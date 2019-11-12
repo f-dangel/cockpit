@@ -1,0 +1,2 @@
+git+https://github.com/f-dangel/backpack.git@development
+-e git+file:///home/fdangel/Documents/deepobs.git#egg=DeepOBS
