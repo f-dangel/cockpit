@@ -291,6 +291,12 @@ TSWLatexianTemp*
 code/*/results
 **/data_deepobs
 
+# Torchvision
+**MNIST/**/*.gz
+
+# Tensorboard
+**/*events.out.tfevents.*
+
 # Paper
 tex/paper/main.pdf
 
