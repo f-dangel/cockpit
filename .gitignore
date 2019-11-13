@@ -291,6 +291,9 @@ TSWLatexianTemp*
 code/*/results
 **/data_deepobs
 
+# Paper
+tex/paper/main.pdf
+
 # # grid search and best runs
 # **.tar.xz
 # code/grid_search_command_scripts/*
