@@ -13,3 +13,8 @@ conda env create -f .conda_env.yml
 ```
 conda activate backboard
 ```
+
+## Getting started with pre-commit hooks
+```
+pre-commit install
+```
