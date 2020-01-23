@@ -26,3 +26,16 @@ def power_iteration(matmul, dim, v0=None, maxiter=100, rtol=1e-3, atol=1e-6):
         eigval = new_eigval
 
     raise RuntimeError("Exceeded maximum number of iterations {}".format(maxiter))
+
+
+def sort_eigs(eigvals, eigvecs=None):
+    """Sort eigenvalue/eigenvector pairs in descending order.
+
+    From: https://stackoverflow.com/questions/8092920/sort-eigenvalues-and\
+    -associated-eigenvectors-after-using-numpy-linalg-eig-in-pyt
+    """
+    idx = eigvals.argsort()
+    eigvals_sorted = eigvals[idx]
+    eigvecs_sorted = None if eigvecs is None else eigvecs[:, idx]
+
+    return eigvals_sorted, eigvecs_sorted
