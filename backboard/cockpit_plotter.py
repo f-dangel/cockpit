@@ -70,8 +70,8 @@ class CockpitPlotter:
 
         # d2init gauge
         for i in range(self.n_layers):
-            self._plot_d2init(self.grid_spec[3, i], i)
-        self._plot_d2init(self.grid_spec[3, -1])
+            self._plot_dist(self.grid_spec[3, i], i)
+        self._plot_dist(self.grid_spec[3, -1])
 
         # Performance plot
         han, leg = self._plot_perf(self.grid_spec[4, :])
@@ -163,7 +163,7 @@ class CockpitPlotter:
                 ]:
                     # Aggregate via sum
                     temp.loc[:, columnName] = temp.sum(axis=1)
-                elif columnName in ["grad_norms", "d2init"]:
+                elif columnName in ["grad_norms", "d2init", "dtravel"]:
                     # Aggregate via root of sum of squares:
                     temp.loc[:, columnName] = temp.pow(2).sum(axis=1).pow(1 / 2)
                 else:
@@ -763,11 +763,12 @@ class CockpitPlotter:
             extend_factors=[0.0, 0.05],
         )
 
-    def _plot_d2init(self, gridspec, layer="all"):
-        """Plot the distance to initialization plot"""
+    def _plot_dist(self, gridspec, layer="all"):
+        """Plot the distance."""
         # Plot Settings
         x_quan = "iteration"
         y_quan = "d2init"
+        y_quan2 = "dtravel"
         x_scale = "linear"
         y_scale = "linear"
         n = "" if isinstance(layer, str) else "_layer_" + str(layer)
@@ -775,6 +776,11 @@ class CockpitPlotter:
         # Compute derived quantities
         self.iter_tracking["EMA_" + y_quan + n] = (
             self.iter_tracking[y_quan + n].ewm(alpha=self.EMA_span, adjust=False).mean()
+        )
+        self.iter_tracking["EMA_" + y_quan2 + n] = (
+            self.iter_tracking[y_quan2 + n]
+            .ewm(alpha=self.EMA_span, adjust=False)
+            .mean()
         )
 
         # Plotting
@@ -801,6 +807,31 @@ class CockpitPlotter:
             ax=ax,
         )
 
+        ax2 = ax.twinx()
+
+        sns.scatterplot(
+            x=x_quan,
+            y=y_quan2 + n,
+            hue="iteration",
+            palette=self.cmap,
+            marker="+",
+            edgecolor=None,
+            s=10,
+            data=self.iter_tracking,
+            ax=ax2,
+        )
+        sns.scatterplot(
+            x=x_quan,
+            y="EMA_" + y_quan2 + n,
+            hue="iteration",
+            palette=self.cmap2,
+            marker=",",
+            edgecolor=None,
+            s=1,
+            data=self.iter_tracking,
+            ax=ax2,
+        )
+
         # Customize Plot
         if isinstance(layer, str):
             title = "Distance Gauge for all Layers"
@@ -821,6 +852,10 @@ class CockpitPlotter:
             facecolor,
             extend_factors=[0.0, 0.05],
         )
+        ax2.get_legend().remove()
+        ax2.set_ylim(bottom=0)
+        ax2.set_ylim(top=max(self.iter_tracking[y_quan2 + n]))
+        ax2.set_ylabel(y_quan2.capitalize().replace("_", " "))
 
     def _customize_plot(
         self,

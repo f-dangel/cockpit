@@ -43,6 +43,7 @@ class CockpitRunner(PTRunner):
         # Init Cockpit
         cockpit = Cockpit(
             tproblem.net.parameters,
+            opt,
             self._run_directory,
             self._file_name,
             plot_interval=training_params["plot_interval"],
@@ -83,7 +84,7 @@ class CockpitRunner(PTRunner):
                 valid_accuracies,
                 test_accuracies,
             )
-            cockpit.epoch_track(train_accuracies, valid_accuracies, opt)
+            cockpit.epoch_track(train_accuracies, valid_accuracies)
 
             # Break from train loop after the last round of evaluation
             if epoch_count == num_epochs:
@@ -147,7 +148,7 @@ class CockpitRunner(PTRunner):
 
             # Check for any key input during the training,
             # potentially stop training or change optimizers parameters
-            stop = cockpit.check_listening(opt)
+            stop = cockpit.check_listening()
             if stop:
                 break
 

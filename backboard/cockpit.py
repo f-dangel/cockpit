@@ -10,16 +10,18 @@ import numpy as np
 import torch
 
 from backboard.cockpit_plotter import CockpitPlotter
+from backboard.utils.cockpit_utils import _fit_quadratic, _layerwise_dot_product
 
 
 class Cockpit:
     """Cockpit class."""
 
-    def __init__(self, get_parameters, run_dir, file_name, plot_interval=1):
+    def __init__(self, get_parameters, opt, run_dir, file_name, plot_interval=1):
         """Initialize the Cockpit.
 
         Args:
-            get_parameters ([func]): A function to access the parameters of the network
+            get_parameters ([func]): A function to access the parameters of the 
+                network
             run_dir ([str]): Save directory of the run.
             file_name ([str]): File name of the run.
         """
@@ -27,6 +29,7 @@ class Cockpit:
         # Save inputs
         self.get_parameters = get_parameters
         self.plot_interval = plot_interval
+        self.opt = opt
 
         # Make dir if necessary
         os.makedirs(run_dir, exist_ok=True)
@@ -79,6 +82,9 @@ class Cockpit:
         # Gradient Norms
         tracking["grad_norms"] = []
 
+        # Distance traveled
+        tracking["dtravel"] = []
+
         # Distance to Init
         tracking["d2init"] = []
 
@@ -101,12 +107,8 @@ class Cockpit:
         self.keycheck.daemon = True
         self.keycheck.start()
 
-    def check_listening(self, opt):
+    def check_listening(self):
         """Check for user input during last epoch and act accordingly.
-
-        Args:
-            opt ([optimizer]): Pass the optimizer to allow to change its
-                               internal variables (i.e. the learning rate)
 
         Returns:
             [Bool]: If training should be stopped.
@@ -117,7 +119,7 @@ class Cockpit:
                 return True
             elif self.keyinput == "e":
                 # If somebody pressed "e", now is the time to intervene.
-                current_lr = opt.param_groups[0]["lr"]
+                current_lr = self.opt.param_groups[0]["lr"]
                 new_lr = input(
                     "Current rearning rate: "
                     + str(current_lr)
@@ -125,7 +127,7 @@ class Cockpit:
                 )
                 try:
                     new_lr = float(new_lr)
-                    for param_group in opt.param_groups:
+                    for param_group in self.opt.param_groups:
                         param_group["lr"] = new_lr
                 except ValueError:
                     print("Invalid input. Leaving learning rate as it is")
@@ -144,9 +146,10 @@ class Cockpit:
 
         # Track Statistics (before updating the search dir)
         self.track_d2init()
+        self.track_grad_norm()
+        self.track_dtravel()
         self.track_f(batch_loss)
         self.track_var_f(batch_losses)
-        self.track_grad_norm()
         self.track_var_df_1()
         self.track_df_1()
         self.track_trace()
@@ -159,23 +162,22 @@ class Cockpit:
         self.track_var_df_0()
         self.track_df_0()
 
-    def epoch_track(self, train_accuracies, valid_accuracies, opt):
+    def epoch_track(self, train_accuracies, valid_accuracies):
         """[summary]
 
         Args:
             train_accuracies ([type]): [description]
             valid_accuracies ([type]): [description]
-            opt ([type]): [description]
         """
         self.tracking_epoch["train_acc"] = train_accuracies
         self.tracking_epoch["valid_acc"] = valid_accuracies
         if "lr" in self.tracking_epoch:
-            self.tracking_epoch["lr"].append(opt.param_groups[0]["lr"])
+            self.tracking_epoch["lr"].append(self.opt.param_groups[0]["lr"])
         else:
-            self.tracking_epoch["lr"] = [opt.param_groups[0]["lr"]]
+            self.tracking_epoch["lr"] = [self.opt.param_groups[0]["lr"]]
 
     def write(self):
-        """ Missing that each tracking data needs to lose the first or last value!!"""
+        """ Write all tracking data into a JSON file."""
         tracking = {
             "iter_tracking": {
                 "f0": self.tracking["f_t"][:-1],
@@ -187,9 +189,10 @@ class Cockpit:
                 "var_df_0": self.tracking["var_df_0"][:-1],
                 "var_df_1": self.tracking["var_df_1"][1:],
                 "grad_norms": self.tracking["grad_norms"][:-1],
+                "dtravel": self.tracking["dtravel"][:-1],
                 "d2init": self.tracking["d2init"][:-1],
                 "trace": self.tracking["trace"][:-1],
-                "alpha": self.tracking["alpha"][:-1],
+                "alpha": self.tracking["alpha"][:],
             },
             "epoch_tracking": self.tracking_epoch,
         }
@@ -199,15 +202,24 @@ class Cockpit:
         print("Cockpit-Log written...")
 
     def update_search_dir(self):
-        """Updates the search direction to be the negative of the current gradient."""
+        """Updates the search direction to the negative current gradient."""
         self.search_dir = [-p.grad.data for p in self.get_parameters()]
 
     def track_d2init(self):
-        """Tracks the L2 distance between the current parameters and their init."""
+        """Tracks the L2 distance of the current parameters to their init."""
         self.tracking["d2init"].append(
             [
                 (init - p).norm(2).item()
                 for init, p in zip(self.p_init, self.get_parameters())
+            ]
+        )
+
+    def track_dtravel(self):
+        """Tracks the distance traveled in each iteration"""
+        self.tracking["dtravel"].append(
+            [
+                el * self.opt.param_groups[0]["lr"]
+                for el in self.tracking["grad_norms"][-1]
             ]
         )
 
@@ -250,7 +262,7 @@ class Cockpit:
     def track_df_1(self):
         """Tracks the projected gradient at f(alpha) layerwise."""
         self.tracking["df_1"].append(
-            self._layerwise_dot_product(
+            _layerwise_dot_product(
                 self.search_dir, [p.grad.data for p in self.get_parameters()]
             )
         )
@@ -258,7 +270,7 @@ class Cockpit:
     def track_df_0(self):
         """Tracks the projected gradient at f(0) layerwise."""
         self.tracking["df_0"].append(
-            self._layerwise_dot_product(
+            _layerwise_dot_product(
                 self.search_dir, [p.grad.data for p in self.get_parameters()]
             )
         )
@@ -271,15 +283,25 @@ class Cockpit:
 
     def track_alpha(self):
         """Tracks the relative step size."""
+        # TODO Use dtravel[-1] instead of f[1]!
         # Skip the first time this function is called
         # (since we don't have a full iteration yet.)
-        # After that we can use f(alpha)=f[-1] and f(0)=f[-2] (same for var)
-        # and for f'(alpha)=df1[-1] and f'(0)=df0[-1]
-        self.tracking["alpha"].append(np.random.normal(0.5, 0.5))
+        if len(self.tracking["f_t"]) < 2:
+            return
+        mu = _fit_quadratic(
+            [self.tracking["f_t"][-2], self.tracking["f_t"][-1]],
+            [sum(self.tracking["df_0"][-1]), sum(self.tracking["df_1"][-1])],
+            [self.tracking["var_f_t"][-2], self.tracking["var_f_t"][-1]],
+            [sum(self.tracking["var_df_0"][-1]), sum(self.tracking["var_df_1"][-1]),],
+        )
+        # get alpha_bar (the step size that is "the other side")
+        alpha_bar = -mu[1] / mu[2]
+        # Get the relative (or local) step size
+        self.tracking["alpha"].append(2 / alpha_bar - 1)
 
     def _exact_variance(self, grads):
-        """Given a batch of individual gradients, it computes the exact variance of
-        their projection onto the search direction.
+        """Given a batch of individual gradients, it computes the exact variance
+        of their projection onto the search direction.
 
         Args:
             grads ([list]): A batch of individual gradients.
@@ -295,18 +317,5 @@ class Cockpit:
         ]
         proj_grad = []
         for grad in grads:
-            proj_grad.append(self._layerwise_dot_product(self.search_dir, grad))
+            proj_grad.append(_layerwise_dot_product(self.search_dir, grad))
         return np.var(np.array(proj_grad), axis=0, ddof=1).tolist()
-
-    @staticmethod
-    def _layerwise_dot_product(x_s, y_s):
-        """Computes the dot product of two parameter vectors layerwise.
-
-        Args:
-            x_s (list): First list of parameter vectors.
-            y_s (list): Second list of parameter vectors.
-
-        Returns:
-            prod: 1-D list of scalars. Each scalar is a dot product of one layer.
-        """
-        return [torch.sum(x * y).item() for x, y in zip(x_s, y_s)]
