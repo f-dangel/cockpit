@@ -99,8 +99,11 @@ class CockpitPlotter:
 
         if draw:
             plt.show()
+            print("Cockpit-Plot shown...")
+        else:
+            plt.close(self.fig)
+            print("Cockpit-Plot drawn...")
         plt.pause(0.01)
-        print("Cockpit-Plot drawn...")
 
     def save_plot(self):
         """Saves the last cockpit plot to image file."""
@@ -449,8 +452,53 @@ class CockpitPlotter:
         ax.set_ylim(ylim)
         ax2.set_xlim(xlim)
         ax2.set_ylim(ylim)
+        # Add indicator for outliers
+        if max(self.iter_tracking["alpha"][-self.iter_per_plot :]) > xlim[1]:
+            ax.annotate(
+                "",
+                xy=(1.8, 0.3),
+                xytext=(1.7, 0.3),
+                size=20,
+                arrowprops=dict(color=sns.color_palette()[1]),
+            )
+        elif max(self.iter_tracking["alpha"]) > xlim[1]:
+            ax.annotate(
+                "",
+                xy=(1.8, 0.3),
+                xytext=(1.7, 0.3),
+                size=20,
+                arrowprops=dict(color="gray"),
+            )
+        if min(self.iter_tracking["alpha"][-self.iter_per_plot :]) < xlim[0]:
+            ax.annotate(
+                "",
+                xy=(-1.8, 0.3),
+                xytext=(-1.7, 0.3),
+                size=20,
+                arrowprops=dict(color=sns.color_palette()[1]),
+            )
+        elif min(self.iter_tracking["alpha"]) < xlim[0]:
+            ax.annotate(
+                "",
+                xy=(-1.8, 0.3),
+                xytext=(-1.7, 0.3),
+                size=20,
+                arrowprops=dict(color="gray"),
+            )
+
         # Legend
-        ax2.legend()
+        # Get the fitted parameters used by sns
+        (mu_all, _) = stats.norm.fit(self.iter_tracking["alpha"])
+        (mu_last, _) = stats.norm.fit(
+            self.iter_tracking["alpha"][-self.iter_per_plot :]
+        )
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax2.legend(
+            [
+                "{0} ($\mu=${1:.2f})".format(labels2[0], mu_all),  # noqa: W605
+                "{0} ($\mu=${1:.2f})".format(labels2[1], mu_last),  # noqa: W605
+            ]
+        )
 
     def _plot_alpha_trace(self, gridspec):
         """Plot the local step size vs the trace over time."""
@@ -882,6 +930,13 @@ class CockpitPlotter:
         # Fix Legend
         lines, labels = ax.get_legend_handles_labels()
         lines2, labels2 = ax2.get_legend_handles_labels()
+
+        plot_labels = []
+        for line, label in zip(lines + lines2, labels + labels2):
+            if label == "lr":
+                plot_labels.append("{0}: ({1:.2E})".format(label, line.get_ydata()[-1]))
+            else:
+                plot_labels.append("{0}: ({1:.2%})".format(label, line.get_ydata()[-1]))
         ax.get_legend().remove()
         ax2.get_legend().remove()
-        ax.legend(lines + lines2, labels + labels2)
+        ax.legend(lines + lines2, plot_labels)
