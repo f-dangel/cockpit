@@ -104,19 +104,19 @@ class CockpitRunner(PTRunner):
                         reduction="none"
                     )
                     batch_loss = torch.mean(batch_losses)
-                    if batch_count % train_log_interval == 0:
-                        bp_extensions = (
-                            extensions.Variance(),
-                            extensions.BatchGrad(),
-                            extensions.DiagHessian(),
-                        )
-                    else:
-                        bp_extensions = []
-                        # eigenvalue calc
+                    # if batch_count % train_log_interval == 0:
+                    bp_extensions = (
+                        extensions.Variance(),
+                        extensions.BatchGrad(),
+                        extensions.DiagHessian(),
+                    )
+                    # else:
+                    #     bp_extensions = []
+                    #     # eigenvalue calc
                     with backpack(*bp_extensions):
                         batch_loss.backward()
-                        if batch_count % train_log_interval == 0:
-                            cockpit.track(batch_losses)
+                        # if batch_count % train_log_interval == 0:
+                        cockpit.track(batch_losses)
                     opt.step()
 
                     if batch_count % train_log_interval == 0:
