@@ -29,7 +29,7 @@ class BaseLinearOperator(LinearOperator):
 class HVPLinearOperator(BaseLinearOperator):
     """Scipy interface for multiplication with the Hessian in torch."""
 
-    def __init__(self, loss, params, dtype=numpy.float32):
+    def __init__(self, loss, params, grad_params=None, dtype=numpy.float32):
         """Multiplication with the Hessian of loss w.r.t. params."""
         num_params = sum(p.numel() for p in params)
         shape = (num_params, num_params)
@@ -37,6 +37,7 @@ class HVPLinearOperator(BaseLinearOperator):
 
         self.loss = loss
         self.params = params
+        self.grad_params = grad_params
         self.device = loss.device
 
     def _matvec(self, v_numpy):
@@ -47,7 +48,9 @@ class HVPLinearOperator(BaseLinearOperator):
 
     def hessian_vector_product(self, v_torch):
         """Multiply by the Hessian using autodiff in torch."""
-        return hessian_vector_product(self.loss, self.params, v_torch)
+        return hessian_vector_product(
+            self.loss, self.params, v_torch, grad_params=self.grad_params
+        )
 
 
 class GGNVPLinearOperator(BaseLinearOperator):
