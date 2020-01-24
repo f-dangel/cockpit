@@ -26,6 +26,7 @@ class CockpitRunner(PTRunner):
         train_log_interval,
         tb_log,
         tb_log_dir,
+        **training_params
     ):
         opt = self._optimizer_class(tproblem.net.parameters(), **hyperparams)
 
@@ -44,7 +45,7 @@ class CockpitRunner(PTRunner):
             tproblem.net.parameters,
             self._run_directory,
             self._file_name,
-            # plot_interval=2,
+            plot_interval=training_params["plot_interval"],
         )
 
         if tb_log:
@@ -87,7 +88,8 @@ class CockpitRunner(PTRunner):
             # Break from train loop after the last round of evaluation
             if epoch_count == num_epochs:
                 cockpit.write()
-                cockpit.cockpit_plotter.plot()
+                # always draw the last one, but only show if necessary
+                cockpit.cockpit_plotter.plot(draw=training_params["show_plot"])
                 break
 
             # Training #
@@ -98,6 +100,10 @@ class CockpitRunner(PTRunner):
             while True:
                 try:
                     opt.zero_grad()
+                    batch_losses, _ = tproblem.get_batch_loss_and_accuracy(
+                        reduction="none"
+                    )
+                    batch_loss = torch.mean(batch_losses)
                     if batch_count % train_log_interval == 0:
                         bp_extensions = (
                             extensions.Variance(),
@@ -106,11 +112,8 @@ class CockpitRunner(PTRunner):
                         )
                     else:
                         bp_extensions = []
+                        # eigenvalue calc
                     with backpack(*bp_extensions):
-                        batch_losses, _ = tproblem.get_batch_loss_and_accuracy(
-                            reduction="none"
-                        )
-                        batch_loss = torch.mean(batch_losses)
                         batch_loss.backward()
                         if batch_count % train_log_interval == 0:
                             cockpit.track(batch_losses)
@@ -137,8 +140,10 @@ class CockpitRunner(PTRunner):
 
             # Write to log file if plot_interval or last epoch
             if epoch_count % cockpit.plot_interval == 0:
+                # track, but only show if wanted
                 cockpit.write()
-                cockpit.cockpit_plotter.plot()
+                if training_params["show_plot"]:
+                    cockpit.cockpit_plotter.plot()
 
             # Check for any key input during the training,
             # potentially stop training or change optimizers parameters
@@ -161,3 +166,16 @@ class CockpitRunner(PTRunner):
 
         cockpit.cockpit_plotter.save_plot()
         return output
+
+    def _add_training_params_to_argparse(self, parser, args, training_params):
+        """Overwrite this method to specify how your
+        runner should read in additional training_parameters and to add them to
+        argparse.
+
+        Args:
+            parser (argparse.ArgumentParser): The argument parser object.
+            args (dict): The args that are parsed as locals to the run method.
+            training_params (dict): Training parameters that are to read in.
+            """
+        for tp in training_params:
+            args[tp] = training_params[tp]
