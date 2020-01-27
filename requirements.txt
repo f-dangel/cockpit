@@ -6,5 +6,5 @@ seaborn
 torch
 -e git://github.com/f-dangel/backpack.git@development#egg=backpack
 -e git://github.com/fsschneider/DeepOBS.git@develop#egg=deepobs
--r requirements/lint.txt
--r requirements/test.txt
+-r req/lint.txt
+-r req/test.txt
