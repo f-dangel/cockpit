@@ -143,11 +143,11 @@ class CockpitRunner(PTRunner):
             if epoch_count % cockpit.plot_interval == 0:
                 # track, but only show if wanted
                 cockpit.write()
-                if training_params["show_plot"]:
-                    cockpit.cockpit_plotter.plot(
-                        save=training_params["save_plots"],
-                        save_append="__epoch__" + str(epoch_count),
-                    )
+                cockpit.cockpit_plotter.plot(
+                    draw=training_params["show_plot"],
+                    save=training_params["save_plots"],
+                    save_append="__epoch__" + str(epoch_count),
+                )
 
             # Check for any key input during the training,
             # potentially stop training or change optimizers parameters
