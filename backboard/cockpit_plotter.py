@@ -900,18 +900,15 @@ class CockpitPlotter:
     def _plot_min_max_ev(self, gridspec):
         """Plot the min vs the max eigenvalue of the Hessian over time."""
         # Plot Settings
-        x_quan = "min_ev"
+        x_quan = "iteration"
         y_quan = "max_ev"
-        x_scale = "log"
+        x_scale = "linear"
         y_scale = "log"
-        title = "Min-Max Eigenvalue"
+        title = "Max Eigenvalue"
         fontweight = "bold"
         facecolor = self.color_summary_plots
 
         # Compute derived quantities
-        self.iter_tracking["EMA_" + x_quan] = (
-            self.iter_tracking[x_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
-        )
         self.iter_tracking["EMA_" + y_quan] = (
             self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
@@ -929,7 +926,7 @@ class CockpitPlotter:
             ax=ax,
         )
         sns.scatterplot(
-            x="EMA_" + x_quan,
+            x=x_quan,
             y="EMA_" + y_quan,
             hue="iteration",
             palette=self.cmap2,
@@ -949,7 +946,7 @@ class CockpitPlotter:
             title,
             fontweight,
             facecolor,
-            extend_factors=[0.05, 0.05],
+            extend_factors=[0.0, 0.05],
         )
 
     def _plot_dist(self, gridspec, layer="all"):

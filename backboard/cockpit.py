@@ -17,7 +17,8 @@ from backboard.utils.cockpit_utils import (
     _get_alpha,
     _layerwise_dot_product,
 )
-from backboard.utils.eigen import sort_eigs
+
+# from backboard.utils.eigen import sort_eigs
 from backboard.utils.linear_operator import HVPLinearOperator
 
 
@@ -105,7 +106,7 @@ class Cockpit:
         tracking["alpha"] = []
 
         # Max and Min Eigenvalue
-        tracking["min_ev"] = []
+        # tracking["min_ev"] = []
         tracking["max_ev"] = []
 
         return tracking, tracking_epoch
@@ -214,7 +215,7 @@ class Cockpit:
                 "d2init": self.tracking["d2init"][:-1],
                 "trace": self.tracking["trace"][:-1],
                 "alpha": self.tracking["alpha"][:],
-                "min_ev": self.tracking["min_ev"][:-1],
+                # "min_ev": self.tracking["min_ev"][:-1],
                 "max_ev": self.tracking["max_ev"][:-1],
             },
             "epoch_tracking": self.tracking_epoch,
@@ -339,11 +340,11 @@ class Cockpit:
         HVP = HVPLinearOperator(
             loss, list(self.get_parameters()), grad_params=grad_params
         )
-        eigvals, eigvecs = eigsh(HVP, k=2, which="BE")
-        eigvals, eigvecs = sort_eigs(eigvals, eigvecs)
+        eigvals = eigsh(HVP, k=1, which="LA", return_eigenvectors=False)
+        # eigvals, eigvecs = sort_eigs(eigvals, eigvecs)
 
-        self.tracking["min_ev"].append(np.float64(eigvals[0]))
-        self.tracking["max_ev"].append(np.float64(eigvals[1]))
+        # self.tracking["min_ev"].append(np.float64(min(eigvals)))
+        self.tracking["max_ev"].append(np.float64(eigvals))
 
     def _exact_variance(self, grads):
         """Given a batch of individual gradients, it computes the exact variance
