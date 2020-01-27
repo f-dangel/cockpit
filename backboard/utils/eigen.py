@@ -1,6 +1,6 @@
 import torch
 
-from backboard.utils import normalize
+from backboard.utils.utils import normalize
 
 
 def power_iteration(matmul, dim, v0=None, maxiter=100, rtol=1e-3, atol=1e-6):
