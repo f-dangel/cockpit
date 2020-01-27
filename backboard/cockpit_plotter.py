@@ -26,7 +26,7 @@ class CockpitPlotter:
         # Will be set the first time we plot
         self.iter_per_plot = 0
 
-    def plot(self, draw=True):
+    def plot(self, draw=True, save=False, save_append=None):
         """Shows a cockpit plot using the cockpit plotter and the current log file."""
 
         self._read_tracking_results()
@@ -56,17 +56,26 @@ class CockpitPlotter:
         # # df gauge
         # for i in range(self.n_layers):
         #     self._plot_df_rel(self.grid_spec[1, i], i)
-        # self._plot_df_rel(self.grid_spec[1, -1])
+        # self._plot_df_rel(self.grid_spec[1, -1])\
+
+        # min vs max eigenvalue
+        self._plot_min_max_ev(self.grid_spec[1, 0])
+
+        # alpha vs cond. number
+        self._plot_alpha_cond(self.grid_spec[1, 1])
+
+        # cond. number vs. iteration
+        self._plot_cond(self.grid_spec[1, 2])
 
         # trace gauge
         for i in range(self.n_layers):
-            self._plot_trace(self.grid_spec[1, i], i)
-        self._plot_trace(self.grid_spec[1, -1])
+            self._plot_trace(self.grid_spec[2, i], i)
+        self._plot_trace(self.grid_spec[2, -1])
 
-        # grad norm gauge
-        for i in range(self.n_layers):
-            self._plot_grad_norm(self.grid_spec[2, i], i)
-        self._plot_grad_norm(self.grid_spec[2, -1])
+        # # grad norm gauge
+        # for i in range(self.n_layers):
+        #     self._plot_grad_norm(self.grid_spec[2, i], i)
+        # self._plot_grad_norm(self.grid_spec[2, -1])
 
         # d2init gauge
         for i in range(self.n_layers):
@@ -104,6 +113,9 @@ class CockpitPlotter:
             plt.close(self.fig)
             print("Cockpit-Plot drawn...")
         plt.pause(0.01)
+        if save:
+            self.fig.savefig(self.log_path + save_append + ".png")
+            print("Cockpit-Plot saved...")
 
     def save_plot(self):
         """Saves the last cockpit plot to image file."""
@@ -174,6 +186,12 @@ class CockpitPlotter:
                     )
                 self.iter_tracking = self.iter_tracking.drop([columnName], axis=1)
                 self.iter_tracking = pd.concat([self.iter_tracking[:], temp[:]], axis=1)
+        # TODO: We currently divide the trace by 7850 since this is the number
+        # of parameters for mnist logreg. We need to change this for different
+        # testproblems
+        self.iter_tracking["avg_cond"] = (
+            self.iter_tracking["max_ev"] / self.iter_tracking["trace"] * 7850
+        )
 
     def _plot_epoch(self, gridspec):
         """Creates a plot of variables that are tracked every epoch
@@ -556,8 +574,6 @@ class CockpitPlotter:
             ylim=ylim,
         )
 
-        ax.set_ylabel(r"$\alpha$")
-
     def _plot_df_rel(self, gridspec, layer="all"):
         """Plot the derivative value relationship plot"""
         # Plot Settings
@@ -761,6 +777,179 @@ class CockpitPlotter:
             fontweight,
             facecolor,
             extend_factors=[0.0, 0.05],
+        )
+
+    def _plot_alpha_cond(self, gridspec):
+        """Plot the local step length alpha vs the condition number.
+
+        NOTE: The condition number is computed as max_ev/avg_ev,
+        not max_ev/min_ev, since the min_ev can become negative due to
+        numerical noise. We call this the average condition number avg_cond.
+        """
+        """Plot the min vs the max eigenvalue of the Hessian over time."""
+        # Plot Settings
+        x_quan = "avg_cond"
+        y_quan = "alpha"
+        x_scale = "log"
+        y_scale = "linear"
+        title = "(Average) Condition Number vs. Alpha"
+        fontweight = "bold"
+        facecolor = self.color_summary_plots
+
+        # Compute derived quantities
+        self.iter_tracking["EMA_" + x_quan] = (
+            self.iter_tracking[x_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
+        )
+        self.iter_tracking["EMA_" + y_quan] = (
+            self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
+        )
+
+        # Plotting
+        ax = self.fig.add_subplot(gridspec)
+        sns.scatterplot(
+            x=x_quan,
+            y=y_quan,
+            hue="iteration",
+            palette=self.cmap,
+            edgecolor=None,
+            s=10,
+            data=self.iter_tracking,
+            ax=ax,
+        )
+        sns.scatterplot(
+            x="EMA_" + x_quan,
+            y="EMA_" + y_quan,
+            hue="iteration",
+            palette=self.cmap2,
+            marker=",",
+            edgecolor=None,
+            s=1,
+            data=self.iter_tracking,
+            ax=ax,
+        )
+
+        self._customize_plot(
+            ax,
+            x_quan,
+            y_quan,
+            x_scale,
+            y_scale,
+            title,
+            fontweight,
+            facecolor,
+            extend_factors=[0.05, 0.05],
+        )
+
+    def _plot_cond(self, gridspec):
+        """Plot the condition number vs iteration.
+
+        NOTE: The condition number is computed as max_ev/avg_ev,
+        not max_ev/min_ev, since the min_ev can become negative due to
+        numerical noise. We call this the average condition number avg_cond.
+        """
+        # Plot Settings
+        x_quan = "iteration"
+        y_quan = "avg_cond"
+        x_scale = "linear"
+        y_scale = "linear"
+        title = "(Average) Condition Number"
+        fontweight = "bold"
+        facecolor = self.color_summary_plots
+
+        # Compute derived quantities
+        self.iter_tracking["EMA_" + y_quan] = (
+            self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
+        )
+
+        # Plotting
+        ax = self.fig.add_subplot(gridspec)
+        sns.scatterplot(
+            x=x_quan,
+            y=y_quan,
+            hue="iteration",
+            palette=self.cmap,
+            edgecolor=None,
+            s=10,
+            data=self.iter_tracking,
+            ax=ax,
+        )
+        sns.scatterplot(
+            x=x_quan,
+            y="EMA_" + y_quan,
+            hue="iteration",
+            palette=self.cmap2,
+            marker=",",
+            edgecolor=None,
+            s=1,
+            data=self.iter_tracking,
+            ax=ax,
+        )
+
+        self._customize_plot(
+            ax,
+            x_quan,
+            y_quan,
+            x_scale,
+            y_scale,
+            title,
+            fontweight,
+            facecolor,
+            extend_factors=[0.0, 0.05],
+        )
+
+    def _plot_min_max_ev(self, gridspec):
+        """Plot the min vs the max eigenvalue of the Hessian over time."""
+        # Plot Settings
+        x_quan = "min_ev"
+        y_quan = "max_ev"
+        x_scale = "log"
+        y_scale = "log"
+        title = "Min-Max Eigenvalue"
+        fontweight = "bold"
+        facecolor = self.color_summary_plots
+
+        # Compute derived quantities
+        self.iter_tracking["EMA_" + x_quan] = (
+            self.iter_tracking[x_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
+        )
+        self.iter_tracking["EMA_" + y_quan] = (
+            self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
+        )
+
+        # Plotting
+        ax = self.fig.add_subplot(gridspec)
+        sns.scatterplot(
+            x=x_quan,
+            y=y_quan,
+            hue="iteration",
+            palette=self.cmap,
+            edgecolor=None,
+            s=10,
+            data=self.iter_tracking,
+            ax=ax,
+        )
+        sns.scatterplot(
+            x="EMA_" + x_quan,
+            y="EMA_" + y_quan,
+            hue="iteration",
+            palette=self.cmap2,
+            marker=",",
+            edgecolor=None,
+            s=1,
+            data=self.iter_tracking,
+            ax=ax,
+        )
+
+        self._customize_plot(
+            ax,
+            x_quan,
+            y_quan,
+            x_scale,
+            y_scale,
+            title,
+            fontweight,
+            facecolor,
+            extend_factors=[0.05, 0.05],
         )
 
     def _plot_dist(self, gridspec, layer="all"):

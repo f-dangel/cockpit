@@ -115,9 +115,9 @@ class CockpitRunner(PTRunner):
                     #     bp_extensions = []
                     #     # eigenvalue calc
                     with backpack(*bp_extensions):
-                        batch_loss.backward()
+                        batch_loss.backward(create_graph=True)
                         # if batch_count % train_log_interval == 0:
-                        cockpit.track(batch_losses)
+                    cockpit.track(batch_losses)
                     opt.step()
 
                     if batch_count % train_log_interval == 0:
@@ -144,7 +144,10 @@ class CockpitRunner(PTRunner):
                 # track, but only show if wanted
                 cockpit.write()
                 if training_params["show_plot"]:
-                    cockpit.cockpit_plotter.plot()
+                    cockpit.cockpit_plotter.plot(
+                        save=training_params["save_plots"],
+                        save_append="__epoch__" + str(epoch_count),
+                    )
 
             # Check for any key input during the training,
             # potentially stop training or change optimizers parameters

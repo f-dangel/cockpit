@@ -5,9 +5,11 @@ import json
 import math
 import os
 import threading
+import warnings
 
 import numpy as np
 import torch
+from scipy.sparse.linalg import eigsh
 
 from backboard.cockpit_plotter import CockpitPlotter
 from backboard.utils.cockpit_utils import (
@@ -15,6 +17,8 @@ from backboard.utils.cockpit_utils import (
     _get_alpha,
     _layerwise_dot_product,
 )
+from backboard.utils.eigen import sort_eigs
+from backboard.utils.linear_operator import HVPLinearOperator
 
 
 class Cockpit:
@@ -34,6 +38,8 @@ class Cockpit:
         self.get_parameters = get_parameters
         self.plot_interval = plot_interval
         self.opt = opt
+
+        self._check_optimizer()
 
         # Make dir if necessary
         os.makedirs(run_dir, exist_ok=True)
@@ -98,6 +104,10 @@ class Cockpit:
         # Local Step Length
         tracking["alpha"] = []
 
+        # Max and Min Eigenvalue
+        tracking["min_ev"] = []
+        tracking["max_ev"] = []
+
         return tracking, tracking_epoch
 
     def start_listening(self):
@@ -158,6 +168,13 @@ class Cockpit:
         self.track_df_1()
         self.track_trace()
         self.track_alpha()
+        self.track_eigenvalues(batch_loss)
+
+        # try:
+        #     print("Alpha type", type(self.tracking["alpha"][-1]))
+        #     print("Min EV type", type(self.tracking["min_ev"][-1]))
+        # except:
+        #     pass
 
         # Update Search Direction
         self.update_search_dir()
@@ -197,6 +214,8 @@ class Cockpit:
                 "d2init": self.tracking["d2init"][:-1],
                 "trace": self.tracking["trace"][:-1],
                 "alpha": self.tracking["alpha"][:],
+                "min_ev": self.tracking["min_ev"][:-1],
+                "max_ev": self.tracking["max_ev"][:-1],
             },
             "epoch_tracking": self.tracking_epoch,
         }
@@ -310,6 +329,22 @@ class Cockpit:
         # Get the relative (or local) step size
         self.tracking["alpha"].append(_get_alpha(mu, t))
 
+    def track_eigenvalues(self, loss):
+        """Track the min and max eigenvalue of the Hessian.
+
+        Args:
+            loss (torch): 
+        """
+        grad_params = [p.grad for p in self.get_parameters()]
+        HVP = HVPLinearOperator(
+            loss, list(self.get_parameters()), grad_params=grad_params
+        )
+        eigvals, eigvecs = eigsh(HVP, k=2, which="BE")
+        eigvals, eigvecs = sort_eigs(eigvals, eigvecs)
+
+        self.tracking["min_ev"].append(np.float64(eigvals[0]))
+        self.tracking["max_ev"].append(np.float64(eigvals[1]))
+
     def _exact_variance(self, grads):
         """Given a batch of individual gradients, it computes the exact variance
         of their projection onto the search direction.
@@ -330,3 +365,20 @@ class Cockpit:
         for grad in grads:
             proj_grad.append(_layerwise_dot_product(self.search_dir, grad))
         return np.var(np.array(proj_grad), axis=0, ddof=1).tolist()
+
+    def _check_optimizer(self):
+        if self.opt.__class__.__name__ == "SGD":
+            if self.opt.param_groups[0]["momentum"] != 0:
+                warnings.warn(
+                    "Warning: You are using SGD with momentum. Computation of "
+                    "parameter update magnitude is probably incorrect!",
+                    stacklevel=2,
+                )
+
+        else:
+            warnings.warn(
+                "Warning: You are using an optimizer, with an unknown parameter "
+                "update. Computation of parameter update magnitude is probably "
+                "incorrect!",
+                stacklevel=2,
+            )
