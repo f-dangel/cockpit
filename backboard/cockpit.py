@@ -2,15 +2,19 @@
 
 import itertools
 import json
+import math
 import os
 import threading
 
-# import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
 from backboard.cockpit_plotter import CockpitPlotter
-from backboard.utils.cockpit_utils import _fit_quadratic, _layerwise_dot_product
+from backboard.utils.cockpit_utils import (
+    _fit_quadratic,
+    _get_alpha,
+    _layerwise_dot_product,
+)
 
 
 class Cockpit:
@@ -288,16 +292,23 @@ class Cockpit:
         # (since we don't have a full iteration yet.)
         if len(self.tracking["f_t"]) < 2:
             return
+
+        # We need to find the size of the step taken,
+        # since dtravel can be a list, we need to aggregate it
+        if type(self.tracking["dtravel"][-1]) is list:
+            t = math.sqrt(sum(t * t for t in self.tracking["dtravel"][-1]))
+        else:
+            t = self.tracking["dtravel"][-1]
         mu = _fit_quadratic(
+            t,
             [self.tracking["f_t"][-2], self.tracking["f_t"][-1]],
             [sum(self.tracking["df_0"][-1]), sum(self.tracking["df_1"][-1])],
             [self.tracking["var_f_t"][-2], self.tracking["var_f_t"][-1]],
             [sum(self.tracking["var_df_0"][-1]), sum(self.tracking["var_df_1"][-1]),],
         )
-        # get alpha_bar (the step size that is "the other side")
-        alpha_bar = -mu[1] / mu[2]
+
         # Get the relative (or local) step size
-        self.tracking["alpha"].append(2 / alpha_bar - 1)
+        self.tracking["alpha"].append(_get_alpha(mu, t))
 
     def _exact_variance(self, grads):
         """Given a batch of individual gradients, it computes the exact variance
