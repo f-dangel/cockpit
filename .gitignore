@@ -288,7 +288,7 @@ TSWLatexianTemp*
 
 # DeepOBS
 *.json
-code/*/results
+**/results
 **/data_deepobs
 
 # Torchvision
