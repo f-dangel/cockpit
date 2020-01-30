@@ -23,7 +23,8 @@ class BaseLinearOperator(LinearOperator):
 
     def _postprocess(self, v_torch):
         """Flatten and concatenate, then convert to `numpy` array."""
-        return parameters_to_vector(v_torch).cpu().numpy()
+        v_torch_flat = [v.contiguous() for v in v_torch]
+        return parameters_to_vector(v_torch_flat).cpu().numpy()
 
 
 class HVPLinearOperator(BaseLinearOperator):
