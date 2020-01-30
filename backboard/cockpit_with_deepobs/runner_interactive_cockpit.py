@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 
+import time
 import warnings
 
 import torch
@@ -100,6 +101,12 @@ class CockpitRunner(PTRunner):
             batch_count = 0
             while True:
                 try:
+                    if training_params["track_time"]:
+                        if batch_count == 0:
+                            comp_time = time.time()
+                        elif batch_count % 10 == 0:
+                            print("10 iterations took ", time.time() - comp_time)
+                            comp_time = time.time()
                     opt.zero_grad()
                     batch_losses, _ = tproblem.get_batch_loss_and_accuracy(
                         reduction="none"
