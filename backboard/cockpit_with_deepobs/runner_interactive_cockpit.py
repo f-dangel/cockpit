@@ -8,7 +8,7 @@ import warnings
 import torch
 
 from backboard import Cockpit
-from backpack import backpack, extend, extensions
+from backpack import backpack, extend
 from deepobs.pytorch.runners.runner import PTRunner
 
 
@@ -47,8 +47,10 @@ class CockpitRunner(PTRunner):
             opt,
             self._run_directory,
             self._file_name,
+            track_interval=training_params["track_interval"],
             plot_interval=training_params["plot_interval"],
         )
+        batch_losses = []
 
         if tb_log:
             try:
@@ -85,13 +87,15 @@ class CockpitRunner(PTRunner):
                 valid_accuracies,
                 test_accuracies,
             )
-            cockpit.epoch_track(train_accuracies, valid_accuracies)
+            cockpit.track_epoch(
+                epoch_count, global_step, train_accuracies[-1], valid_accuracies[-1],
+            )
 
             # Break from train loop after the last round of evaluation
             if epoch_count == num_epochs:
                 cockpit.write()
                 # always draw the last one, but only show if necessary
-                cockpit.cockpit_plotter.plot(draw=training_params["show_plot"])
+                # cockpit.cockpit_plotter.plot(draw=training_params["show_plot"])
                 break
 
             # Training #
@@ -107,25 +111,26 @@ class CockpitRunner(PTRunner):
                         elif batch_count % 10 == 0:
                             print("10 iterations took ", time.time() - comp_time)
                             comp_time = time.time()
+
+                    # Cockpit tracking before (only if we hit the track_interval)
+                    if cockpit.should_track(global_step):
+                        cockpit.track_before(batch_losses, global_step)
+
                     opt.zero_grad()
                     batch_losses, _ = tproblem.get_batch_loss_and_accuracy(
                         reduction="none"
                     )
                     batch_loss = torch.mean(batch_losses)
-                    # if batch_count % train_log_interval == 0:
-                    bp_extensions = (
-                        extensions.Variance(),
-                        extensions.BatchGrad(),
-                        extensions.DiagHessian(),
-                    )
-                    # else:
-                    #     bp_extensions = []
-                    #     # eigenvalue calc
-                    with backpack(*bp_extensions):
+
+                    # Use BackPACK for the backward pass, but only use the
+                    # extensions necessary.
+                    with backpack(*cockpit.extensions(global_step)):
                         batch_loss.backward(create_graph=True)
-                        # if batch_count % train_log_interval == 0:
-                    cockpit.track(batch_losses)
                     opt.step()
+
+                    # Cockpit tracking after (only if we hit the track_interval)
+                    if cockpit.should_track(global_step):
+                        cockpit.track_after(batch_losses, global_step)
 
                     if batch_count % train_log_interval == 0:
                         minibatch_train_losses.append(batch_loss.item())
@@ -147,14 +152,14 @@ class CockpitRunner(PTRunner):
                     break
 
             # Write to log file if plot_interval or last epoch
-            if epoch_count % cockpit.plot_interval == 0:
-                # track, but only show if wanted
-                cockpit.write()
-                cockpit.cockpit_plotter.plot(
-                    draw=training_params["show_plot"],
-                    save=training_params["save_plots"],
-                    save_append="__epoch__" + str(epoch_count),
-                )
+            # if epoch_count % cockpit.plot_interval == 0:
+            # track, but only show if wanted
+            # cockpit.write()
+            # cockpit.cockpit_plotter.plot(
+            #     draw=training_params["show_plot"],
+            #     save=training_params["save_plots"],
+            #     save_append="__epoch__" + str(epoch_count),
+            # )
 
             # Check for any key input during the training,
             # potentially stop training or change optimizers parameters
@@ -175,7 +180,7 @@ class CockpitRunner(PTRunner):
             "test_accuracies": test_accuracies,
         }
 
-        cockpit.cockpit_plotter.save_plot()
+        # cockpit.cockpit_plotter.save_plot()
         return output
 
     def _add_training_params_to_argparse(self, parser, args, training_params):
