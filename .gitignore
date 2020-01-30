@@ -282,6 +282,13 @@ TSWLatexianTemp*
 # Python IDE files
 .idea
 
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+########################
+
 # pip src
 **/src
 *.egg-info
@@ -298,29 +305,5 @@ TSWLatexianTemp*
 **/*events.out.tfevents.*
 
 # Paper
-tex/paper/main.pdf
-
-# # grid search and best runs
-# **.tar.xz
-# code/grid_search_command_scripts/*
-# !code/grid_search_command_scripts/filter_jobs.py
-# !code/grid_search_command_scripts/interactive_condor_rm.py
-# code/best_run_command_scripts/*
-
-# # benchmarks
-# code/benchmarks/data
-# code/benchmarks/*.json
-# code/benchmarks/*.pk
-
-# # plots
-# code/plots/**/*.pdf
-# code/plots/**/*.png
-# code/plots/individual
-# code/plots/**/*.tex
-# !code/plots/**/*_processed.tex
-# code/plots/**/*dampings*/
-# code/plots/**/*dampings*.tex
-
-# *.tex.preview.pdf
-# *.tex.preview.tex
-# *.tex.preview_BB.txt 
+tex/paper/backboard/main.pdf
+tex/paper/surfing_the_walls/main.pdf
