@@ -1,7 +1,7 @@
 import torch
 
-from backboard.eigen import power_iteration
-from backboard.utils import normalize
+from backboard.utils.eigen import power_iteration
+from backboard.utils.utils import normalize
 
 
 def test_power_iteration_example():
