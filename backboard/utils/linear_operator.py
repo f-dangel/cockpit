@@ -2,15 +2,14 @@
 Hessian-vector products in torch with scipy.sparse.linalg.LinearOperator interface
 """
 
+import numpy
 import torch
+from scipy.sparse.linalg import LinearOperator
 from torch.nn.utils import parameters_to_vector
 
-from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.ggnvp import ggn_vector_product_from_plist
+from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
-
-from scipy.sparse.linalg import LinearOperator
-import numpy
 
 
 class BaseLinearOperator(LinearOperator):
