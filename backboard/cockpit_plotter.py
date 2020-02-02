@@ -28,7 +28,7 @@ class CockpitPlotter:
         # Will be set the first time we plot
         self.iter_per_plot = 0
 
-    def plot(self, draw=True, save=False, save_append=None):
+    def plot(self, show=True, save=False, save_append=None):
         """Shows a cockpit plot using the cockpit plotter and the current log file."""
 
         self._read_tracking_results()
@@ -108,15 +108,22 @@ class CockpitPlotter:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-        if draw:
+        if show:
             plt.show()
             print("Cockpit-Plot shown...")
+            plt.pause(0.01)
         else:
             plt.close(self.fig)
             print("Cockpit-Plot drawn...")
-        plt.pause(0.01)
+            plt.pause(0.01)
+
         if save:
-            self.fig.savefig(self.log_path + save_append + ".png")
+            file_path = (
+                self.log_path + ".png"
+                if save_append is None
+                else self.log_path + save_append + ".png"
+            )
+            self.fig.savefig(file_path)
             print("Cockpit-Plot saved...")
 
     def save_plot(self):
@@ -469,7 +476,7 @@ class CockpitPlotter:
             ylim=ylim,
         )
 
-    def _plot_alpha(self, gridspec):
+    def _plot_alpha(self, gridspec):  # noqa: C901
         """Plot the local step length"""
         # Plot Settings
         title = "Alpha gauge"
@@ -490,29 +497,36 @@ class CockpitPlotter:
         # Alpha Histogram
         ax2 = ax.twinx()
         # All alphas
-        sns.distplot(
-            self.iter_tracking["alpha"],
-            ax=ax2,
-            # norm_hist=True,
-            fit=stats.norm,
-            kde=False,
-            color="gray",
-            fit_kws={"color": "gray"},
-            hist_kws={"linewidth": 0, "alpha": 0.25},
-            label="all",
-        )
+        try:
+            sns.distplot(
+                self.iter_tracking["alpha"],
+                ax=ax2,
+                # norm_hist=True,
+                fit=stats.norm,
+                kde=False,
+                color="gray",
+                fit_kws={"color": "gray"},
+                hist_kws={"linewidth": 0, "alpha": 0.25},
+                label="all",
+            )
+        except ValueError:
+            print("Alphas included NaN and could therefore not be plotted.")
+
         # Just from last plot
-        sns.distplot(
-            self.iter_tracking["alpha"][-self.iter_per_plot :],
-            ax=ax2,
-            # norm_hist=True,
-            fit=stats.norm,
-            kde=False,
-            color=sns.color_palette()[1],
-            fit_kws={"color": sns.color_palette()[1]},
-            hist_kws={"linewidth": 0, "alpha": 0.65},
-            label="since last plot",
-        )
+        try:
+            sns.distplot(
+                self.iter_tracking["alpha"][-self.iter_per_plot :].fillna(1000),
+                ax=ax2,
+                # norm_hist=True,
+                fit=stats.norm,
+                kde=False,
+                color=sns.color_palette()[1],
+                fit_kws={"color": sns.color_palette()[1]},
+                hist_kws={"linewidth": 0, "alpha": 0.65},
+                label="since last plot",
+            )
+        except ValueError:
+            print("Alphas included NaN and could therefore not be plotted.")
 
         # Customize Plot
         ax.set_title(title, fontweight=fontweight)
@@ -569,17 +583,27 @@ class CockpitPlotter:
 
         # Legend
         # Get the fitted parameters used by sns
-        (mu_all, _) = stats.norm.fit(self.iter_tracking["alpha"])
-        (mu_last, _) = stats.norm.fit(
-            self.iter_tracking["alpha"][-self.iter_per_plot :]
-        )
+        try:
+            (mu_all, _) = stats.norm.fit(self.iter_tracking["alpha"])
+        except RuntimeError:
+            mu_all = None
+
+        try:
+            (mu_last, _) = stats.norm.fit(
+                self.iter_tracking["alpha"][-self.iter_per_plot :]
+            )
+        except RuntimeError:
+            mu_last = None
         lines2, labels2 = ax2.get_legend_handles_labels()
-        ax2.legend(
-            [
-                "{0} ($\mu=${1:.2f})".format(labels2[0], mu_all),  # noqa: W605
-                "{0} ($\mu=${1:.2f})".format(labels2[1], mu_last),  # noqa: W605
-            ]
-        )
+        try:
+            ax2.legend(
+                [
+                    "{0} ($\mu=${1:.2f})".format(labels2[0], mu_all),  # noqa: W605
+                    "{0} ($\mu=${1:.2f})".format(labels2[1], mu_last),  # noqa: W605
+                ]
+            )
+        except TypeError:
+            pass
 
     def _plot_alpha_trace(self, gridspec):
         """Plot the local step size vs the trace over time."""
@@ -1167,7 +1191,6 @@ class CockpitPlotter:
             ax.set_ylim([ylim_min, ylim_max])
         else:
             ax.set_ylim(ylim)
-        print(y_quan, ylim_min, ylim_max, ylim)
 
     def _customize_epoch_plot(
         self,

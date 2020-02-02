@@ -94,8 +94,9 @@ class CockpitRunner(PTRunner):
             # Break from train loop after the last round of evaluation
             if epoch_count == num_epochs:
                 cockpit.write()
-                # always draw the last one, but only show if necessary
-                # cockpit.cockpit_plotter.plot(draw=training_params["show_plot"])
+                cockpit.cockpit_plotter.plot(
+                    show=training_params["show_plot"], save=True
+                )
                 break
 
             # Training #
@@ -152,14 +153,14 @@ class CockpitRunner(PTRunner):
                     break
 
             # Write to log file if plot_interval or last epoch
-            # if epoch_count % cockpit.plot_interval == 0:
-            # track, but only show if wanted
-            # cockpit.write()
-            # cockpit.cockpit_plotter.plot(
-            #     draw=training_params["show_plot"],
-            #     save=training_params["save_plots"],
-            #     save_append="__epoch__" + str(epoch_count),
-            # )
+            if epoch_count % cockpit.plot_interval == 0:
+                # track, but only show if wanted
+                cockpit.write()
+                cockpit.cockpit_plotter.plot(
+                    show=training_params["show_plot"],
+                    save=training_params["save_plots"],
+                    save_append="__epoch__" + str(epoch_count),
+                )
 
             # Check for any key input during the training,
             # potentially stop training or change optimizers parameters
@@ -180,7 +181,6 @@ class CockpitRunner(PTRunner):
             "test_accuracies": test_accuracies,
         }
 
-        # cockpit.cockpit_plotter.save_plot()
         return output
 
     def _add_training_params_to_argparse(self, parser, args, training_params):
