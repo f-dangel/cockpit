@@ -119,16 +119,16 @@ class CockpitPlotter:
 
         if save:
             file_path = (
-                self.log_path + ".png"
+                self.log_path + ".svg"
                 if save_append is None
-                else self.log_path + save_append + ".png"
+                else self.log_path + save_append + ".svg"
             )
             self.fig.savefig(file_path)
             print("Cockpit-Plot saved...")
 
     def save_plot(self):
         """Saves the last cockpit plot to image file."""
-        self.fig.savefig(self.log_path + ".png")
+        self.fig.savefig(self.log_path + ".svg")
         print("Cockpit-Plot saved...")
 
     def _set_plotting_parameters(self):
@@ -262,7 +262,7 @@ class CockpitPlotter:
         x_quan = "iteration"
         y_quan = "learning_rate"
         x_scale = "linear"
-        y_scale = "log"
+        y_scale = "linear"
         title = "Hyperparameters"
 
         # Plotting
