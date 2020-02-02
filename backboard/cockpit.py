@@ -17,15 +17,22 @@ from backboard.utils.cockpit_utils import (
     _get_alpha,
     _layerwise_dot_product,
 )
-
-# from backboard.utils.eigen import sort_eigs
 from backboard.utils.linear_operator import HVPLinearOperator
+from backpack import extensions
 
 
 class Cockpit:
     """Cockpit class."""
 
-    def __init__(self, get_parameters, opt, run_dir, file_name, plot_interval=1):
+    def __init__(
+        self,
+        get_parameters,
+        opt,
+        run_dir,
+        file_name,
+        track_interval=1,
+        plot_interval=1,
+    ):
         """Initialize the Cockpit.
 
         Args:
@@ -37,6 +44,7 @@ class Cockpit:
 
         # Save inputs
         self.get_parameters = get_parameters
+        self.track_interval = track_interval
         self.plot_interval = plot_interval
         self.opt = opt
 
@@ -68,46 +76,58 @@ class Cockpit:
         self.search_dir = [torch.zeros_like(p) for p in self.get_parameters()]
 
         tracking = dict()
+        tracking["iteration"] = []
 
-        tracking_epoch = dict()
-
-        # function value and its variance
-        # implemented in a continuous list
-        # will later be split into pairs of sequential values
-        tracking["f_t"] = []
-        tracking["var_f_t"] = []
+        # function value
+        tracking["f0"] = []
+        tracking["f1"] = []
+        # and its variance
+        tracking["var_f0"] = []
+        tracking["var_f1"] = []
 
         # derivative and its variance. This is the projected gradient
         # onto the search direction.
-        tracking["df_0"] = []
-        tracking["df_1"] = []
+        tracking["df0"] = []
+        tracking["df1"] = []
         # first project the gradients, then compute their variance.
         # Exact but slow way.
-        tracking["var_df_0"] = []
-        tracking["var_df_1"] = []
-        # first compute the variance, then project it
-        # Incorrect, but fast approximation.
-        tracking["df_var_0"] = []
-        tracking["df_var_1"] = []
+        tracking["var_df0"] = []
+        tracking["var_df1"] = []
 
         # Gradient Norms
+        # is alywas computed at theta_0 (the position of f0)
         tracking["grad_norms"] = []
 
         # Distance traveled
+        # (aka the size of the step from theta_0 to theta_1)
         tracking["dtravel"] = []
 
         # Distance to Init
+        # is alywas computed at theta_0 (the position of f0)
         tracking["d2init"] = []
 
         # Hessian Trace
+        # is alywas computed at theta_0 (the position of f0)
         tracking["trace"] = []
 
-        # Local Step Length
+        # Local Effective Step Length
+        # (aka where do we end up on a quadratic fit with the step we took)
         tracking["alpha"] = []
 
-        # Max and Min Eigenvalue
-        # tracking["min_ev"] = []
+        # Max Eigenvalue of the Hessian
+        # is alywas computed at theta_0 (the position of f0)
         tracking["max_ev"] = []
+
+        # Quantaties that are only tracked once per epoch
+        tracking_epoch = dict()
+        tracking_epoch["iteration"] = []
+        tracking_epoch["epoch"] = []
+
+        # Accuracies
+        tracking_epoch["train_accuracy"] = []
+        tracking_epoch["valid_accuracy"] = []
+
+        tracking_epoch["learning_rate"] = []
 
         return tracking, tracking_epoch
 
@@ -149,85 +169,187 @@ class Cockpit:
 
             self.start_listening()
 
-    def track(self, batch_losses):
-        """Track all relevant quantities.
+    def should_track(self, global_step):
+        """Returns wether we want to track in the current step
 
         Args:
-            batch_losses ([array]): Array of individual losses in a batch.
+            global_step (int): Number of current iteration
         """
+        if global_step == 0:
+            return False
+        elif self.track_interval == 1:
+            return True
+        else:
+            return global_step % self.track_interval == 1
 
-        # Compute the (mean) batch loss.
-        batch_loss = torch.mean(batch_losses)
+    def extensions(self, global_step):
+        """Returns the backpack extensions that should be used in this iteration
 
-        # Track Statistics (before updating the search dir)
-        self.track_d2init()
-        self.track_grad_norm()
-        self.track_dtravel()
-        self.track_f(batch_loss)
-        self.track_var_f(batch_losses)
-        self.track_var_df_1()
-        self.track_df_1()
-        self.track_trace()
-        self.track_alpha()
-        self.track_eigenvalues(batch_loss)
+        Args:
+            global_step ([type]): [description]
+        """
+        if (
+            global_step % self.track_interval == 0
+            or global_step % self.track_interval == 1
+        ):
+            return (
+                extensions.Variance(),
+                extensions.BatchGrad(),
+                extensions.DiagHessian(),
+            )
+        else:
+            return []
 
-        # try:
-        #     print("Alpha type", type(self.tracking["alpha"][-1]))
-        #     print("Min EV type", type(self.tracking["min_ev"][-1]))
-        # except:
-        #     pass
-
-        # Update Search Direction
-        self.update_search_dir()
-
-        # Track Statistics (after updating the search dir)
-        self.track_var_df_0()
-        self.track_df_0()
-
-    def epoch_track(self, train_accuracies, valid_accuracies):
+    def track_before(self, batch_losses, global_step):
         """[summary]
 
         Args:
+            batch_losses ([type]): [description]
+        """
+        batch_loss = torch.mean(batch_losses)
+
+        self.tracking["iteration"].append(global_step)
+
+        self.update_search_dir()
+
+        self.track_f(batch_loss, "0")
+        self.track_var_f(batch_losses, "0")
+        self.track_df("0")
+        self.track_var_df("0")
+
+        self.track_grad_norms()
+        self.track_dtravel()  # important to compute after grad_norms !
+        self.track_trace()
+        self.track_ev(batch_loss)
+
+    def track_after(self, batch_losses, global_step):
+        """[summary]
+
+        Args:
+            batch_losses ([type]): [description]
+        """
+        assert (
+            self.tracking["iteration"][-1] == global_step
+        ), "Iterations before and after are inconsistent"
+
+        batch_loss = torch.mean(batch_losses)
+
+        self.track_f(batch_loss, "1")
+        self.track_var_f(batch_losses, "1")
+        self.track_df("1")
+        self.track_var_df("1")
+
+        self.track_d2init()
+        self.track_alpha()
+
+    def track_epoch(self, epoch_count, global_step, train_accuracies, valid_accuracies):
+        """Tracks quantities at the start of epoch number epoch_count.
+
+        The epoch_count starts at 0. if a learning rate of [1, 2, 3] is tracked
+        this means that a learning rate of 1 is used for epoch 0, a learning
+        rate of 2 for epoch 1 and it was then switched to 3 for epoch 2 (but this
+        epoch was never trained, since we only wanted to train for 2 epochs).
+
+        Args:
+            epoch_count ([type]): [description]
+            global_step ([type]): [description]
             train_accuracies ([type]): [description]
             valid_accuracies ([type]): [description]
+
+        Returns:
+            [type]: [description]
         """
-        self.tracking_epoch["train_acc"] = train_accuracies
-        self.tracking_epoch["valid_acc"] = valid_accuracies
-        if "lr" in self.tracking_epoch:
-            self.tracking_epoch["lr"].append(self.opt.param_groups[0]["lr"])
-        else:
-            self.tracking_epoch["lr"] = [self.opt.param_groups[0]["lr"]]
+        self.tracking_epoch["epoch"].append(epoch_count)
+        self.tracking_epoch["iteration"].append(global_step)
 
-    def write(self):
-        """ Write all tracking data into a JSON file."""
-        tracking = {
-            "iter_tracking": {
-                "f0": self.tracking["f_t"][:-1],
-                "f1": self.tracking["f_t"][1:],
-                "var_f0": self.tracking["var_f_t"][:-1],
-                "var_f1": self.tracking["var_f_t"][1:],
-                "df0": self.tracking["df_0"][:-1],
-                "df1": self.tracking["df_1"][1:],
-                "var_df_0": self.tracking["var_df_0"][:-1],
-                "var_df_1": self.tracking["var_df_1"][1:],
-                "grad_norms": self.tracking["grad_norms"][:-1],
-                "dtravel": self.tracking["dtravel"][:-1],
-                "d2init": self.tracking["d2init"][:-1],
-                "trace": self.tracking["trace"][:-1],
-                "alpha": self.tracking["alpha"][:],
-                # "min_ev": self.tracking["min_ev"][:-1],
-                "max_ev": self.tracking["max_ev"][:-1],
-            },
-            "epoch_tracking": self.tracking_epoch,
-        }
+        self.tracking_epoch["train_accuracy"].append(train_accuracies)
+        self.tracking_epoch["valid_accuracy"].append(valid_accuracies)
 
-        with open(self.log_path + ".json", "w") as json_file:
-            json.dump(tracking, json_file, indent=4)
-        print("Cockpit-Log written...")
+        self.tracking_epoch["learning_rate"].append(self.opt.param_groups[0]["lr"])
+
+    # General tracking methods
 
     def update_search_dir(self):
-        """Updates the search direction to the negative current gradient."""
+        """Updates the search direction to the negative current gradient.
+
+        TODO this is currently only valid for SGD!"""
         self.search_dir = [-p.grad.data for p in self.get_parameters()]
+
+    def track_f(self, batch_loss, point):
+        """[summary]
+
+        Args:
+            batch_losses ([type]): [description]
+        """
+        self.tracking["f" + point].append(batch_loss.item())
+
+    def track_var_f(self, batch_losses, point):
+        """[summary]
+
+        Args:
+            batch_losses ([type]): [description]
+        """
+        self.tracking["var_f" + point].append(batch_losses.var().item())
+
+    def track_df(self, point):
+        """[summary]"""
+        self.tracking["df" + point].append(
+            _layerwise_dot_product(
+                self.search_dir, [p.grad.data for p in self.get_parameters()]
+            )
+        )
+
+    def track_var_df(self, point):
+        """Tracks the variance of the projected gradients at f(0).
+
+        This method is exact (what we need), but slow."""
+        self.tracking["var_df" + point].append(
+            self._exact_variance([p.grad_batch.data for p in self.get_parameters()])
+        )
+
+    # Track_before methods
+
+    def track_grad_norms(self):
+        """Tracks the gradient norm."""
+        self.tracking["grad_norms"].append(
+            [p.grad.data.norm(2).item() for p in self.get_parameters()]
+        )
+
+    def track_trace(self):
+        """Tracks the trace of the Hessian."""
+        self.tracking["trace"].append(
+            [p.diag_h.sum().item() for p in self.get_parameters()]
+        )
+
+    def track_ev(self, batch_loss):
+        """Track the min and max eigenvalue of the Hessian.
+
+        Args:
+            batch_loss (torch): 
+        """
+        HVP = HVPLinearOperator(
+            batch_loss,
+            list(self.get_parameters()),
+            grad_params=[p.grad for p in self.get_parameters()],
+        )
+        eigvals = eigsh(HVP, k=1, which="LA", return_eigenvectors=False)
+
+        self.tracking["max_ev"].append(np.float64(eigvals))
+
+    # Track_after methods
+
+    def track_dtravel(self):
+        """Tracks the distance traveled in each iteration.
+
+        It is very important that this function is computed AFTER tracking
+        grad_norms.
+        """
+        self.tracking["dtravel"].append(
+            [
+                el * self.opt.param_groups[0]["lr"]
+                for el in self.tracking["grad_norms"][-1]
+            ]
+        )
 
     def track_d2init(self):
         """Tracks the L2 distance of the current parameters to their init."""
@@ -238,81 +360,8 @@ class Cockpit:
             ]
         )
 
-    def track_dtravel(self):
-        """Tracks the distance traveled in each iteration"""
-        self.tracking["dtravel"].append(
-            [
-                el * self.opt.param_groups[0]["lr"]
-                for el in self.tracking["grad_norms"][-1]
-            ]
-        )
-
-    def track_f(self, batch_loss):
-        """Tracks the (mean) batch loss/function value of the 1-D search.
-
-        Args:
-            batch_loss ([float]): Mean loss value in the batch.
-        """
-        self.tracking["f_t"].append(batch_loss.item())
-
-    def track_var_f(self, batch_losses):
-        """Tracks the variance of the batch loss.
-
-        Args:
-            batch_losses ([array]): Array of individual losses in a batch.
-        """
-        self.tracking["var_f_t"].append(batch_losses.var().item())
-
-    def track_grad_norm(self):
-        """Tracks the gradient norm."""
-        self.tracking["grad_norms"].append(
-            [p.grad.data.norm(2).item() for p in self.get_parameters()]
-        )
-
-    def track_var_df_1(self):
-        """Tracks the variance of the projected gradients at f(alpha).
-
-        This method is exact (what we need), but slow."""
-        grads = [p.grad_batch.data for p in self.get_parameters()]
-        self.tracking["var_df_1"].append(self._exact_variance(grads))
-
-    def track_var_df_0(self):
-        """Tracks the variance of the projected gradients at f(0).
-
-        This method is exact (what we need), but slow."""
-        grads = [p.grad_batch.data for p in self.get_parameters()]
-        self.tracking["var_df_0"].append(self._exact_variance(grads))
-
-    def track_df_1(self):
-        """Tracks the projected gradient at f(alpha) layerwise."""
-        self.tracking["df_1"].append(
-            _layerwise_dot_product(
-                self.search_dir, [p.grad.data for p in self.get_parameters()]
-            )
-        )
-
-    def track_df_0(self):
-        """Tracks the projected gradient at f(0) layerwise."""
-        self.tracking["df_0"].append(
-            _layerwise_dot_product(
-                self.search_dir, [p.grad.data for p in self.get_parameters()]
-            )
-        )
-
-    def track_trace(self):
-        """Tracks the trace of the Hessian."""
-        self.tracking["trace"].append(
-            [p.diag_h.sum().item() for p in self.get_parameters()]
-        )
-
     def track_alpha(self):
         """Tracks the relative step size."""
-        # TODO Use dtravel[-1] instead of f[1]!
-        # Skip the first time this function is called
-        # (since we don't have a full iteration yet.)
-        if len(self.tracking["f_t"]) < 2:
-            return
-
         # We need to find the size of the step taken,
         # since dtravel can be a list, we need to aggregate it
         if type(self.tracking["dtravel"][-1]) is list:
@@ -321,30 +370,43 @@ class Cockpit:
             t = self.tracking["dtravel"][-1]
         mu = _fit_quadratic(
             t,
-            [self.tracking["f_t"][-2], self.tracking["f_t"][-1]],
-            [sum(self.tracking["df_0"][-1]), sum(self.tracking["df_1"][-1])],
-            [self.tracking["var_f_t"][-2], self.tracking["var_f_t"][-1]],
-            [sum(self.tracking["var_df_0"][-1]), sum(self.tracking["var_df_1"][-1]),],
+            [self.tracking["f0"][-1], self.tracking["f1"][-1]],
+            [sum(self.tracking["df0"][-1]), sum(self.tracking["df1"][-1])],
+            [self.tracking["var_f0"][-1], self.tracking["var_f1"][-1]],
+            [sum(self.tracking["var_df0"][-1]), sum(self.tracking["var_df1"][-1]),],
         )
 
         # Get the relative (or local) step size
         self.tracking["alpha"].append(_get_alpha(mu, t))
 
-    def track_eigenvalues(self, loss):
-        """Track the min and max eigenvalue of the Hessian.
+    def write(self):
+        """ Write all tracking data into a JSON file."""
+        tracking = {
+            "iter_tracking": self.tracking,
+            "epoch_tracking": self.tracking_epoch,
+        }
 
-        Args:
-            loss (torch): 
-        """
-        grad_params = [p.grad for p in self.get_parameters()]
-        HVP = HVPLinearOperator(
-            loss, list(self.get_parameters()), grad_params=grad_params
-        )
-        eigvals = eigsh(HVP, k=1, which="LA", return_eigenvectors=False)
-        # eigvals, eigvecs = sort_eigs(eigvals, eigvecs)
+        with open(self.log_path + ".json", "w") as json_file:
+            json.dump(tracking, json_file, indent=4)
+        print("Cockpit-Log written...")
 
-        # self.tracking["min_ev"].append(np.float64(min(eigvals)))
-        self.tracking["max_ev"].append(np.float64(eigvals))
+    def _check_optimizer(self):
+        if self.opt.__class__.__name__ == "SGD":
+            if self.opt.param_groups[0]["momentum"] != 0:
+                warnings.warn(
+                    "Warning: You are using SGD with momentum. Computation of "
+                    "parameter update magnitude and search direction is "
+                    "probably incorrect!",
+                    stacklevel=2,
+                )
+
+        else:
+            warnings.warn(
+                "Warning: You are using an optimizer, with an unknown parameter "
+                "update. Computation of parameter update magnitude and search "
+                "direction is probably incorrect!",
+                stacklevel=2,
+            )
 
     def _exact_variance(self, grads):
         """Given a batch of individual gradients, it computes the exact variance
@@ -366,20 +428,3 @@ class Cockpit:
         for grad in grads:
             proj_grad.append(_layerwise_dot_product(self.search_dir, grad))
         return np.var(np.array(proj_grad), axis=0, ddof=1).tolist()
-
-    def _check_optimizer(self):
-        if self.opt.__class__.__name__ == "SGD":
-            if self.opt.param_groups[0]["momentum"] != 0:
-                warnings.warn(
-                    "Warning: You are using SGD with momentum. Computation of "
-                    "parameter update magnitude is probably incorrect!",
-                    stacklevel=2,
-                )
-
-        else:
-            warnings.warn(
-                "Warning: You are using an optimizer, with an unknown parameter "
-                "update. Computation of parameter update magnitude is probably "
-                "incorrect!",
-                stacklevel=2,
-            )

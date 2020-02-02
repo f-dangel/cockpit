@@ -48,3 +48,7 @@ def _get_alpha(mu, t):
 
     # scale everything on a standard quadratic (i.e. step of 0 = minimum)
     return (2 * t) / alpha_bar - 1
+
+
+def _root_sum_of_squares(list):
+    return sum((el ** 2 for el in list)) ** (0.5)

@@ -1,5 +1,6 @@
 """Plotting Part of the Cockpit"""
 import json
+import warnings
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -8,6 +9,7 @@ import pandas as pd
 import seaborn as sns
 from scipy import stats
 
+from backboard.utils.cockpit_utils import _root_sum_of_squares
 from deepobs import config
 
 
@@ -26,7 +28,7 @@ class CockpitPlotter:
         # Will be set the first time we plot
         self.iter_per_plot = 0
 
-    def plot(self, draw=True, save=False, save_append=None):
+    def plot(self, show=True, save=False, save_append=None):
         """Shows a cockpit plot using the cockpit plotter and the current log file."""
 
         self._read_tracking_results()
@@ -42,7 +44,7 @@ class CockpitPlotter:
         else:
             self.fig = plt.figure(constrained_layout=True)
 
-        self.grid_spec = self.fig.add_gridspec(6, self.n_layers + 1)
+        self.grid_spec = self.fig.add_gridspec(6, self.parts + 1)
 
         # # f gauge
         # self._plot_f_rel(self.grid_spec[0, -1])
@@ -68,7 +70,7 @@ class CockpitPlotter:
         self._plot_cond(self.grid_spec[1, 2])
 
         # trace gauge
-        for i in range(self.n_layers):
+        for i in range(self.parts):
             self._plot_trace(self.grid_spec[2, i], i)
         self._plot_trace(self.grid_spec[2, -1])
 
@@ -78,15 +80,15 @@ class CockpitPlotter:
         # self._plot_grad_norm(self.grid_spec[2, -1])
 
         # d2init gauge
-        for i in range(self.n_layers):
+        for i in range(self.parts):
             self._plot_dist(self.grid_spec[3, i], i)
         self._plot_dist(self.grid_spec[3, -1])
 
         # Performance plot
         han, leg = self._plot_perf(self.grid_spec[4, :])
 
-        # Epoch Plot
-        self._plot_epoch(self.grid_spec[5, :])
+        # Hyperparameter Plot
+        self._plot_hyperparams(self.grid_spec[5, :])
 
         # Set Title
         tp = (
@@ -106,15 +108,22 @@ class CockpitPlotter:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-        if draw:
+        if show:
             plt.show()
             print("Cockpit-Plot shown...")
+            plt.pause(0.01)
         else:
             plt.close(self.fig)
             print("Cockpit-Plot drawn...")
-        plt.pause(0.01)
+            plt.pause(0.01)
+
         if save:
-            self.fig.savefig(self.log_path + save_append + ".png")
+            file_path = (
+                self.log_path + ".png"
+                if save_append is None
+                else self.log_path + save_append + ".png"
+            )
+            self.fig.savefig(file_path)
             print("Cockpit-Plot saved...")
 
     def save_plot(self):
@@ -144,70 +153,117 @@ class CockpitPlotter:
             data = json.load(f)
 
         self.iter_tracking = pd.DataFrame.from_dict(data["iter_tracking"])
-        self.iter_tracking = self.iter_tracking.reset_index().rename(
-            columns={"index": "iteration"}
-        )
 
         self.epoch_tracking = pd.DataFrame.from_dict(data["epoch_tracking"])
-        self.epoch_tracking = self.epoch_tracking.reset_index().rename(
-            columns={"index": "epoch"}
-        )
 
         self._process_tracking_results()
 
     def _process_tracking_results(self):
-        # expand lists
-        self.n_layers = 1
-        for (columnName, columnData) in self.iter_tracking.items():
-            if isinstance(columnData[0], list):
-                temp = self.iter_tracking[columnName].apply(pd.Series)
-                self.n_layers = max(self.n_layers, temp.shape[1])
-                temp = temp.rename(columns=lambda x: columnName + "_layer_" + str(x))
-                # Aggregate for all layers
-                if columnName in [
-                    "df0",
-                    "df1",
-                    "var_df_0",
-                    "var_df_1",
-                    "df_var_0",
-                    "df_var_1",
-                    "trace",
-                ]:
-                    # Aggregate via sum
-                    temp.loc[:, columnName] = temp.sum(axis=1)
-                elif columnName in ["grad_norms", "d2init", "dtravel"]:
-                    # Aggregate via root of sum of squares:
-                    temp.loc[:, columnName] = temp.pow(2).sum(axis=1).pow(1 / 2)
-                else:
-                    print(
-                        "**Don't know how I should aggregate "
-                        + str(columnName)
-                        + " for all layers"
-                    )
-                self.iter_tracking = self.iter_tracking.drop([columnName], axis=1)
-                self.iter_tracking = pd.concat([self.iter_tracking[:], temp[:]], axis=1)
-        # TODO: We currently divide the trace by 7850 since this is the number
-        # of parameters for mnist logreg. We need to change this for different
-        # testproblems
-        self.iter_tracking["avg_cond"] = (
-            self.iter_tracking["max_ev"] / self.iter_tracking["trace"] * 7850
-        )
+        """Process the tracking results."""
+        # Compute the number of "layers" of the net, and into how many parts
+        # we want to split it
+        self.n_layers, self.parts = self._number_of_parts()
 
-    def _plot_epoch(self, gridspec):
-        """Creates a plot of variables that are tracked every epoch
+        # some util variables for the splitting/aggregation
+        layers_per_part = self.n_layers // self.parts
+        rest_ = self.n_layers % self.parts
+        # splits = [layers_per_part + (1 if i < rest_ else 0)
+        # for i in range(self.parts)]
+
+        # split part-wise
+        # Create new columns for each part
+        for (columnName, columnData) in self.iter_tracking.items():
+            # We only need to handle data that is non-scalar
+            if isinstance(columnData[0], list):
+                aggregate = self._get_aggregate_function(columnName)
+                # Create new parts
+                for p in range(self.parts):
+                    start = p * layers_per_part + min(p, rest_)
+                    end = (p + 1) * layers_per_part + min(p + 1, rest_)
+                    self.iter_tracking[columnName + "_part_" + str(p)] = [
+                        aggregate(x[start:end])
+                        for x in self.iter_tracking[columnName].tolist()
+                    ]
+                # Overall average
+                self.iter_tracking[columnName] = [
+                    aggregate(x[:]) for x in self.iter_tracking[columnName].tolist()
+                ]
+
+        # Compute avg_ev & avg_cond
+        # for that we need the number of parameters, which for now, we hardcode
+        num_params = {
+            "mnist_logreg": 7850,
+            "cifar10_3c3d": 895210,
+            "fmnist_2c2d": 3274634,
+        }
+        if self.testproblem in num_params:
+            self.iter_tracking["avg_ev"] = (
+                self.iter_tracking["trace"] / num_params[self.testproblem]
+            )
+            self.iter_tracking["avg_cond"] = (
+                self.iter_tracking["max_ev"] / self.iter_tracking["avg_ev"]
+            )
+        else:
+            warnings.warn(
+                "Warning: Unknown testproblem "
+                + self.testproblem
+                + ", couldn't compute the average eigenvalue",
+                stacklevel=1,
+            )
+
+    def _get_aggregate_function(self, quantity):
+        """Get the corresponding aggregation function for a given quantity.
+
+        Args:
+            quantity ([type]): [description]
+        """
+        if quantity in [
+            "df0",
+            "df1",
+            "var_df0",
+            "var_df1",
+            "df_var0",
+            "df_var1",
+            "trace",
+        ]:
+            return sum
+        elif quantity in ["grad_norms", "d2init", "dtravel"]:
+            return _root_sum_of_squares
+        else:
+            warnings.warn(
+                "Warning: Don't know how to aggregate " + quantity, stacklevel=2,
+            )
+
+    def _number_of_parts(self):
+        """Compute the number of parts we want to plot."""
+        # check number of layers using df0 variable
+        n_layers = len(self.iter_tracking["df0"][0])
+
+        # limit to four parts
+        parts = min(n_layers, 4)
+
+        # or use hard-coded setting
+        tp_model_parts = {
+            "logreg": 2,
+            "3c3d": 2,
+            "2c2d": 4,
+        }
+        if self.tp_model in tp_model_parts:
+            parts = tp_model_parts[self.tp_model]
+        return n_layers, parts
+
+    def _plot_hyperparams(self, gridspec):
+        """Creates a plot of hyperparameters
 
         Args:
             gridspec ([gridspec]): Gridspec to plot into
         """
         # Plot Settings
-        x_quan = "epoch"
-        y_quan = "lr"
-        y_quan2 = "train_acc"
-        y_quan3 = "valid_acc"
+        x_quan = "iteration"
+        y_quan = "learning_rate"
         x_scale = "linear"
         y_scale = "log"
-        y_scale2 = "linear"
-        title = "Epoch Plot"
+        title = "Hyperparameters"
 
         # Plotting
         ax = self.fig.add_subplot(gridspec)
@@ -224,6 +280,56 @@ class CockpitPlotter:
             label=y_quan,
             color="black",
             linewidth=0.8,
+        )
+
+        # Customize Plot
+        self._customize_epoch_plot(
+            ax,
+            title,
+            x_scale=x_scale,
+            y_scale=y_scale,
+            fontweight="bold",
+            facecolor=self.color_summary_plots,
+        )
+
+    def _plot_perf(self, gridspec):
+        """Create a performance plot."""
+        # Plot Settings
+        x_quan = "iteration"
+        y_quan = "f0"
+        y_quan2 = "train_accuracy"
+        y_quan3 = "valid_accuracy"
+        x_scale = "linear"
+        y_scale = "log"
+        y_scale2 = "linear"
+        title = "Performance Plot"
+
+        # Plotting
+        ax = self.fig.add_subplot(gridspec)
+        self.iter_tracking["EMA_" + y_quan] = (
+            self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
+        )
+
+        sns.scatterplot(
+            x=x_quan,
+            y=y_quan,
+            hue="iteration",
+            palette=self.cmap,
+            edgecolor=None,
+            s=10,
+            data=self.iter_tracking,
+            ax=ax,
+        )
+        sns.scatterplot(
+            x=x_quan,
+            y="EMA_" + y_quan,
+            hue="iteration",
+            palette=self.cmap2,
+            marker=",",
+            edgecolor=None,
+            s=1,
+            data=self.iter_tracking,
+            ax=ax,
         )
 
         ax2 = ax.twinx()
@@ -255,55 +361,6 @@ class CockpitPlotter:
         )
 
         # Customize Plot
-        self._customize_epoch_plot(
-            ax,
-            ax2,
-            title,
-            x_scale=x_scale,
-            y_scale=y_scale,
-            y_scale2=y_scale2,
-            epochs=self.epoch_tracking.shape[0] - 1,
-            fontweight="bold",
-            facecolor=self.color_summary_plots,
-        )
-
-    def _plot_perf(self, gridspec):
-        """Create the loss vs. iteration plot."""
-        # Plot Settings
-        x_quan = "iteration"
-        y_quan = "f0"
-        x_scale = "linear"
-        y_scale = "log"
-        title = "Performance Plot"
-
-        # Plotting
-        ax = self.fig.add_subplot(gridspec)
-        self.iter_tracking["EMA_" + y_quan] = (
-            self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
-        )
-        sns.scatterplot(
-            x=x_quan,
-            y=y_quan,
-            hue="iteration",
-            palette=self.cmap,
-            edgecolor=None,
-            s=10,
-            data=self.iter_tracking,
-            ax=ax,
-        )
-        sns.scatterplot(
-            x=x_quan,
-            y="EMA_" + y_quan,
-            hue="iteration",
-            palette=self.cmap2,
-            marker=",",
-            edgecolor=None,
-            s=1,
-            data=self.iter_tracking,
-            ax=ax,
-        )
-
-        # Customize Plot
         self._customize_plot(
             ax,
             x_quan,
@@ -313,8 +370,21 @@ class CockpitPlotter:
             title,
             fontweight="bold",
             facecolor=self.color_summary_plots,
-            extend_factors=[0.0, 0.05],
+            extend_factors=[0.0, 0.0],
         )
+
+        # Customize further
+        # Set Accuracies limites to 0 and 1
+        ax2.set_ylim([0, 1])
+        # Set Scales
+        ax2.set_yscale(y_scale2)
+        # Fix Legend
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        plot_labels = []
+        for line, label in zip(lines2, labels2):
+            plot_labels.append("{0}: ({1:.2%})".format(label, line.get_ydata()[-1]))
+        ax2.get_legend().remove()
+        ax.legend(lines2, plot_labels)
 
         ax.set_ylabel("Minibatch Train Loss")
         handles, labels = ax.get_legend_handles_labels()
@@ -331,7 +401,7 @@ class CockpitPlotter:
         y_quan = "cert_sign_f"
         x_scale = "linear"
         y_scale = "linear"
-        title = "f gauge for all layers"
+        title = "f gauge for the Net"
         ylim = None
 
         # Compute derived quantities
@@ -406,7 +476,7 @@ class CockpitPlotter:
             ylim=ylim,
         )
 
-    def _plot_alpha(self, gridspec):
+    def _plot_alpha(self, gridspec):  # noqa: C901
         """Plot the local step length"""
         # Plot Settings
         title = "Alpha gauge"
@@ -427,29 +497,36 @@ class CockpitPlotter:
         # Alpha Histogram
         ax2 = ax.twinx()
         # All alphas
-        sns.distplot(
-            self.iter_tracking["alpha"],
-            ax=ax2,
-            # norm_hist=True,
-            fit=stats.norm,
-            kde=False,
-            color="gray",
-            fit_kws={"color": "gray"},
-            hist_kws={"linewidth": 0, "alpha": 0.25},
-            label="all",
-        )
+        try:
+            sns.distplot(
+                self.iter_tracking["alpha"],
+                ax=ax2,
+                # norm_hist=True,
+                fit=stats.norm,
+                kde=False,
+                color="gray",
+                fit_kws={"color": "gray"},
+                hist_kws={"linewidth": 0, "alpha": 0.25},
+                label="all",
+            )
+        except ValueError:
+            print("Alphas included NaN and could therefore not be plotted.")
+
         # Just from last plot
-        sns.distplot(
-            self.iter_tracking["alpha"][-self.iter_per_plot :],
-            ax=ax2,
-            # norm_hist=True,
-            fit=stats.norm,
-            kde=False,
-            color=sns.color_palette()[1],
-            fit_kws={"color": sns.color_palette()[1]},
-            hist_kws={"linewidth": 0, "alpha": 0.65},
-            label="since last plot",
-        )
+        try:
+            sns.distplot(
+                self.iter_tracking["alpha"][-self.iter_per_plot :].fillna(1000),
+                ax=ax2,
+                # norm_hist=True,
+                fit=stats.norm,
+                kde=False,
+                color=sns.color_palette()[1],
+                fit_kws={"color": sns.color_palette()[1]},
+                hist_kws={"linewidth": 0, "alpha": 0.65},
+                label="since last plot",
+            )
+        except ValueError:
+            print("Alphas included NaN and could therefore not be plotted.")
 
         # Customize Plot
         ax.set_title(title, fontweight=fontweight)
@@ -506,17 +583,27 @@ class CockpitPlotter:
 
         # Legend
         # Get the fitted parameters used by sns
-        (mu_all, _) = stats.norm.fit(self.iter_tracking["alpha"])
-        (mu_last, _) = stats.norm.fit(
-            self.iter_tracking["alpha"][-self.iter_per_plot :]
-        )
+        try:
+            (mu_all, _) = stats.norm.fit(self.iter_tracking["alpha"])
+        except RuntimeError:
+            mu_all = None
+
+        try:
+            (mu_last, _) = stats.norm.fit(
+                self.iter_tracking["alpha"][-self.iter_per_plot :]
+            )
+        except RuntimeError:
+            mu_last = None
         lines2, labels2 = ax2.get_legend_handles_labels()
-        ax2.legend(
-            [
-                "{0} ($\mu=${1:.2f})".format(labels2[0], mu_all),  # noqa: W605
-                "{0} ($\mu=${1:.2f})".format(labels2[1], mu_last),  # noqa: W605
-            ]
-        )
+        try:
+            ax2.legend(
+                [
+                    "{0} ($\mu=${1:.2f})".format(labels2[0], mu_all),  # noqa: W605
+                    "{0} ($\mu=${1:.2f})".format(labels2[1], mu_last),  # noqa: W605
+                ]
+            )
+        except TypeError:
+            pass
 
     def _plot_alpha_trace(self, gridspec):
         """Plot the local step size vs the trace over time."""
@@ -641,11 +728,11 @@ class CockpitPlotter:
 
         # Customize Plot
         if isinstance(layer, str):
-            title = "df gauge for all layers"
+            title = "df gauge for the Net"
             fontweight = "bold"
             facecolor = self.color_summary_plots
         else:
-            title = "df gauge for layer " + str(layer)
+            title = "df gauge for Part " + str(layer)
             fontweight = "normal"
             facecolor = None
         self._customize_plot(
@@ -668,7 +755,7 @@ class CockpitPlotter:
         y_quan = "trace"
         x_scale = "linear"
         y_scale = "log"
-        n = "" if isinstance(layer, str) else "_layer_" + str(layer)
+        n = "" if isinstance(layer, str) else "_part_" + str(layer)
 
         # Compute derived quantities
         self.iter_tracking["EMA_" + y_quan + n] = (
@@ -701,11 +788,11 @@ class CockpitPlotter:
 
         # Customize Plot
         if isinstance(layer, str):
-            title = "Trace for all Layers"
+            title = "Trace for the Net"
             fontweight = "bold"
             facecolor = self.color_summary_plots
         else:
-            title = "Trace for Layer " + str(layer)
+            title = "Trace for Part " + str(layer)
             fontweight = "normal"
             facecolor = None
         self._customize_plot(
@@ -727,7 +814,7 @@ class CockpitPlotter:
         y_quan = "grad_norms"
         x_scale = "linear"
         y_scale = "linear"
-        n = "" if isinstance(layer, str) else "_layer_" + str(layer)
+        n = "" if isinstance(layer, str) else "_part_" + str(layer)
 
         # Compute derived quantities
         self.iter_tracking["EMA_" + y_quan + n] = (
@@ -760,11 +847,11 @@ class CockpitPlotter:
 
         # Customize Plot
         if isinstance(layer, str):
-            title = "Grad Norm Gauge for all Layers"
+            title = "Grad Norm Gauge for the Net"
             fontweight = "bold"
             facecolor = self.color_summary_plots
         else:
-            title = "Grad Norm Gauge for Layer " + str(layer)
+            title = "Grad Norm Gauge for Part " + str(layer)
             fontweight = "normal"
             facecolor = None
         self._customize_plot(
@@ -957,7 +1044,7 @@ class CockpitPlotter:
         y_quan2 = "dtravel"
         x_scale = "linear"
         y_scale = "linear"
-        n = "" if isinstance(layer, str) else "_layer_" + str(layer)
+        n = "" if isinstance(layer, str) else "_part_" + str(layer)
 
         # Compute derived quantities
         self.iter_tracking["EMA_" + y_quan + n] = (
@@ -1020,11 +1107,11 @@ class CockpitPlotter:
 
         # Customize Plot
         if isinstance(layer, str):
-            title = "Distance Gauge for all Layers"
+            title = "Distance Gauge for the Net"
             fontweight = "bold"
             facecolor = self.color_summary_plots
         else:
-            title = "Distance Gauge for Layer " + str(layer)
+            title = "Distance Gauge for Part " + str(layer)
             fontweight = "normal"
             facecolor = None
         self._customize_plot(
@@ -1108,17 +1195,13 @@ class CockpitPlotter:
     def _customize_epoch_plot(
         self,
         ax,
-        ax2,
         title,
         x_scale="linear",
         y_scale="log",
-        y_scale2="linear",
-        epochs=None,
         fontweight="normal",
         facecolor=None,
     ):
         """[summary]
-
         Args:
             ax ([type]): [description]
             ax2 ([type]): [description]
@@ -1128,36 +1211,24 @@ class CockpitPlotter:
         """
         ax.set_title(title, fontweight=fontweight)
 
-        # Set Accuracies limites to 0 and 1
-        ax2.set_ylim([0, 1])
-
         # Set Background Color
         if facecolor is not None:
             ax.set_facecolor(self.color_summary_plots)
 
         # Start x axis from zero and make it tight
         ax.set_xlim(left=0)
-        ax2.set_xlim(left=0)
 
-        if epochs is not None:
-            ax.set_xlim(right=epochs)
-            ax2.set_xlim(right=epochs)
+        ax.set_xlim(right=self.epoch_tracking["iteration"].iloc[-1])
 
         # Set Scales
         ax.set_xscale(x_scale)
         ax.set_yscale(y_scale)
-        ax2.set_yscale(y_scale2)
 
         # Fix Legend
         lines, labels = ax.get_legend_handles_labels()
-        lines2, labels2 = ax2.get_legend_handles_labels()
 
         plot_labels = []
-        for line, label in zip(lines + lines2, labels + labels2):
-            if label == "lr":
-                plot_labels.append("{0}: ({1:.2E})".format(label, line.get_ydata()[-1]))
-            else:
-                plot_labels.append("{0}: ({1:.2%})".format(label, line.get_ydata()[-1]))
+        for line, label in zip(lines, labels):
+            plot_labels.append("{0}: ({1:.2E})".format(label, line.get_ydata()[-1]))
         ax.get_legend().remove()
-        ax2.get_legend().remove()
-        ax.legend(lines + lines2, plot_labels)
+        ax.legend(lines, plot_labels)
