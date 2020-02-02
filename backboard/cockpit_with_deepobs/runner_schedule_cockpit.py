@@ -12,11 +12,11 @@ from backpack import backpack, extend
 from deepobs.pytorch.runners.runner import PTRunner
 
 
-class InteractiveCockpitRunner(PTRunner):
+class ScheduleCockpitRunner(PTRunner):
     """Custom Runner to track statistics"""
 
     def __init__(self, optimizer_class, hyperparameter_names):
-        super(InteractiveCockpitRunner, self).__init__(
+        super(ScheduleCockpitRunner, self).__init__(
             optimizer_class, hyperparameter_names
         )
 
@@ -32,6 +32,12 @@ class InteractiveCockpitRunner(PTRunner):
         **training_params
     ):
         opt = self._optimizer_class(tproblem.net.parameters(), **hyperparams)
+
+        # LR Scheduler
+
+        lr_sched = training_params["lr_schedule"](num_epochs)
+
+        scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lr_sched)
 
         # Lists to log train/test loss and accuracy.
         train_losses = []
@@ -77,6 +83,9 @@ class InteractiveCockpitRunner(PTRunner):
         tproblem.loss_function = hotfix_lossfunc
 
         for epoch_count in range(num_epochs + 1):
+            # Next step in LR Schedule
+            scheduler.step(epoch_count)
+
             # Evaluate at beginning of epoch.
             self.evaluate_all(
                 epoch_count,
@@ -197,3 +206,41 @@ class InteractiveCockpitRunner(PTRunner):
             """
         for tp in training_params:
             args[tp] = training_params[tp]
+
+    def _post_process_output(
+        self,
+        output,
+        testproblem,
+        batch_size,
+        num_epochs,
+        random_seed,
+        l2_reg,
+        hyperparams,
+        **training_params
+    ):
+        """Ensures that for both frameworks the structure of the output is the same"""
+
+        # remove test accuracy if it is not available
+        if "test_accuracies" in output:
+            if all(output["test_accuracies"]) == 0:
+                del output["test_accuracies"]
+                del output["train_accuracies"]
+                try:
+                    del output["valid_accuracies"]
+                except KeyError:
+                    pass
+
+        # merge meta data to output dict
+        output = {
+            "testproblem": testproblem,
+            "batch_size": batch_size,
+            "num_epochs": num_epochs,
+            "random_seed": random_seed,
+            "l2_reg": l2_reg,
+            "optimizer_name": self._optimizer_name,
+            "optimizer_hyperparams": hyperparams,
+            # "training_params": training_params,
+            **output,
+        }
+
+        return output
