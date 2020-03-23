@@ -306,4 +306,5 @@ TSWLatexianTemp*
 
 # Paper
 tex/paper/backboard/main.pdf
+tex/paper/backboard/_region_*
 tex/paper/surfing_the_walls/main.pdf
