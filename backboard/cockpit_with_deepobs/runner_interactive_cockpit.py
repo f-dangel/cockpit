@@ -61,7 +61,8 @@ class InteractiveCockpitRunner(PTRunner):
                 summary_writer = SummaryWriter(log_dir=tb_log_dir)
             except ImportError as err:
                 warnings.warn(
-                    "Not possible to use tensorboard for pytorch. Reason: " + err.msg,
+                    "Not possible to use tensorboard for pytorch. Reason: "
+                    + err.msg,
                     RuntimeWarning,
                 )
                 tb_log = False
@@ -90,7 +91,14 @@ class InteractiveCockpitRunner(PTRunner):
                 test_accuracies,
             )
             cockpit.track_epoch(
-                epoch_count, global_step, train_accuracies[-1], valid_accuracies[-1],
+                epoch_count,
+                global_step,
+                train_losses[-1],
+                valid_losses[-1],
+                test_losses[-1],
+                train_accuracies[-1],
+                valid_accuracies[-1],
+                test_accuracies[-1],
             )
 
             # Break from train loop after the last round of evaluation
@@ -112,7 +120,9 @@ class InteractiveCockpitRunner(PTRunner):
                         if batch_count == 0:
                             comp_time = time.time()
                         elif batch_count % 10 == 0:
-                            print("10 iterations took ", time.time() - comp_time)
+                            print(
+                                "10 iterations took ", time.time() - comp_time
+                            )
                             comp_time = time.time()
 
                     # Cockpit tracking before (only if we hit the track_interval)

@@ -124,8 +124,13 @@ class Cockpit:
         tracking_epoch["epoch"] = []
 
         # Accuracies
+        tracking_epoch["train_loss"] = []
+        tracking_epoch["valid_loss"] = []
+        tracking_epoch["test_loss"] = []
+        # Accuracies
         tracking_epoch["train_accuracy"] = []
         tracking_epoch["valid_accuracy"] = []
+        tracking_epoch["test_accuracy"] = []
 
         tracking_epoch["learning_rate"] = []
 
@@ -242,7 +247,17 @@ class Cockpit:
         self.track_d2init()
         self.track_alpha()
 
-    def track_epoch(self, epoch_count, global_step, train_accuracies, valid_accuracies):
+    def track_epoch(
+        self,
+        epoch_count,
+        global_step,
+        train_losses,
+        valid_losses,
+        test_losses,
+        train_accuracies,
+        valid_accuracies,
+        test_accuracies,
+    ):
         """Tracks quantities at the start of epoch number epoch_count.
 
         The epoch_count starts at 0. if a learning rate of [1, 2, 3] is tracked
@@ -262,10 +277,17 @@ class Cockpit:
         self.tracking_epoch["epoch"].append(epoch_count)
         self.tracking_epoch["iteration"].append(global_step)
 
+        self.tracking_epoch["train_loss"].append(train_losses)
+        self.tracking_epoch["valid_loss"].append(valid_losses)
+        self.tracking_epoch["test_loss"].append(test_losses)
+
         self.tracking_epoch["train_accuracy"].append(train_accuracies)
         self.tracking_epoch["valid_accuracy"].append(valid_accuracies)
+        self.tracking_epoch["test_accuracy"].append(test_accuracies)
 
-        self.tracking_epoch["learning_rate"].append(self.opt.param_groups[0]["lr"])
+        self.tracking_epoch["learning_rate"].append(
+            self.opt.param_groups[0]["lr"]
+        )
 
     # General tracking methods
 
@@ -304,7 +326,9 @@ class Cockpit:
 
         This method is exact (what we need), but slow."""
         self.tracking["var_df" + point].append(
-            self._exact_variance([p.grad_batch.data for p in self.get_parameters()])
+            self._exact_variance(
+                [p.grad_batch.data for p in self.get_parameters()]
+            )
         )
 
     # Track_before methods
@@ -373,7 +397,10 @@ class Cockpit:
             [self.tracking["f0"][-1], self.tracking["f1"][-1]],
             [sum(self.tracking["df0"][-1]), sum(self.tracking["df1"][-1])],
             [self.tracking["var_f0"][-1], self.tracking["var_f1"][-1]],
-            [sum(self.tracking["var_df0"][-1]), sum(self.tracking["var_df1"][-1]),],
+            [
+                sum(self.tracking["var_df0"][-1]),
+                sum(self.tracking["var_df1"][-1]),
+            ],
         )
 
         # Get the relative (or local) step size
