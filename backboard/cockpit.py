@@ -12,11 +12,8 @@ import torch
 from scipy.sparse.linalg import eigsh
 
 from backboard.cockpit_plotter import CockpitPlotter
-from backboard.utils.cockpit_utils import (
-    _fit_quadratic,
-    _get_alpha,
-    _layerwise_dot_product,
-)
+from backboard.utils.cockpit_utils import (_fit_quadratic, _get_alpha,
+                                           _layerwise_dot_product)
 from backboard.utils.linear_operator import HVPLinearOperator
 from backpack import extensions
 
@@ -301,9 +298,7 @@ class Cockpit:
         self.tracking_epoch["valid_accuracy"].append(valid_accuracies)
         self.tracking_epoch["test_accuracy"].append(test_accuracies)
 
-        self.tracking_epoch["learning_rate"].append(
-            self.opt.param_groups[0]["lr"]
-        )
+        self.tracking_epoch["learning_rate"].append(self.opt.param_groups[0]["lr"])
 
     # General tracking methods
 
@@ -342,9 +337,7 @@ class Cockpit:
 
         This method is exact (what we need), but slow."""
         self.tracking["var_df" + point].append(
-            self._exact_variance(
-                [p.grad_batch.data for p in self.get_parameters()]
-            )
+            self._exact_variance([p.grad_batch.data for p in self.get_parameters()])
         )
 
     # Track_before methods
@@ -413,10 +406,7 @@ class Cockpit:
             [self.tracking["f0"][-1], self.tracking["f1"][-1]],
             [sum(self.tracking["df0"][-1]), sum(self.tracking["df1"][-1])],
             [self.tracking["var_f0"][-1], self.tracking["var_f1"][-1]],
-            [
-                sum(self.tracking["var_df0"][-1]),
-                sum(self.tracking["var_df1"][-1]),
-            ],
+            [sum(self.tracking["var_df0"][-1]), sum(self.tracking["var_df1"][-1]),],
         )
 
         # Get the relative (or local) step size

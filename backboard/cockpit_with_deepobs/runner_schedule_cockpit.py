@@ -67,8 +67,7 @@ class ScheduleCockpitRunner(PTRunner):
                 summary_writer = SummaryWriter(log_dir=tb_log_dir)
             except ImportError as err:
                 warnings.warn(
-                    "Not possible to use tensorboard for pytorch. Reason: "
-                    + err.msg,
+                    "Not possible to use tensorboard for pytorch. Reason: " + err.msg,
                     RuntimeWarning,
                 )
                 tb_log = False
@@ -129,9 +128,7 @@ class ScheduleCockpitRunner(PTRunner):
                         if batch_count == 0:
                             comp_time = time.time()
                         elif batch_count % 10 == 0:
-                            print(
-                                "10 iterations took ", time.time() - comp_time
-                            )
+                            print("10 iterations took ", time.time() - comp_time)
                             comp_time = time.time()
 
                     # Cockpit tracking before (only if we hit the track_interval)

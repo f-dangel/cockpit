@@ -186,8 +186,7 @@ class CockpitPlotter:
                     ]
                 # Overall average
                 self.iter_tracking[columnName] = [
-                    aggregate(x[:])
-                    for x in self.iter_tracking[columnName].tolist()
+                    aggregate(x[:]) for x in self.iter_tracking[columnName].tolist()
                 ]
 
         # Compute avg_ev & avg_cond
@@ -232,8 +231,7 @@ class CockpitPlotter:
             return _root_sum_of_squares
         else:
             warnings.warn(
-                "Warning: Don't know how to aggregate " + quantity,
-                stacklevel=2,
+                "Warning: Don't know how to aggregate " + quantity, stacklevel=2,
             )
 
     def _number_of_parts(self):
@@ -315,9 +313,7 @@ class CockpitPlotter:
         else:
             ax = fig.add_subplot(gridspec)
         self.iter_tracking["EMA_" + y_quan] = (
-            self.iter_tracking[y_quan]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
 
         sns.scatterplot(
@@ -392,9 +388,7 @@ class CockpitPlotter:
         lines2, labels2 = ax2.get_legend_handles_labels()
         plot_labels = []
         for line, label in zip(lines2, labels2):
-            plot_labels.append(
-                "{0}: ({1:.2%})".format(label, line.get_ydata()[-1])
-            )
+            plot_labels.append("{0}: ({1:.2%})".format(label, line.get_ydata()[-1]))
         ax2.get_legend().remove()
         ax.legend(lines2, plot_labels)
 
@@ -427,8 +421,7 @@ class CockpitPlotter:
             )
         if x_quan == "avg_var_f" or y_quan == "avg_var_f":
             self.iter_tracking["avg_var_f"] = (
-                0.5 * self.iter_tracking["var_f1"]
-                + 0.5 * self.iter_tracking["var_f0"]
+                0.5 * self.iter_tracking["var_f1"] + 0.5 * self.iter_tracking["var_f0"]
             )
         if x_quan == "cert_sign_f" or y_quan == "cert_sign_f":
             self.iter_tracking["cert_sign_f"] = self.iter_tracking.apply(
@@ -445,14 +438,10 @@ class CockpitPlotter:
             )
             ylim = [0, 1]
         self.iter_tracking["EMA_" + x_quan] = (
-            self.iter_tracking[x_quan]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[x_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
         self.iter_tracking["EMA_" + y_quan] = (
-            self.iter_tracking[y_quan]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
 
         # Plotting
@@ -619,12 +608,8 @@ class CockpitPlotter:
         try:
             ax2.legend(
                 [
-                    "{0} ($\mu=${1:.2f})".format(
-                        labels2[0], mu_all
-                    ),  # noqa: W605
-                    "{0} ($\mu=${1:.2f})".format(
-                        labels2[1], mu_last
-                    ),  # noqa: W605
+                    "{0} ($\mu=${1:.2f})".format(labels2[0], mu_all),  # noqa: W605
+                    "{0} ($\mu=${1:.2f})".format(labels2[1], mu_last),  # noqa: W605
                 ]
             )
         except TypeError:
@@ -643,14 +628,10 @@ class CockpitPlotter:
         ylim = [-2, 2]
 
         self.iter_tracking["EMA_" + x_quan] = (
-            self.iter_tracking[x_quan]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[x_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
         self.iter_tracking["EMA_" + y_quan] = (
-            self.iter_tracking[y_quan]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
 
         # Plotting
@@ -716,9 +697,7 @@ class CockpitPlotter:
                     stats.norm.cdf(
                         0,
                         loc=(row["df1" + n] - row["df0" + n]),
-                        scale=(
-                            np.sqrt(row["var_df_0" + n] + row["var_df_1" + n])
-                        ),
+                        scale=(np.sqrt(row["var_df_0" + n] + row["var_df_1" + n])),
                     )
                     - 0.5
                 )
@@ -727,14 +706,10 @@ class CockpitPlotter:
             )
             ylim = [0, 1]
         self.iter_tracking["EMA_" + x_quan + n] = (
-            self.iter_tracking[x_quan + n]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[x_quan + n].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
         self.iter_tracking["EMA_" + y_quan + n] = (
-            self.iter_tracking[y_quan + n]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan + n].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
 
         # Plotting
@@ -796,9 +771,7 @@ class CockpitPlotter:
 
         # Compute derived quantities
         self.iter_tracking["EMA_" + y_quan] = (
-            self.iter_tracking[y_quan]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
 
         # Plotting
@@ -848,9 +821,7 @@ class CockpitPlotter:
         std_alpha = np.std(self.iter_tracking["alpha"])
 
         ax.set_ylabel(
-            r"alpha ($\mu$={0:.2f}, $\sigma$={1:.2f})".format(
-                avg_alpha, std_alpha
-            )
+            r"alpha ($\mu$={0:.2f}, $\sigma$={1:.2f})".format(avg_alpha, std_alpha)
         )
 
     def _plot_trace(self, gridspec, layer="all", fig=None):
@@ -864,9 +835,7 @@ class CockpitPlotter:
 
         # Compute derived quantities
         self.iter_tracking["EMA_" + y_quan + n] = (
-            self.iter_tracking[y_quan + n]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan + n].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
 
         # Plotting
@@ -930,14 +899,10 @@ class CockpitPlotter:
 
         # Compute derived quantities
         self.iter_tracking["EMA_" + y_quan + n] = (
-            self.iter_tracking[y_quan + n]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan + n].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
         self.iter_tracking["EMA_" + y_quan2] = (
-            self.iter_tracking[y_quan2]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan2].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
 
         # Plotting
@@ -1029,9 +994,7 @@ class CockpitPlotter:
 
         # Compute derived quantities
         self.iter_tracking["EMA_" + y_quan + n] = (
-            self.iter_tracking[y_quan + n]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan + n].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
 
         # Plotting
@@ -1102,14 +1065,10 @@ class CockpitPlotter:
 
         # Compute derived quantities
         self.iter_tracking["EMA_" + x_quan] = (
-            self.iter_tracking[x_quan]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[x_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
         self.iter_tracking["EMA_" + y_quan] = (
-            self.iter_tracking[y_quan]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
 
         # Plotting
@@ -1166,9 +1125,7 @@ class CockpitPlotter:
 
         # Compute derived quantities
         self.iter_tracking["EMA_" + y_quan] = (
-            self.iter_tracking[y_quan]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
 
         # Plotting
@@ -1220,9 +1177,7 @@ class CockpitPlotter:
 
         # Compute derived quantities
         self.iter_tracking["EMA_" + y_quan] = (
-            self.iter_tracking[y_quan]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
 
         # Plotting
@@ -1273,9 +1228,7 @@ class CockpitPlotter:
 
         # Compute derived quantities
         self.iter_tracking["EMA_" + y_quan + n] = (
-            self.iter_tracking[y_quan + n]
-            .ewm(alpha=self.EMA_span, adjust=False)
-            .mean()
+            self.iter_tracking[y_quan + n].ewm(alpha=self.EMA_span, adjust=False).mean()
         )
         self.iter_tracking["EMA_" + y_quan2 + n] = (
             self.iter_tracking[y_quan2 + n]
@@ -1456,8 +1409,6 @@ class CockpitPlotter:
 
         plot_labels = []
         for line, label in zip(lines, labels):
-            plot_labels.append(
-                "{0}: ({1:.2E})".format(label, line.get_ydata()[-1])
-            )
+            plot_labels.append("{0}: ({1:.2E})".format(label, line.get_ydata()[-1]))
         ax.get_legend().remove()
         ax.legend(lines, plot_labels)
