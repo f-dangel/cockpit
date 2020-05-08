@@ -1,13 +1,5 @@
-from .cockpit import Cockpit
+from .airline_plotter import AirlinePlotter
 from .cockpit_plotter import CockpitPlotter
-from .cockpit_with_deepobs.runner_interactive_cockpit import (
-    InteractiveCockpitRunner,
-)
-from .cockpit_with_deepobs.runner_schedule_cockpit import ScheduleCockpitRunner
+from .cockpit_tracker import CockpitTracker
 
-__all__ = [
-    "Cockpit",
-    "CockpitPlotter",
-    "InteractiveCockpitRunner",
-    "ScheduleCockpitRunner",
-]
+__all__ = ["AirlinePlotter", "CockpitPlotter", "CockpitTracker"]
