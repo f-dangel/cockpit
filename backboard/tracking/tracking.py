@@ -110,10 +110,9 @@ def track_ev(self, batch_loss):
     Args:
         batch_loss (float): Average loss over a batch
     """
+    trainable_params = [p for p in self.parameters() if p.requires_grad]
     HVP = HVPLinearOperator(
-        batch_loss,
-        list(self.parameters()),
-        grad_params=[p.grad for p in self.parameters()],
+        batch_loss, trainable_params, grad_params=[p.grad for p in trainable_params],
     )
     eigvals = eigsh(HVP, k=1, which="LA", return_eigenvectors=False)
 
