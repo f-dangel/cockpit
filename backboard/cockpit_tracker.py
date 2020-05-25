@@ -54,6 +54,8 @@ class CockpitTracker:
             "max_ev",  # largest eigenvalue of hessian, computed at theta_0
             # ball radius around expected gradient (Byrd et al. 2012)
             "norm_test_radius",
+            # band width around expected gradient (Bollapgrada et al. 2017)
+            "inner_product_test_width",
         ]
         per_epoch_quants = [
             "iteration",  # keep track which iteration we store
@@ -182,6 +184,7 @@ class CockpitTracker:
             tracking.track_alpha(self)
 
             tracking.track_norm_test_radius(self)
+            tracking.track_inner_product_test_width(self)
         else:
             return
 
