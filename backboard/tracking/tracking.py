@@ -10,6 +10,7 @@ self is a CockpitTracker."""
 from math import sqrt
 
 import numpy as np
+import torch
 from scipy.sparse.linalg import eigsh
 
 from .utils_ev import HVPLinearOperator
@@ -175,15 +176,16 @@ def track_norm_test_radius(self):
 
     Let `g_B, g_P` denote the gradient of the mini-batch and expected risk,
     respectively. The norm test proposes to satisfy
-        `|| g_B - g_P ||² / || g_P ||² ≤ r²`
+        `E( || g_B - g_P ||² / || g_P ||² ) ≤ r²`
     for some user-specified radius `r`.
 
     A practical form with mini-batch gradients `gₙ` is given by
-        `(1 / (|B| (|B| - 1)) * ∑ₙ || gₙ - g_B ||² / || g_B ||² ≤ r²`.
+        `(1 / (|B| (|B| - 1))) * ∑ₙ || gₙ - g_B ||² / || g_B ||² ≤ r²`.
 
     We track the square root of the above equation's LHS.
 
-    Note: The norm test radius `r` is not additive over layers.
+    .. note::
+        The norm test radius `r` is not additive over layers.
     """
 
     def norm_test_radius(B, batch_l2, grad):
@@ -196,4 +198,50 @@ def track_norm_test_radius(self):
 
     self.iter_tracking["norm_test_radius"].append(
         [parameter_norm_test_radius(p) for p in self.parameters() if p.requires_grad]
+    )
+
+
+def track_inner_product_test_width(self):
+    """Track the band width orthogonal to the expected risk gradient.
+
+    Introduced in:
+        Adaptive Sampling Strategies for Stochastic Optimization
+        by Raghu Bollapragada, Richard Byrd, Jorge Nocedal
+        (2017)
+
+    Let `g_B, g_P` denote the gradient of the mini-batch and expected risk,
+    respectively. The inner product test proposes to satisfy
+        `E( gᵀ_B g_P / || g_P ||² ) ≤ w²`
+    for some user-specified band width `w`.
+
+    A practical form with mini-batch gradients `gₙ` is given by
+        `(1 / (|B| (|B| - 1))) * ∑ₙ ( gᵀₙ g_B / || g_B ||² - 1 )² ≤ w²`.
+
+    We track the square root of the above equation's LHS.
+
+    .. note::
+        The inner product test width `w` is not additive over layers.
+    """
+    import time
+
+    def inner_product_test_width(B, grad_batch, grad):
+        projection = (
+            torch.einsum("bi,i->b", grad_batch.reshape(B, -1), grad.reshape(-1))
+            / grad.norm(2) ** 2
+        )
+        square_width = 1 / (B - 1) * (B * (projection ** 2).sum() - 1)
+        print("Width: ", sqrt(square_width))
+        time.sleep(2)
+        return sqrt(square_width)
+
+    def parameter_inner_product_test_width(p):
+        B = p.grad_batch.shape[0]
+        return inner_product_test_width(B, p.grad_batch, p.grad)
+
+    self.iter_tracking["inner_product_test_width"].append(
+        [
+            parameter_inner_product_test_width(p)
+            for p in self.parameters()
+            if p.requires_grad
+        ]
     )
