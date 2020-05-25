@@ -52,6 +52,8 @@ class CockpitTracker:
             "trace",  # hessian trace, computed at theta_0
             "alpha",  # local effective step size
             "max_ev",  # largest eigenvalue of hessian, computed at theta_0
+            # ball radius around expected gradient (Byrd et al. 2012)
+            "norm_test_radius",
         ]
         per_epoch_quants = [
             "iteration",  # keep track which iteration we store
@@ -178,6 +180,8 @@ class CockpitTracker:
 
             tracking.track_d2init(self)
             tracking.track_alpha(self)
+
+            tracking.track_norm_test_radius(self)
         else:
             return
 
@@ -207,6 +211,7 @@ class CockpitTracker:
                 extensions.Variance(),
                 extensions.BatchGrad(),
                 extensions.DiagHessian(),
+                extensions.BatchL2Grad(),
             )
         else:
             return []
