@@ -90,7 +90,14 @@ class InteractiveCockpitRunner(PTRunner):
                 test_accuracies,
             )
             cockpit.track_epoch(
-                epoch_count, global_step, train_accuracies[-1], valid_accuracies[-1],
+                epoch_count,
+                global_step,
+                train_losses[-1],
+                valid_losses[-1],
+                test_losses[-1],
+                train_accuracies[-1],
+                valid_accuracies[-1],
+                test_accuracies[-1],
             )
 
             # Break from train loop after the last round of evaluation

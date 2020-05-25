@@ -12,11 +12,8 @@ import torch
 from scipy.sparse.linalg import eigsh
 
 from backboard.cockpit_plotter import CockpitPlotter
-from backboard.utils.cockpit_utils import (
-    _fit_quadratic,
-    _get_alpha,
-    _layerwise_dot_product,
-)
+from backboard.utils.cockpit_utils import (_fit_quadratic, _get_alpha,
+                                           _layerwise_dot_product)
 from backboard.utils.linear_operator import HVPLinearOperator
 from backpack import extensions
 
@@ -94,6 +91,16 @@ class Cockpit:
         tracking["var_df0"] = []
         tracking["var_df1"] = []
 
+        # Gradient tests
+        tracking["norm_test_layers"] = []
+        tracking["norm_test_network"] = []
+        tracking["inner_product_test_layers"] = []
+        tracking["inner_product_test_network"] = []
+        tracking["orthogonality_test_layers"] = []
+        tracking["orthogonality_test_network"] = []
+        tracking["acute_angle_test_layers"] = []
+        tracking["acute_angle_test_network"] = []
+
         # Gradient Norms
         # is alywas computed at theta_0 (the position of f0)
         tracking["grad_norms"] = []
@@ -123,9 +130,14 @@ class Cockpit:
         tracking_epoch["iteration"] = []
         tracking_epoch["epoch"] = []
 
+        # Losses
+        tracking_epoch["train_loss"] = []
+        tracking_epoch["valid_loss"] = []
+        tracking_epoch["test_loss"] = []
         # Accuracies
         tracking_epoch["train_accuracy"] = []
         tracking_epoch["valid_accuracy"] = []
+        tracking_epoch["test_accuracy"] = []
 
         tracking_epoch["learning_rate"] = []
 
@@ -196,6 +208,7 @@ class Cockpit:
                 extensions.Variance(),
                 extensions.BatchGrad(),
                 extensions.DiagHessian(),
+                extensions.BatchL2Grad(),
             )
         else:
             return []
@@ -239,10 +252,25 @@ class Cockpit:
         self.track_df("1")
         self.track_var_df("1")
 
+        self.track_norm_test()
+        self.track_inner_product_test()
+        self.track_orthogonality_test()
+        self.track_acute_angle_test()
+
         self.track_d2init()
         self.track_alpha()
 
-    def track_epoch(self, epoch_count, global_step, train_accuracies, valid_accuracies):
+    def track_epoch(
+        self,
+        epoch_count,
+        global_step,
+        train_losses,
+        valid_losses,
+        test_losses,
+        train_accuracies,
+        valid_accuracies,
+        test_accuracies,
+    ):
         """Tracks quantities at the start of epoch number epoch_count.
 
         The epoch_count starts at 0. if a learning rate of [1, 2, 3] is tracked
@@ -262,8 +290,13 @@ class Cockpit:
         self.tracking_epoch["epoch"].append(epoch_count)
         self.tracking_epoch["iteration"].append(global_step)
 
+        self.tracking_epoch["train_loss"].append(train_losses)
+        self.tracking_epoch["valid_loss"].append(valid_losses)
+        self.tracking_epoch["test_loss"].append(test_losses)
+
         self.tracking_epoch["train_accuracy"].append(train_accuracies)
         self.tracking_epoch["valid_accuracy"].append(valid_accuracies)
+        self.tracking_epoch["test_accuracy"].append(test_accuracies)
 
         self.tracking_epoch["learning_rate"].append(self.opt.param_groups[0]["lr"])
 
@@ -378,6 +411,121 @@ class Cockpit:
 
         # Get the relative (or local) step size
         self.tracking["alpha"].append(_get_alpha(mu, t))
+
+    def track_norm_test(self):
+        """Track the norm test.
+
+        The norm test estimates the variance of the residual length between
+        the mini-batch and expected risk gradient. See Bollapragada (2017):
+        'Adaptive Sampling Strategies for Stochastic Optimization'
+        """
+
+        def compute_norm_test(params):
+            """
+            Args:
+               params (list(torch.Tensor)):
+                    Parameters for computing the norm test
+            """
+            B = p.batch_l2.size(0)
+            batch_l2_norm = sum(p.batch_l2.sum().item() for p in params)
+            grad_l2_norm = sum(p.grad.data.norm(2).item() ** 2 for p in params)
+
+            norm_test = 1.0 / (B - 1.0) * (B * batch_l2_norm / grad_l2_norm - 1)
+            return norm_test
+
+        # layer-wise
+        self.tracking["norm_test_layers"].append(
+            [compute_norm_test([p]) for p in self.get_parameters()]
+        )
+
+        # full network
+        self.tracking["norm_test_layers_network"].append(
+            compute_norm_test(list(self.get_parameters(0)))
+        )
+
+    def track_inner_product_test(self):
+        """Track the inner product test.
+
+        The inner product test estimates the variance of the mini-batch
+        gradient projection on the expected risk gradient. See Bollapragada
+        (2017): 'Adaptive Sampling Strategies for Stochastic Optimization'
+        """
+        def compute_inner_product_test(params):
+            """
+            Args:
+               params (list(torch.Tensor)):
+                    Parameters for computing the inner product test
+            """
+            inner_product_test = 0
+            warnings.warn("Inner product test not implemented. Return dummy.")
+            return inner_product_test
+
+        # layer-wise
+        self.tracking["inner_product_test_layers"].append(
+            [compute_inner_product_test([p]) for p in self.get_parameters()]
+        )
+
+        # full network
+        self.tracking["inner_product_test_layers_network"].append(
+            compute_inner_product_test(list(self.get_parameters(0)))
+        )
+
+
+    def track_orthogonality_test(self):
+        """Track the orthogonality test.
+
+        The orthogonality test estimates the residual's variance between the
+        mini-batch gradient projection on the expected risk gradient. See
+        Bollapragada (2017): 'Adaptive Sampling Strategies for Stochastic
+        Optimization'
+        """
+        def compute_orthogonality_test(params):
+            """
+            Args:
+               params (list(torch.Tensor)):
+                    Parameters for computing the orthogonality test
+            """
+            orthogonality_test = 0
+            warnings.warn("Orthogonality test not implemented. Return dummy.")
+            return orthogonality_test
+
+        # layer-wise
+        self.tracking["orthogonality_test_layers"].append(
+            [compute_orthogonality_test([p]) for p in self.get_parameters()]
+        )
+
+        # full network
+        self.tracking["orthogonality_test_layers_network"].append(
+            compute_orthogonality_test(list(self.get_parameters(0)))
+        )
+
+    def track_acute_angle_test(self):
+        """Track the acute angle test.
+
+        The orthogonality test estimates the sin(angle)'s variance between the
+        mini-batch gradient and the expected risk gradient. See Bahamou (2019):
+        'A Dynamic Sampling Adaptive-SGD Method for Machine Learning'
+        """
+        def compute_acute_angle_test(params):
+            """
+            Args:
+               params (list(torch.Tensor)):
+                    Parameters for computing the acute angle test
+            """
+            acute_angle_test = 0
+            warnings.warn("Acute angle test not implemented. Return dummy.")
+            return acute_angle_test
+
+        # layer-wise
+        self.tracking["acute_angle_test_layers"].append(
+            [compute_acute_angle_test([p]) for p in self.get_parameters()]
+        )
+
+        # full network
+        self.tracking["acute_angle_test_layers_network"].append(
+            compute_acute_angle_test(list(self.get_parameters(0)))
+        )
+
 
     def write(self):
         """ Write all tracking data into a JSON file."""
