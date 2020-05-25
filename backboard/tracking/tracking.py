@@ -14,12 +14,8 @@ import torch
 from scipy.sparse.linalg import eigsh
 
 from .utils_ev import HVPLinearOperator
-from .utils_tracking import (
-    _exact_variance,
-    _fit_quadratic,
-    _get_alpha,
-    _layerwise_dot_product,
-)
+from .utils_tracking import (_exact_variance, _fit_quadratic, _get_alpha,
+                             _layerwise_dot_product)
 
 
 def track_f(self, batch_loss, point):
@@ -300,3 +296,4 @@ def track_acute_angle_test_sin(self):
             for p in self.parameters()
             if p.requires_grad
         ]
+    )

@@ -56,6 +56,8 @@ class CockpitTracker:
             "norm_test_radius",
             # band width around expected gradient (Bollapgrada et al. 2017)
             "inner_product_test_width",
+            # angle sin between mini-batch and expected gradient (Bahamou, 2017)
+            "acute_angle_test_sin",
         ]
         per_epoch_quants = [
             "iteration",  # keep track which iteration we store
@@ -185,6 +187,7 @@ class CockpitTracker:
 
             tracking.track_norm_test_radius(self)
             tracking.track_inner_product_test_width(self)
+            tracking.track_acute_angle_test_sin(self)
         else:
             return
 
