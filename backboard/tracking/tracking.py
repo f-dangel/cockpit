@@ -163,3 +163,37 @@ def track_alpha(self):
 
     # Get the relative (or local) step size
     self.iter_tracking["alpha"].append(_get_alpha(mu, t))
+
+
+def track_norm_test_radius(self):
+    """Track the ball radius around the expected risk gradient.
+
+    Introduced in:
+        Sample size selection in optimization methods for machine learning
+        by Richard H. Byrd, Gillian M. Chin, Jorge Nocedal & Yuchen Wu
+        (Mathematical Programming volume 134, pages 127–155 (2012))
+
+    Let `g_B, g_P` denote the gradient of the mini-batch and expected risk,
+    respectively. The norm test proposes to satisfy
+        `|| g_B - g_P ||² / || g_P ||² ≤ r²`
+    for some user-specified radius `r`.
+
+    A practical form with mini-batch gradients `gₙ` is given by
+        `(1 / (|B| (|B| - 1)) * ∑ₙ || gₙ - g_B ||² / || g_B ||² ≤ r²`.
+
+    We track the square root of the above equation's LHS.
+
+    Note: The norm test radius `r` is not additive over layers.
+    """
+
+    def norm_test_radius(B, batch_l2, grad):
+        square_radius = 1 / (B - 1) * (B * (batch_l2.sum() / grad.norm(2) ** 2) - 1)
+        return sqrt(square_radius)
+
+    def parameter_norm_test_radius(p):
+        B = p.batch_l2.shape[0]
+        return norm_test_radius(B, p.batch_l2, p.grad)
+
+    self.iter_tracking["norm_test_radius"].append(
+        [parameter_norm_test_radius(p) for p in self.parameters() if p.requires_grad]
+    )
