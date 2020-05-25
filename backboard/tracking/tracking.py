@@ -222,7 +222,6 @@ def track_inner_product_test_width(self):
     .. note::
         The inner product test width `w` is not additive over layers.
     """
-    import time
 
     def inner_product_test_width(B, grad_batch, grad):
         projection = (
@@ -230,8 +229,6 @@ def track_inner_product_test_width(self):
             / grad.norm(2) ** 2
         )
         square_width = 1 / (B - 1) * (B * (projection ** 2).sum() - 1)
-        print("Width: ", sqrt(square_width))
-        time.sleep(2)
         return sqrt(square_width)
 
     def parameter_inner_product_test_width(p):
@@ -245,3 +242,61 @@ def track_inner_product_test_width(self):
             if p.requires_grad
         ]
     )
+
+
+def track_acute_angle_test_sin(self):
+    """Track the angle sinus between mini-batch and expected risk gradient.
+
+    Although defined differently in terms of inaccessible quantities,
+    the estimation from a mini-batch is equivalent to the orthogonality
+    test in Bollapragada (2017).
+
+    Introduced in:
+        A Dynamic Sampling Adaptive-SGD Method for Machine Learning
+        by Achraf Bahamou, Donald Goldfarb
+        (2020)
+
+    Let `g_B, g_P` denote the gradient of the mini-batch and expected risk,
+    respectively. The acute angle test proposes to satisfy
+        `E( sin (∠( g_B, g_P )² ) ≤ s²`
+    for some user-specified sinus `s`.
+
+    A practical form with mini-batch gradients `gₙ` is given by
+        `(1 / (|B| (|B| - 1))) * (
+                                  ∑ₙ || gₙ ||² / || g_B ||²
+                                  - 2 B ∑ₙ ( gᵀₙ g_B )² / || g_B ||⁴
+                                  +B
+                                  )                                 ≤ s²`.
+
+    We track the square root of the above equation's LHS.
+
+    .. note::
+        The acute angle test sinus `s` is not additive over layers.
+    """
+
+    def acute_angle_test_sin(B, grad_batch, batch_l2, grad):
+        summand1 = B * batch_l2.sum() / grad.norm(2) ** 2
+
+        summand2 = (
+            -2
+            * B
+            * (
+                torch.einsum("bi,i->b", grad_batch.reshape(B, -1), grad.reshape(-1))
+                ** 2
+            ).sum()
+            / grad.norm(2) ** 4
+        )
+
+        square_sin = 1 / (B - 1) * (summand1 + summand2 + 1)
+        return sqrt(square_sin)
+
+    def parameter_acute_angle_test_sin(p):
+        B = p.batch_l2.shape[0]
+        return acute_angle_test_sin(B, p.grad_batch, p.batch_l2, p.grad)
+
+    self.iter_tracking["acute_angle_test_sin"].append(
+        [
+            parameter_acute_angle_test_sin(p)
+            for p in self.parameters()
+            if p.requires_grad
+        ]
