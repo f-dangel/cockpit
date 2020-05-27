@@ -174,9 +174,6 @@ def track_global_norm_test_radius(self):
 
     radius = _norm_test_radius(B, batch_l2, grad)
 
-    print("Global norm test: ", radius)
-    time.sleep(1)
-
     self.iter_tracking["global_norm_test_radius"].append(radius)
 
 
@@ -188,13 +185,9 @@ def track_norm_test_radius(self):
     """
 
     def parameter_norm_test_radius(p):
-        B = _get_batch_size(self.parameters())
-
-        radius = _norm_test_radius(B, p.batch_l2, p.grad)
-
-        print("Param norm test: ", radius)
-        time.sleep(1)
-
+        radius = _norm_test_radius(
+            _get_batch_size(self.parameters()), p.batch_l2, p.grad
+        )
         return radius
 
     self.iter_tracking["norm_test_radius"].append(
@@ -204,13 +197,12 @@ def track_norm_test_radius(self):
 
 def track_global_inner_product_test_width(self):
     """Track inner product test width for the concatenated network parameters."""
-    B = _get_batch_size(self.parameters())
     grad_batch = _combine_grad_batch(self.parameters())
     grad = _combine_grad(self.parameters())
 
-    width = _inner_product_test_width(B, grad_batch, grad)
-    print("Global inner product test: ", width)
-    time.sleep(1)
+    width = _inner_product_test_width(
+        _get_batch_size(self.parameters()), grad_batch, grad
+    )
 
     self.iter_tracking["global_inner_product_test_width"].append(width)
 
@@ -223,13 +215,9 @@ def track_inner_product_test_width(self):
     """
 
     def parameter_inner_product_test_width(p):
-        B = _get_batch_size(self.parameters())
-
-        width = _inner_product_test_width(B, p.grad_batch, p.grad)
-
-        print("Param inner product test: ", width)
-        time.sleep(1)
-
+        width = _inner_product_test_width(
+            _get_batch_size(self.parameters()), p.grad_batch, p.grad
+        )
         return width
 
     self.iter_tracking["inner_product_test_width"].append(
@@ -243,15 +231,13 @@ def track_inner_product_test_width(self):
 
 def track_global_acute_angle_test_sin(self):
     """Track acute angle test sinus for the concatenated network parameters."""
-    B = _get_batch_size(self.parameters())
     batch_l2 = _combine_batch_l2(self.parameters())
     grad_batch = _combine_grad_batch(self.parameters())
     grad = _combine_grad(self.parameters())
 
-    sin = _acute_angle_test_sin(B, grad_batch, batch_l2, grad)
-
-    print("Global acute angle test: ", sin)
-    time.sleep(1)
+    sin = _acute_angle_test_sin(
+        _get_batch_size(self.parameters()), grad_batch, batch_l2, grad
+    )
 
     self.iter_tracking["global_acute_angle_test_sin"].append(sin)
 
@@ -264,13 +250,9 @@ def track_acute_angle_test_sin(self):
     """
 
     def parameter_acute_angle_test_sin(p):
-        B = _get_batch_size(self.parameters())
-
-        sin = _acute_angle_test_sin(B, p.grad_batch, p.batch_l2, p.grad)
-
-        print("Param acute angle test: ", sin)
-        time.sleep(1)
-
+        sin = _acute_angle_test_sin(
+            _get_batch_size(self.parameters()), p.grad_batch, p.batch_l2, p.grad
+        )
         return sin
 
     self.iter_tracking["acute_angle_test_sin"].append(
