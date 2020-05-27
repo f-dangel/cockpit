@@ -7,6 +7,7 @@ of the CockpitTracker class.
 
 self is a CockpitTracker."""
 
+import time
 from math import sqrt
 
 import numpy as np
@@ -14,8 +15,11 @@ import torch
 from scipy.sparse.linalg import eigsh
 
 from .utils_ev import HVPLinearOperator
-from .utils_tracking import (_exact_variance, _fit_quadratic, _get_alpha,
-                             _layerwise_dot_product)
+from .utils_tracking import (_acute_angle_test_sin, _combine_batch_l2,
+                             _combine_grad, _combine_grad_batch,
+                             _exact_variance, _fit_quadratic, _get_alpha,
+                             _get_batch_size, _inner_product_test_width,
+                             _layerwise_dot_product, _norm_test_radius)
 
 
 def track_f(self, batch_loss, point):
@@ -162,74 +166,71 @@ def track_alpha(self):
     self.iter_tracking["alpha"].append(_get_alpha(mu, t))
 
 
+def track_global_norm_test_radius(self):
+    """Track norm test radius for the concatenated network parameters."""
+    B = _get_batch_size(self.parameters())
+    batch_l2 = _combine_batch_l2(self.parameters())
+    grad = _combine_grad(self.parameters())
+
+    radius = _norm_test_radius(B, batch_l2, grad)
+
+    print("Global norm test: ", radius)
+    time.sleep(1)
+
+    self.iter_tracking["global_norm_test_radius"].append(radius)
+
+
 def track_norm_test_radius(self):
     """Track the ball radius around the expected risk gradient.
-
-    Introduced in:
-        Sample size selection in optimization methods for machine learning
-        by Richard H. Byrd, Gillian M. Chin, Jorge Nocedal & Yuchen Wu
-        (Mathematical Programming volume 134, pages 127–155 (2012))
-
-    Let `g_B, g_P` denote the gradient of the mini-batch and expected risk,
-    respectively. The norm test proposes to satisfy
-        `E( || g_B - g_P ||² / || g_P ||² ) ≤ r²`
-    for some user-specified radius `r`.
-
-    A practical form with mini-batch gradients `gₙ` is given by
-        `(1 / (|B| (|B| - 1))) * ∑ₙ || gₙ - g_B ||² / || g_B ||² ≤ r²`.
-
-    We track the square root of the above equation's LHS.
 
     .. note::
         The norm test radius `r` is not additive over layers.
     """
 
-    def norm_test_radius(B, batch_l2, grad):
-        square_radius = 1 / (B - 1) * (B * (batch_l2.sum() / grad.norm(2) ** 2) - 1)
-        return sqrt(square_radius)
-
     def parameter_norm_test_radius(p):
-        B = p.batch_l2.shape[0]
-        return norm_test_radius(B, p.batch_l2, p.grad)
+        B = _get_batch_size(self.parameters())
+
+        radius = _norm_test_radius(B, p.batch_l2, p.grad)
+
+        print("Param norm test: ", radius)
+        time.sleep(1)
+
+        return radius
 
     self.iter_tracking["norm_test_radius"].append(
         [parameter_norm_test_radius(p) for p in self.parameters() if p.requires_grad]
     )
 
 
+def track_global_inner_product_test_width(self):
+    """Track inner product test width for the concatenated network parameters."""
+    B = _get_batch_size(self.parameters())
+    grad_batch = _combine_grad_batch(self.parameters())
+    grad = _combine_grad(self.parameters())
+
+    width = _inner_product_test_width(B, grad_batch, grad)
+    print("Global inner product test: ", width)
+    time.sleep(1)
+
+    self.iter_tracking["global_inner_product_test_width"].append(width)
+
+
 def track_inner_product_test_width(self):
     """Track the band width orthogonal to the expected risk gradient.
-
-    Introduced in:
-        Adaptive Sampling Strategies for Stochastic Optimization
-        by Raghu Bollapragada, Richard Byrd, Jorge Nocedal
-        (2017)
-
-    Let `g_B, g_P` denote the gradient of the mini-batch and expected risk,
-    respectively. The inner product test proposes to satisfy
-        `E( gᵀ_B g_P / || g_P ||² ) ≤ w²`
-    for some user-specified band width `w`.
-
-    A practical form with mini-batch gradients `gₙ` is given by
-        `(1 / (|B| (|B| - 1))) * ∑ₙ ( gᵀₙ g_B / || g_B ||² - 1 )² ≤ w²`.
-
-    We track the square root of the above equation's LHS.
 
     .. note::
         The inner product test width `w` is not additive over layers.
     """
 
-    def inner_product_test_width(B, grad_batch, grad):
-        projection = (
-            torch.einsum("bi,i->b", grad_batch.reshape(B, -1), grad.reshape(-1))
-            / grad.norm(2) ** 2
-        )
-        square_width = 1 / (B - 1) * (B * (projection ** 2).sum() - 1)
-        return sqrt(square_width)
-
     def parameter_inner_product_test_width(p):
-        B = p.grad_batch.shape[0]
-        return inner_product_test_width(B, p.grad_batch, p.grad)
+        B = _get_batch_size(self.parameters())
+
+        width = _inner_product_test_width(B, p.grad_batch, p.grad)
+
+        print("Param inner product test: ", width)
+        time.sleep(1)
+
+        return width
 
     self.iter_tracking["inner_product_test_width"].append(
         [
@@ -240,55 +241,37 @@ def track_inner_product_test_width(self):
     )
 
 
+def track_global_acute_angle_test_sin(self):
+    """Track acute angle test sinus for the concatenated network parameters."""
+    B = _get_batch_size(self.parameters())
+    batch_l2 = _combine_batch_l2(self.parameters())
+    grad_batch = _combine_grad_batch(self.parameters())
+    grad = _combine_grad(self.parameters())
+
+    sin = _acute_angle_test_sin(B, grad_batch, batch_l2, grad)
+
+    print("Global acute angle test: ", sin)
+    time.sleep(1)
+
+    self.iter_tracking["global_acute_angle_test_sin"].append(sin)
+
+
 def track_acute_angle_test_sin(self):
     """Track the angle sinus between mini-batch and expected risk gradient.
-
-    Although defined differently in terms of inaccessible quantities,
-    the estimation from a mini-batch is equivalent to the orthogonality
-    test in Bollapragada (2017).
-
-    Introduced in:
-        A Dynamic Sampling Adaptive-SGD Method for Machine Learning
-        by Achraf Bahamou, Donald Goldfarb
-        (2020)
-
-    Let `g_B, g_P` denote the gradient of the mini-batch and expected risk,
-    respectively. The acute angle test proposes to satisfy
-        `E( sin (∠( g_B, g_P )² ) ≤ s²`
-    for some user-specified sinus `s`.
-
-    A practical form with mini-batch gradients `gₙ` is given by
-        `(1 / (|B| (|B| - 1))) * (
-                                  ∑ₙ || gₙ ||² / || g_B ||²
-                                  - 2 B ∑ₙ ( gᵀₙ g_B )² / || g_B ||⁴
-                                  +B
-                                  )                                 ≤ s²`.
-
-    We track the square root of the above equation's LHS.
 
     .. note::
         The acute angle test sinus `s` is not additive over layers.
     """
 
-    def acute_angle_test_sin(B, grad_batch, batch_l2, grad):
-        summand1 = B * batch_l2.sum() / grad.norm(2) ** 2
-
-        summand2 = (
-            -2
-            * B
-            * (
-                torch.einsum("bi,i->b", grad_batch.reshape(B, -1), grad.reshape(-1))
-                ** 2
-            ).sum()
-            / grad.norm(2) ** 4
-        )
-
-        square_sin = 1 / (B - 1) * (summand1 + summand2 + 1)
-        return sqrt(square_sin)
-
     def parameter_acute_angle_test_sin(p):
-        B = p.batch_l2.shape[0]
-        return acute_angle_test_sin(B, p.grad_batch, p.batch_l2, p.grad)
+        B = _get_batch_size(self.parameters())
+
+        sin = _acute_angle_test_sin(B, p.grad_batch, p.batch_l2, p.grad)
+
+        print("Param acute angle test: ", sin)
+        time.sleep(1)
+
+        return sin
 
     self.iter_tracking["acute_angle_test_sin"].append(
         [
