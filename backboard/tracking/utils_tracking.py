@@ -166,3 +166,21 @@ def _get_alpha(mu, t):
 
 def _normalize(v):
     return v / v.norm()
+
+
+def _combine_grad(parameters):
+    """Construct grad for concatenation of flattened parameters."""
+    return torch.cat([p.grad.flatten() for p in parameters if p.requires_grad])
+
+
+def _combine_grad_batch(parameters):
+    """Construct grad_batch for concatenation of flattened parameters."""
+    flat_grad_batch = [
+        p.grad_batch.reshape(p.shape[0], -1) for p in parameters if p.requires_grad
+    ]
+    return torch.cat(flat_grad_batch, dim=1)
+
+
+def _combine_batch_l2(parameters):
+    """Construct batch_l2 for concatenation of flattened parameters."""
+    return sum(p.batch_l2 for p in parameters if p.requires_grad)
