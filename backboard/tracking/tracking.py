@@ -272,10 +272,6 @@ def track_global_mean_gsnr(self):
     grad = _combine_grad(self.parameters())
 
     gsnr = _mean_gsnr(_get_batch_size(self.parameters()), sum_grad_squared, grad)
-
-    print("Global mean GSNR: ", gsnr)
-    time.sleep(1)
-
     self.iter_tracking["global_mean_gsnr"].append(gsnr)
 
 
@@ -290,10 +286,6 @@ def track_mean_gsnr(self):
         gsnr = _mean_gsnr(
             _get_batch_size(self.parameters()), p.sum_grad_squared, p.grad
         )
-
-        print("Parameter mean GSNR: ", gsnr)
-        time.sleep(1)
-
         return gsnr
 
     self.iter_tracking["mean_gsnr"].append(
