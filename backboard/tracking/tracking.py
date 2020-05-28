@@ -12,14 +12,16 @@ from math import sqrt
 
 import numpy as np
 import torch
+
 from scipy.sparse.linalg import eigsh
 
 from .utils_ev import HVPLinearOperator
 from .utils_tracking import (_acute_angle_test_sin, _combine_batch_l2,
                              _combine_grad, _combine_grad_batch,
-                             _exact_variance, _fit_quadratic, _get_alpha,
-                             _get_batch_size, _inner_product_test_width,
-                             _layerwise_dot_product, _norm_test_radius)
+                             _combine_sum_grad_squared, _exact_variance,
+                             _fit_quadratic, _get_alpha, _get_batch_size,
+                             _inner_product_test_width, _layerwise_dot_product,
+                             _mean_gsnr, _norm_test_radius)
 
 
 def track_f(self, batch_loss, point):
@@ -261,4 +263,39 @@ def track_acute_angle_test_sin(self):
             for p in self.parameters()
             if p.requires_grad
         ]
+    )
+
+
+def track_global_mean_gsnr(self):
+    """Track mean gradient signal-to-noise ratio for concatenated network parameters."""
+    sum_grad_squared = _combine_sum_grad_squared(self.parameters())
+    grad = _combine_grad(self.parameters())
+
+    gsnr = _mean_gsnr(_get_batch_size(self.parameters()), sum_grad_squared, grad)
+
+    print("Global mean GSNR: ", gsnr)
+    time.sleep(1)
+
+    self.iter_tracking["global_mean_gsnr"].append(gsnr)
+
+
+def track_mean_gsnr(self):
+    """Track mean gradient signal-to-noise ratio for concatenated network parameters.
+
+    .. note::
+        The GSNR is not additive over layers.
+    """
+
+    def parameter_mean_gsnr(p):
+        gsnr = _mean_gsnr(
+            _get_batch_size(self.parameters()), p.sum_grad_squared, p.grad
+        )
+
+        print("Parameter mean GSNR: ", gsnr)
+        time.sleep(1)
+
+        return gsnr
+
+    self.iter_tracking["mean_gsnr"].append(
+        [parameter_mean_gsnr(p) for p in self.parameters() if p.requires_grad]
     )

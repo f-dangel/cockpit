@@ -61,6 +61,9 @@ class CockpitTracker:
             # angle sin between mini-batch and expected gradient (Bahamou, 2017)
             "acute_angle_test_sin",
             "global_acute_angle_test_sin",
+            # gradient signal-to-noise ratio (Liu, 2020)
+            "mean_gsnr",
+            "global_mean_gsnr",
         ]
         per_epoch_quants = [
             "iteration",  # keep track which iteration we store
@@ -196,6 +199,9 @@ class CockpitTracker:
 
             tracking.track_acute_angle_test_sin(self)
             tracking.track_global_acute_angle_test_sin(self)
+
+            tracking.track_mean_gsnr(self)
+            tracking.track_global_mean_gsnr(self)
         else:
             return
 
@@ -222,6 +228,8 @@ class CockpitTracker:
             or global_step % self.track_interval == 1
         ):
             return (
+                extensions.SumGradSquared(),
+                # TODO: Use SumGradSquared, Variance recomputes summed gradient
                 extensions.Variance(),
                 extensions.BatchGrad(),
                 extensions.DiagHessian(),

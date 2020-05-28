@@ -187,6 +187,13 @@ def _combine_batch_l2(parameters):
     return sum(p.batch_l2 for p in parameters if p.requires_grad)
 
 
+def _combine_sum_grad_squared(parameters):
+    """Construct sum_grad_squared for concatenation of flattened parameters."""
+    return torch.cat(
+        [p.sum_grad_squared.flatten() for p in parameters if p.requires_grad]
+    )
+
+
 def _norm_test_radius(B, batch_l2, grad):
     """Ball radius around the expected risk gradient.
 
@@ -290,3 +297,28 @@ def _get_batch_size(parameters):
             return B
 
     raise ValueError("No parameter with requires_grad=True found")
+
+
+def _mean_gsnr(B, sum_grad_squared, grad):
+    """Mean gradient signal-to-noise ratio."""
+    grad_squared = grad ** 2
+
+    gsnr = grad_squared / (B * sum_grad_squared - grad_squared)
+    return torch.mean(gsnr).item()
+
+
+def _gsnr(B, sum_grad_squared, grad):
+    """Gradient signal-to-noise ratio.
+
+    Studied in:
+        Understanding Why Neural Networks Generalize Well Through
+        GSNR of Parameters
+        by Jinlong Liu, Guoqing Jiang, Yunzhi Bai, Ting Chen, Huayan Wang
+        (2020)
+
+    TODO: Add math
+    """
+    grad_squared = grad ** 2
+
+    gsnr = grad_squared / (B * sum_grad_squared - grad_squared)
+    return gsnr
