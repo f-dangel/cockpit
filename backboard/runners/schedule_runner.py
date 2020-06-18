@@ -1,19 +1,19 @@
-"""Custom Runner to track statistics. """
+"""Schedule Runner to combine DeepOBS and Backboard
+using a learning rate schedule."""
 
-from __future__ import print_function
-
-import time
+import os
 import warnings
 
-import torch
+from torch.optim.lr_scheduler import LambdaLR
 
-from backboard import Cockpit
+from backboard import CockpitPlotter, CockpitTracker
 from backpack import backpack, extend
 from deepobs.pytorch.runners.runner import PTRunner
 
 
 class ScheduleCockpitRunner(PTRunner):
-    """Custom Runner to track statistics"""
+    """Schedule Runner to combine DeepOBS and Backboard
+    using a learning rate schedule."""
 
     def __init__(self, optimizer_class, hyperparameter_names):
         super(ScheduleCockpitRunner, self).__init__(
@@ -31,48 +31,23 @@ class ScheduleCockpitRunner(PTRunner):
         tb_log_dir,
         **training_params
     ):
+
         opt = self._optimizer_class(tproblem.net.parameters(), **hyperparams)
 
-        # LR Scheduler
-
+        # Using a LR Scheduler
         lr_sched = training_params["lr_schedule"](num_epochs)
+        scheduler = LambdaLR(opt, lr_lambda=lr_sched)
 
-        scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lr_sched)
-
-        # Lists to log train/test loss and accuracy.
-        train_losses = []
-        valid_losses = []
-        test_losses = []
-        train_accuracies = []
-        valid_accuracies = []
-        test_accuracies = []
-
-        minibatch_train_losses = []
-
+        # Extra Cockpit Stuff #
         # Init Cockpit
-        cockpit = Cockpit(
+        logpath = os.path.join(self._run_directory, self._file_name + "__log")
+        cockpit_tracker = CockpitTracker(
             tproblem.net.parameters,
             opt,
-            self._run_directory,
-            self._file_name,
+            logpath,
             track_interval=training_params["track_interval"],
-            plot_interval=training_params["plot_interval"],
         )
-        batch_losses = []
-
-        if tb_log:
-            try:
-                from torch.utils.tensorboard import SummaryWriter
-
-                summary_writer = SummaryWriter(log_dir=tb_log_dir)
-            except ImportError as err:
-                warnings.warn(
-                    "Not possible to use tensorboard for pytorch. Reason: " + err.msg,
-                    RuntimeWarning,
-                )
-                tb_log = False
-        global_step = 0
-
+        cockpit_plotter = CockpitPlotter(logpath)
         # Integrate BackPACK
         extend(tproblem.net)
         tproblem._old_loss = tproblem.loss_function
@@ -81,6 +56,30 @@ class ScheduleCockpitRunner(PTRunner):
             return extend(tproblem._old_loss(reduction=reduction))
 
         tproblem.loss_function = hotfix_lossfunc
+        # End Cockpit Stuff #
+
+        # Lists to log train/test loss and accuracy.
+        train_losses = []
+        valid_losses = []
+        test_losses = []
+        train_accuracies = []
+        valid_accuracies = []
+        test_accuracies = []
+        minibatch_train_losses = []
+        batch_losses = []  # so it exists the first time we pass it to cockpit
+
+        if tb_log:
+            try:
+                from torch.utils.tensorboard import SummaryWriter
+
+                summary_writer = SummaryWriter(log_dir=tb_log_dir)
+            except ImportError as e:
+                warnings.warn(
+                    "Not possible to use tensorboard for pytorch. Reason: " + e.msg,
+                    RuntimeWarning,
+                )
+                tb_log = False
+        global_step = 0
 
         for epoch_count in range(num_epochs + 1):
             # Next step in LR Schedule
@@ -98,7 +97,7 @@ class ScheduleCockpitRunner(PTRunner):
                 valid_accuracies,
                 test_accuracies,
             )
-            cockpit.track_epoch(
+            cockpit_tracker.track_epoch(
                 epoch_count,
                 global_step,
                 train_losses[-1],
@@ -111,9 +110,10 @@ class ScheduleCockpitRunner(PTRunner):
 
             # Break from train loop after the last round of evaluation
             if epoch_count == num_epochs:
-                cockpit.write()
-                cockpit.cockpit_plotter.plot(
-                    show=training_params["show_plot"], save=True
+                cockpit_tracker.write()
+                # Produce the last cockpit view, save it, and optionally show it
+                cockpit_plotter.plot(
+                    show_plot=training_params["show_plots"], save_plot=True
                 )
                 break
 
@@ -124,32 +124,32 @@ class ScheduleCockpitRunner(PTRunner):
             batch_count = 0
             while True:
                 try:
-                    if training_params["track_time"]:
-                        if batch_count == 0:
-                            comp_time = time.time()
-                        elif batch_count % 10 == 0:
-                            print("10 iterations took ", time.time() - comp_time)
-                            comp_time = time.time()
+                    cockpit_tracker.track_before(batch_losses, global_step)
 
-                    # Cockpit tracking before (only if we hit the track_interval)
-                    if cockpit.should_track(global_step):
-                        cockpit.track_before(batch_losses, global_step)
-
-                    opt.zero_grad()
                     batch_losses, _ = tproblem.get_batch_loss_and_accuracy(
-                        reduction="none"
+                        reduction="none"  # changed for cockpit
                     )
-                    batch_loss = torch.mean(batch_losses)
+
+                    # do zero_grad after forward pass, so we don't set it to
+                    # zero when there is no more batch in this epoch
+                    opt.zero_grad()
+
+                    # Check if losses is matrix, then sum
+                    # This is a hotfix necessary for our current quadratic_deep
+                    # implementation.
+                    if len(batch_losses.shape) == 2:
+                        batch_losses = batch_losses.sum(1)
+
+                    batch_loss = batch_losses.mean()
 
                     # Use BackPACK for the backward pass, but only use the
                     # extensions necessary.
-                    with backpack(*cockpit.extensions(global_step)):
+                    with backpack(*cockpit_tracker.extensions(global_step)):
                         batch_loss.backward(create_graph=True)
+
                     opt.step()
 
-                    # Cockpit tracking after (only if we hit the track_interval)
-                    if cockpit.should_track(global_step):
-                        cockpit.track_after(batch_losses, global_step)
+                    cockpit_tracker.track_after(batch_losses, global_step)
 
                     if batch_count % train_log_interval == 0:
                         minibatch_train_losses.append(batch_loss.item())
@@ -170,21 +170,15 @@ class ScheduleCockpitRunner(PTRunner):
                 except StopIteration:
                     break
 
-            # Write to log file if plot_interval or last epoch
-            if epoch_count % cockpit.plot_interval == 0:
-                # track, but only show if wanted
-                cockpit.write()
-                cockpit.cockpit_plotter.plot(
-                    show=training_params["show_plot"],
-                    save=training_params["save_plots"],
-                    save_append="__epoch__" + str(epoch_count),
+            # Write to log file
+            cockpit_tracker.write()
+            # Create Cockpit Plot if hitting the interval
+            if epoch_count % training_params["plot_interval"] == 0:
+                cockpit_plotter.plot(
+                    show_plot=training_params["show_plots"],
+                    save_plot=training_params["save_plots"],
+                    savename_append="__epoch__" + str(epoch_count),
                 )
-
-            # Check for any key input during the training,
-            # potentially stop training or change optimizers parameters
-            stop = cockpit.check_listening()
-            if stop:
-                break
 
         if tb_log:
             summary_writer.close()
@@ -202,9 +196,7 @@ class ScheduleCockpitRunner(PTRunner):
         return output
 
     def _add_training_params_to_argparse(self, parser, args, training_params):
-        """Overwrite this method to specify how your
-        runner should read in additional training_parameters and to add them to
-        argparse.
+        """Add any extra arguments as training parameters.
 
         Args:
             parser (argparse.ArgumentParser): The argument parser object.
@@ -225,7 +217,10 @@ class ScheduleCockpitRunner(PTRunner):
         hyperparams,
         **training_params
     ):
-        """Ensures that for both frameworks the structure of the output is the same"""
+        """Remove the training_params from the output.
+
+        Since some training parameters (e.g. the lr_schedule) are not JSON
+        serializable, we need to remove them from the output."""
 
         # remove test accuracy if it is not available
         if "test_accuracies" in output:
@@ -246,7 +241,7 @@ class ScheduleCockpitRunner(PTRunner):
             "l2_reg": l2_reg,
             "optimizer_name": self._optimizer_name,
             "optimizer_hyperparams": hyperparams,
-            # "training_params": training_params,
+            # "training_params": training_params, # removed for Cockpit
             **output,
         }
 
