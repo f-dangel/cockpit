@@ -14,13 +14,13 @@ an art than a science due to the lack of theoretical guarantees. It requires
 intuition/experience gained from hours of hyperparameter tuning. Commonly, a
 static or dynamic schedule is defined for all hyperparameters during training,
 looping over a grid. Based on the learning curves of the test/train objective
-and classification accuracy it is then decided, which setting is most promising.
-While this procedure can be highly automated, it suffers from a poor gain of
-insight in the optimization procedure. Almost never, quantities are used during
-training to adapt the optimization strategy. We use BackPACK to monitor quantities
-during training with the goal of both informing the machine learning engineer
-about the state of training, and to identify useful rules for when and how to
-change the optimization strategy if training stagnates."""
+and classification accuracy it is then decided, which setting is most
+promising. While this procedure can be highly automated, it suffers from a poor
+gain of insight in the optimization procedure. Almost never, quantities are
+used during training to adapt the optimization strategy. We use BackPACK to
+monitor quantities during training with the goal of both informing the machine
+learning engineer about the state of training, and to identify useful rules for
+when and how to change the optimization strategy if training stagnates."""
 
 VERSION = "0.0.1"
 URL = "https://github.com/f-dangel/backboard"

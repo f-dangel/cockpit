@@ -1,5 +1,6 @@
 """Utility functions for the CockpitTracker."""
 
+import copy
 import itertools
 import os
 import warnings
@@ -108,8 +109,8 @@ def _fit_quadratic(t, fs, dfs, fs_var, dfs_var):
         t (float): Position of second observation.
         fs (float): Function values at 0 and t.
         dfs (float): Projected gradients at 0 and t.
-        fs_var (float): Variances of function values at 0 and t.
-        dfs_var (float): Variances of projected gradients at 0 and t.
+        fs_var (list): Variances of function values at 0 and t.
+        dfs_var (list): Variances of projected gradients at 0 and t.
 
     Returns:
         np.array: Parameters of the quadratic fit.
@@ -146,6 +147,8 @@ def _get_alpha(mu, t):
     of 1, is equal to `stepping on the other side of the quadratic`, while a 
     step size of 0 means `stepping to the minimum`.
 
+    If 
+
     Args:
         mu (list): Parameters of the quadratic fit.
         t (float): Step size (taken).
@@ -156,6 +159,10 @@ def _get_alpha(mu, t):
     # If we couldn't compute a quadratic approx., return None.
     if mu is None:
         return None
+    elif mu[2] < 0:
+        # Concave setting: Since this means that it is still going downhill
+        # where we stepped to, we will log it as -1.
+        return -1
     else:
         # get alpha_bar (the step size that is "the other side")
         alpha_bar = -mu[1] / mu[2]
@@ -165,4 +172,57 @@ def _get_alpha(mu, t):
 
 
 def _normalize(v):
+    """Normalize a vector.
+
+    Args:
+        v (torch.Tensor): Some vector
+
+    Returns:
+        torch.Tensor: Normalized vector of norm 1.
+    """
     return v / v.norm()
+
+
+def _trim_dict(dicty):
+    """Returns a trimmed dictionary such that it each value containst a list of the same
+    size.
+
+    We assume that all list have either the size n or n+1. The last elements of
+    all lists of size n+1 should be trimmed.
+
+    Args:
+        dicty (dict): A dictionary where each value is a list.
+
+    Returns:
+        dict: A dictionary with equally sized lists as values
+    """
+    # Create a deepcopy, so that poping an item does not change the original
+    trimmed_dicty = copy.deepcopy(dicty)
+
+    # Create dict where the values are the lenghts of the lists
+    len_dicty = {key: len(value) for key, value in trimmed_dicty.items()}
+
+    # get a sorted list of the unique lenghts
+    lengths = list(set(len_dicty.values()))
+    lengths.sort()
+
+    # We don't have to do anything if the sizes are correct. E.g. if we break
+    # from the loop while not tracking the current iteration
+    if len(lengths) == 1:
+        return trimmed_dicty
+
+    # Make sure that it has at most 2 different lengths
+    assert (
+        len(lengths) == 2
+    ), "Couldn't trim the list as it has more than two different lengths."
+    # make sure that the difference between the two largest ones is exactly 1
+    assert (
+        lengths[-1] - lengths[-2] == 1
+    ), "Couldn't trim the list as the difference between the sizes was more than one."
+
+    for key, value in len_dicty.items():
+        # pop last element of those lists that are too large
+        if value == lengths[-1]:
+            trimmed_dicty[key].pop()
+
+    return trimmed_dicty

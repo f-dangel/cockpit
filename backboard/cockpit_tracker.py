@@ -29,6 +29,12 @@ class CockpitTracker:
         del params["self"]
         self.__dict__ = params
 
+        # Only true after we called both track_before and track_after
+        # NOTE: The very last `track_before` is currently done without being
+        # followed by a `track_after` operation. This is currently fixed in the
+        # `write` operation, but there could be a better solution!
+        self.iteration_complete = True
+
         # check whether we support this optimizer
         utils_tracking._check_optimizer(optimizer)
 
@@ -127,7 +133,7 @@ class CockpitTracker:
                 and to check whether logging is necessary, due to the
                 `track_interval`.
         """
-        if self._should_track(global_step):
+        if self._should_track(global_step) and self.iteration_complete:
             # Preparations
             batch_loss = batch_losses.mean()
             self.iter_tracking["iteration"].append(global_step)
@@ -144,6 +150,9 @@ class CockpitTracker:
             tracking.track_dtravel(self, self.optimizer.param_groups[0]["lr"])
             tracking.track_trace(self)
             tracking.track_ev(self, batch_loss)
+
+            # Tracked the "before" part of the iteration, but not yet the "after"
+            self.iteration_complete = False
         else:
             return
 
@@ -178,13 +187,21 @@ class CockpitTracker:
 
             tracking.track_d2init(self)
             tracking.track_alpha(self)
+
+            # Tracked a full iteration
+            self.iteration_complete = True
         else:
             return
 
     def write(self):
         """Write all tracked data into a JSON file."""
+        # trim the dictionary so all tracked quantites have the same number of
+        # elements. This is a needed fix, since we very last `track_before` is
+        # not followed by a `track_after`.
+        trimmed_iter_tracking = utils_tracking._trim_dict(self.iter_tracking)
+
         tracking = {
-            "iter_tracking": self.iter_tracking,
+            "iter_tracking": trimmed_iter_tracking,
             "epoch_tracking": self.epoch_tracking,
         }
         with open(self.logpath + ".json", "w") as json_file:
