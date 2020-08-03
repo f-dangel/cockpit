@@ -7,18 +7,21 @@ of the CockpitTracker class.
 
 self is a CockpitTracker."""
 
+import time
 from math import sqrt
 
 import numpy as np
+import torch
+
 from scipy.sparse.linalg import eigsh
 
 from .utils_ev import HVPLinearOperator
-from .utils_tracking import (
-    _exact_variance,
-    _fit_quadratic,
-    _get_alpha,
-    _layerwise_dot_product,
-)
+from .utils_tracking import (_acute_angle_test_sin, _combine_batch_l2,
+                             _combine_grad, _combine_grad_batch,
+                             _combine_sum_grad_squared, _exact_variance,
+                             _fit_quadratic, _get_alpha, _get_batch_size,
+                             _inner_product_test_width, _layerwise_dot_product,
+                             _mean_gsnr, _norm_test_radius)
 
 
 def track_f(self, batch_loss, point):
@@ -163,3 +166,128 @@ def track_alpha(self):
 
     # Get the relative (or local) step size
     self.iter_tracking["alpha"].append(_get_alpha(mu, t))
+
+
+def track_global_norm_test_radius(self):
+    """Track norm test radius for the concatenated network parameters."""
+    B = _get_batch_size(self.parameters())
+    batch_l2 = _combine_batch_l2(self.parameters())
+    grad = _combine_grad(self.parameters())
+
+    radius = _norm_test_radius(B, batch_l2, grad)
+
+    self.iter_tracking["global_norm_test_radius"].append(radius)
+
+
+def track_norm_test_radius(self):
+    """Track the ball radius around the expected risk gradient.
+
+    .. note::
+        The norm test radius `r` is not additive over layers.
+    """
+
+    def parameter_norm_test_radius(p):
+        radius = _norm_test_radius(
+            _get_batch_size(self.parameters()), p.batch_l2, p.grad
+        )
+        return radius
+
+    self.iter_tracking["norm_test_radius"].append(
+        [parameter_norm_test_radius(p) for p in self.parameters() if p.requires_grad]
+    )
+
+
+def track_global_inner_product_test_width(self):
+    """Track inner product test width for the concatenated network parameters."""
+    grad_batch = _combine_grad_batch(self.parameters())
+    grad = _combine_grad(self.parameters())
+
+    width = _inner_product_test_width(
+        _get_batch_size(self.parameters()), grad_batch, grad
+    )
+
+    self.iter_tracking["global_inner_product_test_width"].append(width)
+
+
+def track_inner_product_test_width(self):
+    """Track the band width orthogonal to the expected risk gradient.
+
+    .. note::
+        The inner product test width `w` is not additive over layers.
+    """
+
+    def parameter_inner_product_test_width(p):
+        width = _inner_product_test_width(
+            _get_batch_size(self.parameters()), p.grad_batch, p.grad
+        )
+        return width
+
+    self.iter_tracking["inner_product_test_width"].append(
+        [
+            parameter_inner_product_test_width(p)
+            for p in self.parameters()
+            if p.requires_grad
+        ]
+    )
+
+
+def track_global_acute_angle_test_sin(self):
+    """Track acute angle test sinus for the concatenated network parameters."""
+    batch_l2 = _combine_batch_l2(self.parameters())
+    grad_batch = _combine_grad_batch(self.parameters())
+    grad = _combine_grad(self.parameters())
+
+    sin = _acute_angle_test_sin(
+        _get_batch_size(self.parameters()), grad_batch, batch_l2, grad
+    )
+
+    self.iter_tracking["global_acute_angle_test_sin"].append(sin)
+
+
+def track_acute_angle_test_sin(self):
+    """Track the angle sinus between mini-batch and expected risk gradient.
+
+    .. note::
+        The acute angle test sinus `s` is not additive over layers.
+    """
+
+    def parameter_acute_angle_test_sin(p):
+        sin = _acute_angle_test_sin(
+            _get_batch_size(self.parameters()), p.grad_batch, p.batch_l2, p.grad
+        )
+        return sin
+
+    self.iter_tracking["acute_angle_test_sin"].append(
+        [
+            parameter_acute_angle_test_sin(p)
+            for p in self.parameters()
+            if p.requires_grad
+        ]
+    )
+
+
+def track_global_mean_gsnr(self):
+    """Track mean gradient signal-to-noise ratio for concatenated network parameters."""
+    sum_grad_squared = _combine_sum_grad_squared(self.parameters())
+    grad = _combine_grad(self.parameters())
+
+    gsnr = _mean_gsnr(_get_batch_size(self.parameters()), sum_grad_squared, grad)
+    self.iter_tracking["global_mean_gsnr"].append(gsnr)
+
+
+def track_mean_gsnr(self):
+    """Track mean gradient signal-to-noise ratio for concatenated network parameters.
+
+    .. note::
+        The GSNR is not additive over layers.
+    """
+
+    def parameter_mean_gsnr(p):
+        gsnr = _mean_gsnr(
+            _get_batch_size(self.parameters()), p.sum_grad_squared, p.grad
+        )
+        return gsnr
+
+    self.iter_tracking["mean_gsnr"].append(
+        [parameter_mean_gsnr(p) for p in self.parameters() if p.requires_grad]
+    )

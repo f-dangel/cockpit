@@ -58,6 +58,18 @@ class CockpitTracker:
             "trace",  # hessian trace, computed at theta_0
             "alpha",  # local effective step size
             "max_ev",  # largest eigenvalue of hessian, computed at theta_0
+            # ball radius around expected gradient (Byrd et al. 2012)
+            "norm_test_radius",
+            "global_norm_test_radius",
+            # band width around expected gradient (Bollapgrada et al. 2017)
+            "inner_product_test_width",
+            "global_inner_product_test_width",
+            # angle sin between mini-batch and expected gradient (Bahamou, 2017)
+            "acute_angle_test_sin",
+            "global_acute_angle_test_sin",
+            # gradient signal-to-noise ratio (Liu, 2020)
+            "mean_gsnr",
+            "global_mean_gsnr",
         ]
         per_epoch_quants = [
             "iteration",  # keep track which iteration we store
@@ -188,6 +200,18 @@ class CockpitTracker:
             tracking.track_d2init(self)
             tracking.track_alpha(self)
 
+            tracking.track_norm_test_radius(self)
+            tracking.track_global_norm_test_radius(self)
+
+            tracking.track_inner_product_test_width(self)
+            tracking.track_global_inner_product_test_width(self)
+
+            tracking.track_acute_angle_test_sin(self)
+            tracking.track_global_acute_angle_test_sin(self)
+
+            tracking.track_mean_gsnr(self)
+            tracking.track_global_mean_gsnr(self)
+
             # Tracked a full iteration
             self.iteration_complete = True
         else:
@@ -221,9 +245,12 @@ class CockpitTracker:
             or global_step % self.track_interval == 1
         ):
             return (
+                extensions.SumGradSquared(),
+                # TODO: Use SumGradSquared, Variance recomputes summed gradient
                 extensions.Variance(),
                 extensions.BatchGrad(),
                 extensions.DiagHessian(),
+                extensions.BatchL2Grad(),
             )
         else:
             return []
