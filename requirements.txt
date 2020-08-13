@@ -6,5 +6,7 @@ seaborn
 torch
 -e git://github.com/f-dangel/backpack.git@development#egg=backpack
 -e git://github.com/fsschneider/DeepOBS.git@develop#egg=deepobs
+# still private
+-e git+ssh://git@github.com/f-dangel/backobs.git@master#egg=backobs
 -r req/lint.txt
 -r req/test.txt

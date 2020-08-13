@@ -82,9 +82,6 @@ class ScheduleCockpitRunner(PTRunner):
         global_step = 0
 
         for epoch_count in range(num_epochs + 1):
-            # Next step in LR Schedule
-            scheduler.step(epoch_count)
-
             # Evaluate at beginning of epoch.
             self.evaluate_all(
                 epoch_count,
@@ -127,7 +124,7 @@ class ScheduleCockpitRunner(PTRunner):
                     cockpit_tracker.track_before(batch_losses, global_step)
 
                     batch_losses, _ = tproblem.get_batch_loss_and_accuracy(
-                        reduction="none"  # changed for cockpit
+                        reduction="mean"  # changed for cockpit
                     )
 
                     # do zero_grad after forward pass, so we don't set it to
@@ -169,6 +166,9 @@ class ScheduleCockpitRunner(PTRunner):
 
                 except StopIteration:
                     break
+
+            # Next step in LR Schedule
+            scheduler.step()
 
             # Write to log file
             cockpit_tracker.write()

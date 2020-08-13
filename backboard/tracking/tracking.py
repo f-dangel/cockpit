@@ -7,21 +7,27 @@ of the CockpitTracker class.
 
 self is a CockpitTracker."""
 
-import time
 from math import sqrt
 
 import numpy as np
-import torch
-
 from scipy.sparse.linalg import eigsh
 
 from .utils_ev import HVPLinearOperator
-from .utils_tracking import (_acute_angle_test_sin, _combine_batch_l2,
-                             _combine_grad, _combine_grad_batch,
-                             _combine_sum_grad_squared, _exact_variance,
-                             _fit_quadratic, _get_alpha, _get_batch_size,
-                             _inner_product_test_width, _layerwise_dot_product,
-                             _mean_gsnr, _norm_test_radius)
+from .utils_tracking import (
+    _acute_angle_test_sin,
+    _combine_batch_l2,
+    _combine_grad,
+    _combine_grad_batch,
+    _combine_sum_grad_squared,
+    _exact_variance,
+    _fit_quadratic,
+    _get_alpha,
+    _get_batch_size,
+    _inner_product_test_width,
+    _layerwise_dot_product,
+    _mean_gsnr,
+    _norm_test_radius,
+)
 
 
 def track_f(self, batch_loss, point):

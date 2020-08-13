@@ -47,7 +47,7 @@ pre-commit install
 
 The `runners` can be used to train on a DeepOBS test problem and simultaneously
 track quantities to a log file. Depending on the `runner`, these log files can
-be shown using the `CockpitPlotter` while training.
+be plotted using the `CockpitPlotter` while training.
 
 The output of the `runner` is among other things a `__log.json` log file that
 can be read by the `CockpitPlotter` or `AirlinePlotter` to show the cockpit.
@@ -76,6 +76,8 @@ runner.run(
     lr_schedule=lr_schedule
 )
 ```
+
+You can run `python exp/00_Quadratic_Example.py` for an example of this.
 
 ### Cockpit Plotter
 
@@ -129,7 +131,9 @@ Either add your function to the `track_before` or `track_after` method of the
 The actual computation is done in the function that you define in
 [`tracking.py`](backboard/tracking/tracking.py), where you would need to add
 the definition of your tracking function. The result should not be returned but
-appended to `self.iter_tracking[my_quant]`. Additional helper functions can be outsourced to [`utils_tracking.py`](backboard/tracking/utils_tracking.py) or separate utils files.
+appended to `self.iter_tracking[my_quant]`. Additional helper functions can be
+outsourced to [`utils_tracking.py`](backboard/tracking/utils_tracking.py) or
+separate utils files.
 
 ### Add an Instrument
 
