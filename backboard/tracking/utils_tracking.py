@@ -237,7 +237,7 @@ def _combine_grad(parameters):
 def _combine_grad_batch(parameters):
     """Construct grad_batch for concatenation of flattened parameters."""
     flat_grad_batch = [
-        p.grad_batch.reshape(p.shape[0], -1) for p in parameters if p.requires_grad
+        p.grad_batch.flatten(start_dim=1) for p in parameters if p.requires_grad
     ]
     return torch.cat(flat_grad_batch, dim=1)
 

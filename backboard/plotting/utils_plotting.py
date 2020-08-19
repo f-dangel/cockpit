@@ -62,7 +62,6 @@ def _process_tracking_results(self):
     for (columnName, columnData) in self.iter_tracking.items():
         # We only need to handle data that is non-scalar
         if isinstance(columnData[0], list):
-            print(columnName)
             aggregate = _get_aggregate_function(self, columnName)
             # Create new parts
             for p in range(self.parts):
@@ -122,6 +121,23 @@ def _get_aggregate_function(self, quantity):
         return sum
     elif quantity in ["grad_norms", "d2init", "dtravel"]:
         return _root_sum_of_squares
+    elif quantity in [
+        "norm_test_radius",
+        "global_norm_test_radius",
+        "inner_product_test_width",
+        "global_inner_product_test_width",
+        "acute_angle_test_sin",
+        "global_acute_angle_test_sin",
+        "mean_gsnr",
+        "global_mean_gsnr",
+    ]:
+        warnings.warn(
+            "Warning: Don't know how to aggregate "
+            + quantity
+            + ". Using `sum' for now, but this might be wrong.",
+            stacklevel=2,
+        )
+        return sum
     else:
         warnings.warn("Warning: Don't know how to aggregate " + quantity, stacklevel=2)
 

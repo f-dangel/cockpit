@@ -1,14 +1,15 @@
-"""Cond Alpha Gauge."""
+"""Condition number vs. Alpha Gauge."""
 
 from .utils_instruments import create_basic_plot
 
 
 def cond_alpha_gauge(self, fig, gridspec):
-    """[summary]
+    """(Average) condition number vs Alpha value.
 
     Args:
-        fig ([type]): [description]
-        gridspec ([type]): [description]
+        fig (matplotlib.figure): Figure of the Cockpit.
+        gridspec (matplotlib.gridspec): GridSpec where the instrument should be
+            placed.
     """
     # Condition number vs. alpha
     plot_args = {
@@ -22,6 +23,12 @@ def cond_alpha_gauge(self, fig, gridspec):
         "y_scale": "linear",
         "cmap": self.cmap,
         "title": "Condition Number vs. Alpha",
+        "xlim": None,
+        "ylim": None,
+        "fontweight": "bold",
+        "facecolor": "summary",
+        "zero_lines": True,
+        "center": [False, True],
     }
     ax = fig.add_subplot(gridspec)
     create_basic_plot(**plot_args, ax=ax)

@@ -2,15 +2,17 @@
 
 import seaborn as sns
 
-from .utils_instruments import create_basic_plot
+from .utils_instruments import _add_last_value_to_legend, create_basic_plot
 
 
 def performance_gauge(self, fig, gridspec):
-    """[summary]
+    """Performance gauge, plotting train/valid accuracy vs. epoch and
+    mini-batch train loss vs. iteration.
 
     Args:
-        fig ([type]): [description]
-        gridspec ([type]): [description]
+        fig (matplotlib.figure): Figure of the Cockpit.
+        gridspec (matplotlib.gridspec): GridSpec where the instrument should be
+            placed
     """
     # Mini-batch train loss
     plot_args = {
@@ -21,9 +23,14 @@ def performance_gauge(self, fig, gridspec):
         "EMA_alpha": self.EMA_alpha,
         "EMA_cmap": self.cmap2,
         "x_scale": "linear",
-        "y_scale": "log",
+        "y_scale": "linear",
         "cmap": self.cmap,
+        "ylabel": "Mini-batch losses",
         "title": "Performance Plot",
+        "xlim": "tight",
+        "ylim": None,
+        "fontweight": "bold",
+        "facecolor": "summary",
     }
     ax = fig.add_subplot(gridspec)
     create_basic_plot(**plot_args, ax=ax)
@@ -35,7 +42,9 @@ def performance_gauge(self, fig, gridspec):
         "data": self.epoch_tracking,
     }
     ax2 = ax.twinx()
-    sns.lineplot(**plot_args, ax=ax2, label=plot_args["y"], linewidth=2)
+    sns.lineplot(
+        **plot_args, ax=ax2, label=plot_args["y"].title().replace("_", " "), linewidth=2
+    )
 
     # Train Accuracy
     plot_args = {
@@ -43,4 +52,11 @@ def performance_gauge(self, fig, gridspec):
         "y": "valid_accuracy",
         "data": self.epoch_tracking,
     }
-    sns.lineplot(**plot_args, ax=ax2, label=plot_args["y"], linewidth=2)
+    sns.lineplot(
+        **plot_args, ax=ax2, label=plot_args["y"].title().replace("_", " "), linewidth=2
+    )
+
+    # Customization
+    ax2.set_ylim([0, 1])
+    ax2.set_ylabel("Accuracy")
+    _add_last_value_to_legend(ax2, percentage=True)

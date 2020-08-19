@@ -48,10 +48,10 @@ class CockpitPlotter:
         # Subplot grid: Currently looks like this. Instruments with an index,
         # have a flexible amount of plots (one for each part.)
         # +-----------------------+------------------------+--------------------+
-        # | Legend                | Alpha vs. Trace        | Alpha Gauge        |
-        # | Max Eigenvalues Gauge | Cond. Number vs. Alpha | Cond. Number Gauge |
-        # | Trace Gauge_0         | Trace Gauge_1          | Trace Gauge_all    |
-        # | Distance Gauge_0      | Distance Gauge_1       | Distance Gauge_all |
+        # | Legend                | Alpha vs. Trace      | Alpha Gauge          |
+        # | Max Eigenvalues Gauge | Cond. Number Gauge   |Cond. Number vs. Alpha|
+        # | Trace Gauge_0         | Trace Gauge_1        | Trace Gauge_all      |
+        # | Distance Gauge_0      | Distance Gauge_1     | Distance Gauge_all   |
         # |                         Performance Gauge                           |
         # |                         Hyperparameter Gauge                        |
         # +-----------------------+------------------------+--------------------+
@@ -67,10 +67,10 @@ class CockpitPlotter:
         # Second Row #
         # Max EV
         instruments.max_ev_gauge(self, self.fig, self.grid_spec[1, -3])
-        # Cond Number vs Alpha
-        # instruments.cond_alpha_gauge(self, self.fig, self.grid_spec[1, -2])
         # Cond Number Gauge
-        instruments.cond_gauge(self, self.fig, self.grid_spec[1, -1])
+        instruments.cond_gauge(self, self.fig, self.grid_spec[1, -2])
+        # Cond Number vs Alpha
+        instruments.cond_alpha_gauge(self, self.fig, self.grid_spec[1, -1])
 
         # Third Row
         # per part trace
