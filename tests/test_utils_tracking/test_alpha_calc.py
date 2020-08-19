@@ -1,12 +1,15 @@
-"""Test for the quadratic fit and the computation of the local step size alpha."""
+"""Tests for the quadratic fit and the computation of the local step size alpha."""
 
 import numpy as np
 
-from backboard.utils.cockpit_utils import _fit_quadratic, _get_alpha
+from backboard.tracking.utils_tracking import _fit_quadratic, _get_alpha
 
 
 def test_determinstic_fit_min():
-    """Verify that fitting works in the noise free case."""
+    r"""Verify that fitting works in the noise free case.
+
+    This is an example where we "walked to the minimum" \_
+    """
     # Observations
     t = 1  # where
     fs = [1, 0.5]  # loss value
@@ -24,7 +27,10 @@ def test_determinstic_fit_min():
 
 
 def test_determinstic_fit_other_side():
-    """Verify that fitting works in the noise free case."""
+    r"""Verify that fitting works in the noise free case.
+
+    This is an example where we "walked to the other side" \ /
+    """
     # Observations
     t = 1  # where
     fs = [1, 1]  # loss value
@@ -42,7 +48,11 @@ def test_determinstic_fit_other_side():
 
 
 def test_determinstic_fit_linear():
-    """Verify that fitting works in the noise free case."""
+    r"""Verify that fitting works in the noise free case.
+
+    This is an example where it is still going downhill \
+                                                         \
+    """
     # Observations
     t = 1  # where
     fs = [1, 0]  # loss value
@@ -60,7 +70,11 @@ def test_determinstic_fit_linear():
 
 
 def test_determinstic_fit_concave():
-    """Verify that fitting works in the noise free case."""
+    r"""Verify that fitting works in the noise free case.
+
+    This is an example where we start at a local maxima _
+                                                         \
+    """
     # Observations
     t = 1  # where
     fs = [1, 0.5]  # loss value
@@ -72,16 +86,20 @@ def test_determinstic_fit_concave():
 
     assert np.allclose(mu, [1, 0, -1 / 2])
 
+    print(mu)
+
     alpha = _get_alpha(mu, t)
 
-    assert alpha >= 1e12
+    assert alpha == -1
 
 
 def test_stochastic_fit_min():
-    """Verify that fitting works in the noisy case.
-
+    r"""Verify that fitting works in the noisy case.
     Here there are two contradictory observations, but one with a very high
-    uncertainty, that it should not trust."""
+    uncertainty, that it should not trust.
+
+    This is an example where we "walked to the minimum" \_
+    """
     # Observations
     t = 1  # where
     fs = [1, 0.5]  # loss value
@@ -99,10 +117,12 @@ def test_stochastic_fit_min():
 
 
 def test_stochastic_fit_other_side():
-    """Verify that fitting works in the noisy case.
-
+    r"""Verify that fitting works in the noisy case.
     Here there are two contradictory observations, but one with a very high
-    uncertainty, that it should not trust."""
+    uncertainty, that it should not trust.
+
+    This is an example where we "walked to the other side" \ /
+    """
     # Observations
     t = 1  # where
     fs = [1, 0]  # loss value
@@ -120,10 +140,13 @@ def test_stochastic_fit_other_side():
 
 
 def test_small_step():
-    """Verify that fitting works in the noisy case.
-
+    r"""Verify that fitting works in the noisy case.
     Here there are two contradictory observations, but one with a very high
-    uncertainty, that it should not trust."""
+    uncertainty, that it should not trust.
+
+    This is an example where we took a very small step, geting the same loss
+    and derivative
+    """
     # Observations
     t = 1e-10  # where
     fs = [1, 1]  # loss value
