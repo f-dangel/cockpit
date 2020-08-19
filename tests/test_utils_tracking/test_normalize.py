@@ -21,7 +21,7 @@ for _ in range(100):
 
 @pytest.mark.parametrize("v", vecs)
 def test_normalize(v):
-    """Check that a bunch of random vectors have norm zero.
+    """Check that a bunch of random vectors have norm one.
 
     Args:
         v (torch.Tensor): A torch.Tensor vector
