@@ -42,49 +42,7 @@ class CockpitTracker:
         utils_tracking._prepare_logpath(logpath)
 
         # Initialize tracked quantites
-        per_iter_quants = [
-            "iteration",  # keep track which iteration we store
-            "f0",  # function value at the beginning of a step
-            "f1",  # function value at the end of a step
-            "var_f0",  # variance of the function value
-            "var_f1",  # -"-
-            "df0",  # derivative, the projected gradient onto the search dir
-            "df1",  # -"-
-            "var_df0",  # variance of the derivative.
-            "var_df1",  # -"-
-            "grad_norms",  # gradient norm, is computed at theta_0 (position of f0)
-            "dtravel",  # update step size, from theta_0 to theta_1
-            "d2init",  # distance to parameter init, computed at theta_0
-            "trace",  # hessian trace, computed at theta_0
-            "alpha",  # local effective step size
-            "max_ev",  # largest eigenvalue of hessian, computed at theta_0
-            # ball radius around expected gradient (Byrd et al. 2012)
-            "norm_test_radius",
-            "global_norm_test_radius",
-            # band width around expected gradient (Bollapgrada et al. 2017)
-            "inner_product_test_width",
-            "global_inner_product_test_width",
-            # angle sin between mini-batch and expected gradient (Bahamou, 2017)
-            "acute_angle_test_sin",
-            "global_acute_angle_test_sin",
-            # gradient signal-to-noise ratio (Liu, 2020)
-            "mean_gsnr",
-            "global_mean_gsnr",
-        ]
-        per_epoch_quants = [
-            "iteration",  # keep track which iteration we store
-            "epoch",  # keep track which epoch we store
-            "train_loss",
-            "valid_loss",
-            "test_loss",
-            "train_accuracy",
-            "valid_accuracy",
-            "test_accuracy",
-            "learning_rate",
-        ]
-        self.iter_tracking, self.epoch_tracking = utils_tracking._init_tracking(
-            per_iter_quants, per_epoch_quants
-        )
+        self.iter_tracking, self.epoch_tracking = utils_tracking._init_tracking()
 
         # Additional quantites we need to keep track of but not log #
         # We need to store the current search direction

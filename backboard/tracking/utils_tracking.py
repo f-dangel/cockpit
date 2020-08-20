@@ -4,6 +4,7 @@ import copy
 import itertools
 import os
 import warnings
+from collections import defaultdict
 from math import sqrt
 
 import numpy as np
@@ -46,27 +47,19 @@ def _prepare_logpath(logpath):
     os.makedirs(logdir, exist_ok=True)
 
 
-def _init_tracking(per_iter_quants, per_epoch_quants):
+def _init_tracking():
     """Initialize dicts for our tracking quantities.
 
-    This is a helper function that initializes each entry of the dict as an
-    empty list. This makes it easier to append to when tracking.
-
-    Args:
-        per_iter_quants (list): List of quantities that are tracked per iteration
-        per_epoch_quants (list): List for quantities that are tracked per epoch
+    This is a helper function that creates two default dictionaries. This means
+    that if the dict is given a key it doesn't know yet, it returns an empty list.
+    This makes it easier to just append to it, even if it doesn't exist yet.
 
     Returns:
-        [tuple]: A tuple of initialized dictionaries.
+        [tuple]: A tuple of default dictionaries.
     """
-    # Create empty dicts for iter and epoch quantites
-    iter_tracking = dict()
-    epoch_tracking = dict()
-    # fill them with empty lists
-    for quant in per_iter_quants:
-        iter_tracking[quant] = []
-    for quant in per_epoch_quants:
-        epoch_tracking[quant] = []
+    # Create empty default dicts for iter and epoch quantites
+    iter_tracking = defaultdict(list)
+    epoch_tracking = defaultdict(list)
 
     return iter_tracking, epoch_tracking
 

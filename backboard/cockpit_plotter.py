@@ -70,7 +70,7 @@ class CockpitPlotter:
         # Cond Number Gauge
         instruments.cond_gauge(self, self.fig, self.grid_spec[1, -2])
         # Cond Number vs Alpha
-        instruments.cond_alpha_gauge(self, self.fig, self.grid_spec[1, -1])
+        # instruments.cond_alpha_gauge(self, self.fig, self.grid_spec[1, -1])
 
         # Third Row
         # per part trace
