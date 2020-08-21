@@ -1,3 +1,4 @@
+isort
 darglint
 flake8
 mccabe
