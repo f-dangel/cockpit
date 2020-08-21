@@ -27,6 +27,17 @@ def lr_schedule_const(num_epochs):
     [(0.01, 5, 1, lr_schedule_half), (0.7, 3, 5, lr_schedule_const)],
 )
 def test_tracking(lr, num_epochs, track_interval, lr_schedule):
+    """Test the tracking capabilities of the Cockpit.
+
+    Args:
+        lr (float): Learning rate of the optimizer.
+        num_epochs (int): Number of epochs to train the model.
+        track_interval (int): How often we want to track.
+        lr_schedule (lambda): A lambda function defining a learning rate schedule.
+
+    Raises:
+        ValueError: [description]
+    """
     runner = ScheduleCockpitRunner(optimizer_class, hyperparams)
     runner._run(
         testproblem="quadratic_deep",

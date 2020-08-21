@@ -61,6 +61,14 @@ ylim_tests = [
 @pytest.mark.parametrize("xlim,expected_xlim", xlim_tests)
 @pytest.mark.parametrize("ylim,expected_ylim", ylim_tests)
 def test_compute_plot_limits(xlim, ylim, expected_xlim, expected_ylim):
+    """Test whether the plot limits are computed correctly.
+
+    Args:
+        xlim (None, str, list): Defining the limits of the x-axis.
+        ylim (None, str, list): Defining the limits of the y-axis.
+        expected_xlim (list): A list of floats of the expected x-limits.
+        expected_ylim (list): A list of floats of the expected y-limits.
+    """
     # Create a simple plot with known limits
     x, y, _, _, _ = _simple_problem()
 

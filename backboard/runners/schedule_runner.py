@@ -1,5 +1,4 @@
-"""Schedule Runner to combine DeepOBS and Backboard
-using a learning rate schedule."""
+"""Schedule Runner using a learning rate schedule."""
 
 import os
 import warnings
@@ -12,10 +11,15 @@ from deepobs.pytorch.runners.runner import PTRunner
 
 
 class ScheduleCockpitRunner(PTRunner):
-    """Schedule Runner to combine DeepOBS and Backboard
-    using a learning rate schedule."""
+    """Schedule Runner using a learning rate schedule."""
 
     def __init__(self, optimizer_class, hyperparameter_names):
+        """Initialize the runner.
+
+        Args:
+            optimizer_class (torch.optim): The optimizer.
+            hyperparameter_names (dict): Hyperparameters of the optimizer.
+        """
         super(ScheduleCockpitRunner, self).__init__(
             optimizer_class, hyperparameter_names
         )
@@ -31,7 +35,24 @@ class ScheduleCockpitRunner(PTRunner):
         tb_log_dir,
         **training_params
     ):
+        """Training loop for this runner.
 
+        Args:
+            tproblem (deepobs.pytorch.testproblems.testproblem): The testproblem
+                instance to train on.
+            hyperparams (dict): The optimizer hyperparameters to use for the training.
+            num_epochs (int): The number of training epochs.
+            print_train_iter (bool): Whether to print the training progress at
+                every train_log_interval
+            train_log_interval (int): Mini-batch interval for logging.
+            tb_log (bool): Whether to use tensorboard logging or not
+            tb_log_dir (str): The path where to save tensorboard events.
+            **training_params (dict): Kwargs for additional training parameters
+                that will be used by the cockpit.
+
+        Returns:
+            [type]: [description]
+        """
         opt = self._optimizer_class(tproblem.net.parameters(), **hyperparams)
 
         # Using a LR Scheduler
@@ -202,7 +223,7 @@ class ScheduleCockpitRunner(PTRunner):
             parser (argparse.ArgumentParser): The argument parser object.
             args (dict): The args that are parsed as locals to the run method.
             training_params (dict): Training parameters that are to read in.
-            """
+        """
         for tp in training_params:
             args[tp] = training_params[tp]
 
@@ -220,8 +241,8 @@ class ScheduleCockpitRunner(PTRunner):
         """Remove the training_params from the output.
 
         Since some training parameters (e.g. the lr_schedule) are not JSON
-        serializable, we need to remove them from the output."""
-
+        serializable, we need to remove them from the output.
+        """
         # remove test accuracy if it is not available
         if "test_accuracies" in output:
             if all(output["test_accuracies"]) == 0:

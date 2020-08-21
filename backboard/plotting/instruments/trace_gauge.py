@@ -7,6 +7,7 @@ def trace_gauge(self, fig, gridspec, part="all"):
     """Trace gauge, showing the trace of the Hessian versus iteration.
 
     Args:
+        self (cockpit.plotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure): Figure of the Cockpit.
         gridspec (matplotlib.gridspec): GridSpec where the instrument should be
             placed

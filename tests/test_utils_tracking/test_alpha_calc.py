@@ -95,6 +95,7 @@ def test_determinstic_fit_concave():
 
 def test_stochastic_fit_min():
     r"""Verify that fitting works in the noisy case.
+
     Here there are two contradictory observations, but one with a very high
     uncertainty, that it should not trust.
 
@@ -118,6 +119,7 @@ def test_stochastic_fit_min():
 
 def test_stochastic_fit_other_side():
     r"""Verify that fitting works in the noisy case.
+
     Here there are two contradictory observations, but one with a very high
     uncertainty, that it should not trust.
 
@@ -141,6 +143,7 @@ def test_stochastic_fit_other_side():
 
 def test_small_step():
     r"""Verify that fitting works in the noisy case.
+
     Here there are two contradictory observations, but one with a very high
     uncertainty, that it should not trust.
 

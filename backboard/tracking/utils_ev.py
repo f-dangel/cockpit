@@ -1,7 +1,4 @@
-"""
-Hessian-vector products in torch with scipy.sparse.linalg.LinearOperator
-interface
-"""
+"""Hessian-vector products in torch with scipy.sparse.linalg.LinearOperator."""
 
 import numpy
 import torch

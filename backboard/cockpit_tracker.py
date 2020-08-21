@@ -1,4 +1,4 @@
-"""Cockpit Tracker"""
+"""Cockpit Tracker."""
 
 import json
 
@@ -61,7 +61,7 @@ class CockpitTracker:
         valid_accuracies,
         test_accuracies,
     ):
-        """Tracking function for quantities computed at every epoch
+        """Tracking function for quantities computed at every epoch.
 
         Args:
             epoch_count (int): Number of epoch.
@@ -89,8 +89,7 @@ class CockpitTracker:
         )
 
     def track_before(self, batch_losses, global_step):
-        """Tracking function that is done before we get the new loss and
-        gradients.
+        """Tracking function that is done before the forward/backward pass.
 
         This split is necessary since we want to store both projected gradient
         at the beginning of an iteration (computed here) as well as at the end
@@ -127,8 +126,7 @@ class CockpitTracker:
             return
 
     def track_after(self, batch_losses, global_step):
-        """Tracking function that is done after we get the new loss and
-        gradients.
+        """Tracking function that is done after the forward/backward pass.
 
         This split is necessary since we want to store both projected gradient
         at the beginning of an iteration (computed in track_before()) as well as
@@ -191,10 +189,13 @@ class CockpitTracker:
         print("Cockpit-Log written...")
 
     def extensions(self, global_step):
-        """Returns the backpack extensions that should be used in this iteration
+        """Returns the backpack extensions that should be used in this iteration.
 
         Args:
             global_step (int): Current number of iteration.
+
+        Returns:
+            list: A list of backPACK extensions to use. Could be empty.
         """
         # Use BackPACK either if we want to track this or the next iteration.
         # We need both because of the track_before, track_after split.
@@ -214,11 +215,14 @@ class CockpitTracker:
             return []
 
     def _should_track(self, global_step):
-        """Returns wether we want to track in the current step
+        """Returns wether we want to track in the current step.
 
         Args:
             global_step ([type]): Current number of iteration, checked against
                 the `track_interval`.
+
+        Returns:
+            bool: Whether we want to track in this iteration.
         """
         # Skip the first step, as nothing is computed yet
         if global_step == 0:
@@ -233,6 +237,7 @@ class CockpitTracker:
     def _update_search_dir(self):
         """Updates the search direction to the negative current gradient.
 
-        TODO this is currently only valid for SGD!"""
+        TODO this is currently only valid for SGD!
+        """
         # update search direction of all trainable (!) parameters
         self.search_dir = [-p.grad.data for p in self.parameters() if p.requires_grad]

@@ -4,11 +4,13 @@ from .utils_instruments import create_basic_plot
 
 
 def cond_gauge(self, fig, gridspec):
-    """(Average) condition number gauge, showing (average) condition number of
-    the Hessian versus iteration. This (average) condition number is computed as
-    the ratio of the largest eigenvalue and average eigenvalue.
+    """Showing (average) condition number of the Hessian versus iteration.
+
+    This (average) condition number is computed as the ratio of the largest
+    eigenvalue and average eigenvalue.
 
     Args:
+        self (cockpit.plotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure): Figure of the Cockpit.
         gridspec (matplotlib.gridspec): GridSpec where the instrument should be
             placed.

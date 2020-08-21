@@ -4,10 +4,10 @@ from .utils_instruments import create_basic_plot
 
 
 def distance_gauge(self, fig, gridspec, part="all"):
-    """Distance gauge, showing the parameter L2-distance to the initialization
-    versus iteration.
+    """Showing the parameter L2-distance to the initialization versus iteration.
 
     Args:
+        self (cockpit.plotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure): Figure of the Cockpit.
         gridspec (matplotlib.gridspec): GridSpec where the instrument should be
             placed

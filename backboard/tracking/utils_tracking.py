@@ -38,7 +38,7 @@ def _check_optimizer(optimizer):
 
 
 def _prepare_logpath(logpath):
-    """Prepare the logpath by creating it if necessary
+    """Prepare the logpath by creating it if necessary.
 
     Args:
         logpath (str): The path where the logs should be stored
@@ -66,9 +66,11 @@ def _init_tracking():
 
 def _layerwise_dot_product(x_s, y_s):
     """Computes the dot product of two parameter vectors layerwise.
+
     Args:
         x_s (list): First list of parameter vectors.
         y_s (list): Second list of parameter vectors.
+
     Returns:
         prod: 1-D list of scalars. Each scalar is a dot product of one layer.
     """
@@ -76,12 +78,17 @@ def _layerwise_dot_product(x_s, y_s):
 
 
 def _exact_variance(grads, search_dir):
-    """Given a batch of individual gradients, it computes the exact variance
-    of their projection onto the search direction.
+    """Computes the exact variance of individual projected gradients.
+
+    The gradients are projected onto the search direction before the variance
+    is computed.
 
     Args:
         grads (list): List of individual gradients
         search_dir (list): List of search direction
+
+    Returns:
+        list: A list of the variances per layer.
     """
     # swap order of first two axis, so now it is:
     # grads[batch_size, layer, parameters]
@@ -96,8 +103,7 @@ def _exact_variance(grads, search_dir):
 
 
 def _fit_quadratic(t, fs, dfs, fs_var, dfs_var):
-    """Fit a quadratic, given (noisy) observations of two function values and
-    two projected gradients
+    """Fit a quadratic, given two (noisy) function & gradient observations.
 
     Args:
         t (float): Position of second observation.
@@ -137,6 +143,7 @@ def _fit_quadratic(t, fs, dfs, fs_var, dfs_var):
 
 def _get_alpha(mu, t):
     """Compute the local step size alpha.
+
     It will be expressed in terms of the local quadratic fit. A local step size
     of 1, is equal to `stepping on the other side of the quadratic`, while a 
     step size of 0 means `stepping to the minimum`.
@@ -178,8 +185,7 @@ def _normalize(v):
 
 
 def _trim_dict(dicty):
-    """Returns a trimmed dictionary such that it each value containst a list of the same
-    size.
+    """Trimms a dictionary such that each values are lists of the same length.
 
     We assume that all list have either the size n or n+1. The last elements of
     all lists of size n+1 should be trimmed.
@@ -265,7 +271,6 @@ def _norm_test_radius(B, batch_l2, grad):
 
     We track the square root of the above equation's LHS.
     """
-
     square_radius = 1 / (B - 1) * (B * (batch_l2.sum() / grad.norm(2) ** 2) - 1)
     return sqrt(square_radius)
 
@@ -288,7 +293,6 @@ def _inner_product_test_width(B, grad_batch, grad):
 
     We track the square root of the above equation's LHS.
     """
-
     projection = (
         torch.einsum("bi,i->b", grad_batch.reshape(B, -1), grad.reshape(-1))
         / grad.norm(2) ** 2
@@ -342,7 +346,14 @@ def _acute_angle_test_sin(B, grad_batch, batch_l2, grad):
 def _get_batch_size(parameters):
     """Infer batch size from saved BackPACK extensions.
 
-    `B` is reconstructed from the gradient L2 norm.
+    Args:
+        parameters (torch.parameters): Parameters of the model.
+
+    Raises:
+        ValueError: If no parameter which requires gradient is found.
+
+    Returns:
+        int: The batch size.
     """
     for p in parameters:
         if p.requires_grad:

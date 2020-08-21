@@ -26,6 +26,51 @@ def create_basic_plot(
     zero_lines=False,
     center=False,
 ):
+    """Creates a basic plot of x vs. y values for the cockpit.
+
+    Args:
+        x (str): Name of the variable in data that should be plotted on the x-axis.
+        y (str): Name of the variable in data that should be plotted on the y-axis.
+        data (pandas.dataframe): Data Frame containing the plotting data.
+        ax (matplotlib.axis): Axis where the plot should be created.
+        EMA (str, optional): Signifies over which variables an exponentially
+            moving average should be computed.E.g. "xy" would be an exponentially
+            moving average over both variables. Defaults to "".
+        EMA_alpha (float, optional): Decay parameter of the exponentially moving
+            average. Defaults to 0.2.
+        x_scale (str, optional): Whether to use a linear or log scale for the x-axis.
+            Defaults to "linear".
+        y_scale (str, optional): Whether to use a linear or log scale for the y-axis.
+            Defaults to "linear".
+        cmap (matplotlib.cmap, optional): A colormap for the individual data points.
+            Defaults to None.
+        EMA_cmap (matplotlib.cmap, optional): A colormap for the EMA.
+            Defaults to None.
+        xlabel (str, optional): Label for the x-axis. Defaults to None, meaning
+            it uses `x`.
+        ylabel (str, optional): Label for the y-axis. Defaults to None, meaning
+            it uses `y`.
+        title (str, optional): Title of this subfigure. Defaults to "".
+        xlim (str, list, optional): Limits for the x-axis. Can be a (list of)
+            strings, None or numbers. "tight" would shrink the x-limits to the
+            data, None would use the default scaling, and float would use this
+            limit. If it is given as a list, the first value is used as the lower
+            bound and the second one as an upper bound. Defaults to None.
+        ylim (str, list, optional): Limits for the y-axis. Can be a (list of)
+            strings, None or numbers. "tight" would shrink the y-limits to the
+            data, None would use the default scaling, and float would use this
+            limit. If it is given as a list, the first value is used as the lower
+            bound and the second one as an upper bound. Defaults to None.
+        fontweight (str, optional): Fontweight of the title. Defaults to "normal".
+        facecolor (str, optional): Facecolor of the plot. "summary" would use the
+            default facecolor defined for those plots in the cockpit_plotter.
+            Defaults to None, which does not apply any color.
+        zero_lines (bool, optional): Whether to highligh the x and y = 0.
+            Defaults to False.
+        center (bool, optional): Whether to center the limits of the plot.
+            Can also be given as a list, where the first element is applied to
+            the x-axis and the second to the y-axis. Defaults to False.
+    """
     sns.scatterplot(
         x=x, y=y, hue="iteration", palette=cmap, edgecolor=None, s=10, data=data, ax=ax,
     )
@@ -113,21 +158,9 @@ def _beautify_plot(
 
 
 def _compute_plot_limits(ax, xlim, ylim, center=False):
-    # extend shortend inputs
-    if xlim is None:
-        xlim = [None, None]
-    elif xlim == "tight":
-        xlim = ["tight", "tight"]
-    if ylim is None:
-        ylim = [None, None]
-    elif ylim == "tight":
-        ylim = ["tight", "tight"]
-    if type(center) is list:
-        pass
-    elif center:
-        center = [True, True]
-    else:
-        center = [False, False]
+    xlim = _extend_input(xlim)
+    ylim = _extend_input(ylim)
+    center = _extend_input(center)
 
     lims = [xlim, ylim]
     auto_lims = [ax.get_xlim(), ax.get_ylim()]
@@ -162,9 +195,27 @@ def _compute_plot_limits(ax, xlim, ylim, center=False):
     return lims[0], lims[1]
 
 
+def _extend_input(shortend_input):
+    # extend shortend inputs
+    if type(shortend_input) is list:
+        pass
+    elif shortend_input is None:
+        shortend_input = [None, None]
+    elif shortend_input == "tight":
+        shortend_input = ["tight", "tight"]
+    elif shortend_input:
+        shortend_input = [True, True]
+    else:
+        shortend_input = [False, False]
+
+    return shortend_input
+
+
 def _add_last_value_to_legend(ax, percentage=False):
-    """Adds the last value of each line of a plot as a numeric value to its
-    entry in the legend.
+    """Adds the last value of each line to the legend.
+
+    This function takes every line in a plot, checks its last value and adds it
+    in brackets to the corresponding label in the legend.
 
     Args:
         ax (matplotlib.axes): Axis of a matplotlib figure

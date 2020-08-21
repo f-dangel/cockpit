@@ -5,7 +5,8 @@ logged quantity.
 These functions are then used in either track_before, track_after or track_epoch
 of the CockpitTracker class.
 
-self is a CockpitTracker."""
+self is a CockpitTracker.
+"""
 
 from math import sqrt
 
@@ -34,6 +35,7 @@ def track_f(self, batch_loss, point):
     """Tracks the function value at the (start or end) point.
 
     Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
         batch_loss (float): Average loss over a batch
         point (str): Either "0" or "1" to signify that we are iter_tracking the
             starting or end point of an iteration.
@@ -45,6 +47,7 @@ def track_var_f(self, batch_losses, point):
     """Tracks the variance of the function value at the (start or end) point.
 
     Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
         batch_losses (list): List of individual losses in a batch.
         point (str): Either "0" or "1" to signify that we are iter_tracking the
             starting or end point of an iteration.
@@ -53,10 +56,12 @@ def track_var_f(self, batch_losses, point):
 
 
 def track_df(self, point):
-    """Tracks the projected gradient (onto the search direction) at the
-    (start or end) point.
+    """Tracks the projected gradient at the (start or end) point.
+
+    The graident is projected onto the search direction.
 
     Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
         point (str): Either "0" or "1" to signify that we are iter_tracking the
             starting or end point of an iteration.
     """
@@ -69,10 +74,13 @@ def track_df(self, point):
 
 
 def track_var_df(self, point):
-    """Tracks the variance of the projected gradient (onto the search direction)
-    at the (start or end) point.
+    """Tracks the variance of the projected gradient at the (start or end) point.
+
+    The gradient is projected onto the search direction before computing the
+    variance.
 
     Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
         point (str): Either "0" or "1" to signify that we are iter_tracking the
             starting or end point of an iteration.
     """
@@ -85,7 +93,11 @@ def track_var_df(self, point):
 
 
 def track_grad_norms(self):
-    """Tracks the L2 norm of the current gradient."""
+    """Tracks the L2 norm of the current gradient.
+
+    Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
+    """
     self.iter_tracking["grad_norms"].append(
         [p.grad.data.norm(2).item() for p in self.parameters() if p.requires_grad]
     )
@@ -99,6 +111,7 @@ def track_dtravel(self, learning_rate):
     TODO This definition only applies to SGD without Momentum.
 
     Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
         learning_rate (float): Learning rate used in this step.
     """
     self.iter_tracking["dtravel"].append(
@@ -107,7 +120,11 @@ def track_dtravel(self, learning_rate):
 
 
 def track_trace(self):
-    """Tracks the trace of the Hessian."""
+    """Tracks the trace of the Hessian.
+
+    Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
+    """
     self.iter_tracking["trace"].append(
         [p.diag_h.sum().item() for p in self.parameters() if p.requires_grad]
     )
@@ -117,6 +134,7 @@ def track_ev(self, batch_loss):
     """Track the max (and possibly min) eigenvalue of the Hessian.
 
     Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
         batch_loss (float): Average loss over a batch
     """
     trainable_params = [p for p in self.parameters() if p.requires_grad]
@@ -129,7 +147,11 @@ def track_ev(self, batch_loss):
 
 
 def track_d2init(self):
-    """Tracks the L2 distance of the current parameters to their init."""
+    """Tracks the L2 distance of the current parameters to their init.
+
+    Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
+    """
     self.iter_tracking["d2init"].append(
         [
             (init - p).norm(2).item()

@@ -6,10 +6,10 @@ from .utils_instruments import _add_last_value_to_legend, create_basic_plot
 
 
 def performance_gauge(self, fig, gridspec):
-    """Performance gauge, plotting train/valid accuracy vs. epoch and
-    mini-batch train loss vs. iteration.
+    """Plotting train/valid accuracy vs. epoch and mini-batch loss vs. iteration.
 
     Args:
+        self (cockpit.plotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure): Figure of the Cockpit.
         gridspec (matplotlib.gridspec): GridSpec where the instrument should be
             placed

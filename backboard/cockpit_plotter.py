@@ -1,4 +1,4 @@
-"""Plotting Part of the Cockpit"""
+"""Plotting Part of the Cockpit."""
 
 import json
 import os
@@ -14,8 +14,10 @@ from .plotting import instruments, utils_plotting
 
 
 class CockpitPlotter:
+    """Cockpit Plotter Class."""
+
     def __init__(self, logpath):
-        """Initialize the cockpit plotter
+        """Initialize the cockpit plotter.
 
         Args:
             logpath (str): Full path to the JSON logfile
@@ -27,7 +29,7 @@ class CockpitPlotter:
         self._set_plotting_params()
 
     def plot(self, show_plot=True, save_plot=False, savename_append=None, block=False):
-        """Plot the cockpit for the current state of the log file
+        """Plot the cockpit for the current state of the log file.
 
         Args:
             show_plot (bool, optional): Whether the plot should be shown on
@@ -123,9 +125,7 @@ class CockpitPlotter:
         self.fig = plt.figure(constrained_layout=True)
 
     def _read_tracking_results(self):
-        """Read in the tracking results from the JSON file into an internal
-        DataFrame.
-        """
+        """Read the tracking results from the JSON file into an internal DataFrame."""
         with open(self.logpath) as f:
             data = json.load(f)
 
@@ -139,7 +139,7 @@ class CockpitPlotter:
         utils_plotting._process_tracking_results(self)
 
     def _save(self, savename_append=None):
-        """Save the (internal) figure to file
+        """Save the (internal) figure to file.
 
         Args:
             savename_append (str, optional): Optional appendix to the savefile

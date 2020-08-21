@@ -24,7 +24,7 @@ def _split_logpath(logpath):
 
 
 def _compute_layers_parts(self):
-    """Computes the number of layers and 'parts' of the model
+    """Computes the number of layers and 'parts' of the model.
 
     self here is an instance of a CockpitPlotter.
 
@@ -143,7 +143,7 @@ def _get_aggregate_function(self, quantity):
 
 
 def _root_sum_of_squares(list):
-    """Returns the root of the sum of squares of a given list
+    """Returns the root of the sum of squares of a given list.
 
     Args:
         list (list): A list of floats
@@ -155,4 +155,5 @@ def _root_sum_of_squares(list):
 
 
 def legend():
+    """Creates the legend of the whole cockpit, combining the individual instruments."""
     pass

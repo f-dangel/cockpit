@@ -1,3 +1,5 @@
+"""All Instruments for the Cockpit."""
+
 from .alpha_gauge import alpha_gauge
 from .alpha_trace_gauge import alpha_trace_gauge
 from .cond_alpha_gauge import cond_alpha_gauge
