@@ -30,7 +30,6 @@ jobs:
 
   flake8:
     runs-on: ubuntu-latest
-    # if: false
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python 3.7
@@ -47,7 +46,7 @@ jobs:
 
   pydocstyle:
     runs-on: ubuntu-latest
-    # if: false
+    if: false
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python 3.7
@@ -80,7 +79,7 @@ jobs:
         make isort-check
 
   darglint:
-    # if: false
+    if: false
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
