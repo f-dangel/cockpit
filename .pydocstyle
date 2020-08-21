@@ -1,0 +1,9 @@
+[pydocstyle]
+convention = google
+# exclude directories, see
+# https://github.com/PyCQA/pydocstyle/issues/363#issuecomment-625563088
+match_dir = ^(?!(docs|docs_src|build|.git|src|exp)).*
+match = .*\.py
+# ignore =
+#   A,
+#   B,
