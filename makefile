@@ -64,7 +64,7 @@ pydocstyle-check:
 	@pydocstyle --count .
 
 darglint-check:
-	@darglint --verbosity 2 .
+	@darglint --verbosity 2 backboard
 
 isort:
 	@isort --apply
