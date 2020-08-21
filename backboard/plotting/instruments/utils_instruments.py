@@ -112,7 +112,7 @@ def _beautify_plot(
         ax.axhline(0, ls="-", color="white", linewidth=1.5, zorder=0)
 
 
-def _compute_plot_limits(ax, xlim, ylim, center=False):
+def _compute_plot_limits(ax, xlim, ylim, center=False):  # noqa: C901
     # extend shortend inputs
     if xlim is None:
         xlim = [None, None]
