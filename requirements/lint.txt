@@ -2,6 +2,7 @@ isort
 darglint
 flake8
 mccabe
+pydocstyle
 pycodestyle
 pyflakes
 pep8-naming
