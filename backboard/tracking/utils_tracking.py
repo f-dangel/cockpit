@@ -270,6 +270,15 @@ def _norm_test_radius(B, batch_l2, grad):
         `(1 / (|B| (|B| - 1))) * ∑ₙ || gₙ - g_B ||² / || g_B ||² ≤ r²`.
 
     We track the square root of the above equation's LHS.
+
+    Args:
+        B (int): Batch size.
+        batch_l2 (torch.Tensor): The squared L2 norm of individual gradients in
+            the minibatch.
+        grad (torch.Tensor): Gradients of the parameters.
+
+    Returns:
+        float: Ball raidus around the expected risk gradient.
     """
     square_radius = 1 / (B - 1) * (B * (batch_l2.sum() / grad.norm(2) ** 2) - 1)
     return sqrt(square_radius)
@@ -292,6 +301,14 @@ def _inner_product_test_width(B, grad_batch, grad):
         `(1 / (|B| (|B| - 1))) * ∑ₙ ( gᵀₙ g_B / || g_B ||² - 1 )² ≤ w²`.
 
     We track the square root of the above equation's LHS.
+
+    Args:
+        B (int): Batch size.
+        grad_batch (torch.Tensor): The individual gradients of a batch.
+        grad (torch.Tensor): Gradients of the parameters.
+
+    Returns:
+        float: Band width orthogonal to the expected risk gradient.
     """
     projection = (
         torch.einsum("bi,i->b", grad_batch.reshape(B, -1), grad.reshape(-1))
@@ -326,6 +343,16 @@ def _acute_angle_test_sin(B, grad_batch, batch_l2, grad):
                                   )                                 ≤ s²`.
 
     We track the square root of the above equation's LHS.
+
+    Args:
+        B (int): Batch size.
+        grad_batch (torch.Tensor): The individual gradients of a batch.
+        batch_l2 (torch.Tensor): The squared L2 norm of individual gradients in
+            the minibatch.
+        grad (torch.Tensor): Gradients of the parameters.
+
+    Returns:
+        float: Angle sinus between mini-batch and expected risk gradient.
     """
     summand1 = B * batch_l2.sum() / grad.norm(2) ** 2
 
@@ -381,6 +408,15 @@ def _gsnr(B, sum_grad_squared, grad):
         (2020)
 
     TODO: Add math
+
+    Args:
+        B (int): Batch size.
+        sum_grad_squared (torch.Tensor): he sum of individual-gradients-squared,
+            or second moment of the gradient.
+        grad (torch.Tensor): Gradients of the parameters.
+
+    Returns:
+        float: Gradient signal-to-noise ratio.
     """
     grad_squared = grad ** 2
 

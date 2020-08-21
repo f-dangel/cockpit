@@ -171,6 +171,9 @@ def track_alpha(self):
 
     If we cannot make a quadratic fit (most likely due to variances of 0) alpha
     is set to None (via the `_get_alpha` function).
+
+    Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
     """
     # We need to find the size of the step taken,
     # since dtravel can be a list, we need to aggregate it
@@ -197,7 +200,11 @@ def track_alpha(self):
 
 
 def track_global_norm_test_radius(self):
-    """Track norm test radius for the concatenated network parameters."""
+    """Track norm test radius for the concatenated network parameters.
+
+    Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
+    """
     B = _get_batch_size(self.parameters())
     batch_l2 = _combine_batch_l2(self.parameters())
     grad = _combine_grad(self.parameters())
@@ -212,6 +219,9 @@ def track_norm_test_radius(self):
 
     .. note::
         The norm test radius `r` is not additive over layers.
+
+    Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
     """
 
     def parameter_norm_test_radius(p):
@@ -226,7 +236,11 @@ def track_norm_test_radius(self):
 
 
 def track_global_inner_product_test_width(self):
-    """Track inner product test width for the concatenated network parameters."""
+    """Track inner product test width for the concatenated network parameters.
+
+    Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
+    """
     grad_batch = _combine_grad_batch(self.parameters())
     grad = _combine_grad(self.parameters())
 
@@ -242,6 +256,9 @@ def track_inner_product_test_width(self):
 
     .. note::
         The inner product test width `w` is not additive over layers.
+
+    Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
     """
 
     def parameter_inner_product_test_width(p):
@@ -260,7 +277,11 @@ def track_inner_product_test_width(self):
 
 
 def track_global_acute_angle_test_sin(self):
-    """Track acute angle test sinus for the concatenated network parameters."""
+    """Track acute angle test sinus for the concatenated network parameters.
+
+    Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
+    """
     batch_l2 = _combine_batch_l2(self.parameters())
     grad_batch = _combine_grad_batch(self.parameters())
     grad = _combine_grad(self.parameters())
@@ -277,6 +298,9 @@ def track_acute_angle_test_sin(self):
 
     .. note::
         The acute angle test sinus `s` is not additive over layers.
+
+    Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
     """
 
     def parameter_acute_angle_test_sin(p):
@@ -295,7 +319,11 @@ def track_acute_angle_test_sin(self):
 
 
 def track_global_mean_gsnr(self):
-    """Track mean gradient signal-to-noise ratio for concatenated network parameters."""
+    """Track mean gradient signal-to-noise ratio for concatenated network parameters.
+
+    Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
+    """
     sum_grad_squared = _combine_sum_grad_squared(self.parameters())
     grad = _combine_grad(self.parameters())
 
@@ -308,6 +336,9 @@ def track_mean_gsnr(self):
 
     .. note::
         The GSNR is not additive over layers.
+
+    Args:
+        self (CockpitTracker): An instance of the CockpitTracker class.
     """
 
     def parameter_mean_gsnr(p):

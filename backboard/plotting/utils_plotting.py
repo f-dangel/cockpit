@@ -26,10 +26,11 @@ def _split_logpath(logpath):
 def _compute_layers_parts(self):
     """Computes the number of layers and 'parts' of the model.
 
-    self here is an instance of a CockpitPlotter.
+    Args:
+        self (CockpitPlotter): An instance of the CockpitPlotter class.
 
     Returns:
-        [tuple]: Number of layers and parts
+        tuple: Number of layers and parts
     """
     # hard-coded settings
     tp_model_parts = {"logreg": 2, "3c3d": 2, "2c2d": 4}
@@ -49,7 +50,8 @@ def _compute_layers_parts(self):
 def _process_tracking_results(self):
     """Process the tracking results.
 
-    self here is an instance of a CockpitPlotter.
+    Args:
+        self (CockpitPlotter): An instance of the CockpitPlotter class.
     """
     # some util variables for the splitting/aggregation
     layers_per_part = self.layers // self.parts
@@ -104,10 +106,11 @@ def _get_aggregate_function(self, quantity):
     """Get the corresponding aggregation function for a given quantity.
 
     Args:
+        self (CockpitPlotter): An instance of the CockpitPlotter class.
         quantity (str): Name of the quantity we want to aggregate
 
     Returns:
-        [func]: The function that should be used to aggregate this quantity
+        func: The function that should be used to aggregate this quantity
     """
     if quantity in [
         "df0",

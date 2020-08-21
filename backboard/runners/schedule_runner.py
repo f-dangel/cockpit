@@ -51,7 +51,7 @@ class ScheduleCockpitRunner(PTRunner):
                 that will be used by the cockpit.
 
         Returns:
-            [type]: [description]
+            dict: Output of the training loop
         """
         opt = self._optimizer_class(tproblem.net.parameters(), **hyperparams)
 
@@ -238,10 +238,24 @@ class ScheduleCockpitRunner(PTRunner):
         hyperparams,
         **training_params
     ):
-        """Remove the training_params from the output.
+        """Remove the training_params from the output
 
         Since some training parameters (e.g. the lr_schedule) are not JSON
         serializable, we need to remove them from the output.
+
+        Args:
+            output ([type]): [description]
+            testproblem (deepobs.pytorch.testproblems.testproblem): The testproblem
+                instance to train on.
+            batch_size (int): Batch size of the problem.
+            num_epochs (int): The number of training epochs.
+            random_seed (int): Random seed of this run.
+            l2_reg (float): L2 regularization of the problem.
+            hyperparams (dict): Hyperparameters of the optimizer.
+            **training_params (dict): Kwargs of the training parameters.
+
+        Returns:
+            dict: Output of the training loop.
         """
         # remove test accuracy if it is not available
         if "test_accuracies" in output:
