@@ -73,7 +73,10 @@ class CockpitTracker:
                 extensions.DiagHessian(),
                 extensions.BatchL2Grad(),
             ]
-            context_manager = lambda: backpack(*ext)
+
+            def context_manager():
+                return backpack(*ext)
+
         else:
             context_manager = contextlib.nullcontext
 
