@@ -70,10 +70,8 @@ class ScheduleCockpitRunner(PTRunner):
             track_interval=training_params["track_interval"],
         )
         cockpit_plotter = CockpitPlotter(logpath)
-
         # Integrate BackPACK
         tproblem = extend_with_access_unreduced_loss(tproblem)
-
         # End Cockpit Stuff #
 
         # Lists to log train/test loss and accuracy.
@@ -129,7 +127,7 @@ class ScheduleCockpitRunner(PTRunner):
                 # Produce the last cockpit view, save it, and optionally show it
                 cockpit_plotter.plot(
                     show_plot=training_params["show_plots"],
-                    save_plot=training_params["save_plots"],
+                    save_plot=training_params["save_final_plot"],
                 )
                 break
 

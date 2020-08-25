@@ -122,7 +122,7 @@ class CockpitPlotter:
 
         # Apply the settings
         mpl.rcParams["figure.figsize"] = [plot_scale * e for e in plot_size_default]
-        self.fig = plt.figure(constrained_layout=True)
+        self.fig = mpl.figure.Figure()
 
     def _read_tracking_results(self):
         """Read the tracking results from the JSON file into an internal DataFrame."""
