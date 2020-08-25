@@ -7,7 +7,6 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from backboard import CockpitPlotter, CockpitTracker
 from backobs import extend_with_access_unreduced_loss
-from backpack import backpack
 from deepobs.pytorch.runners.runner import PTRunner
 
 
@@ -156,9 +155,8 @@ class ScheduleCockpitRunner(PTRunner):
 
                     batch_loss = batch_losses.mean()
 
-                    # Use BackPACK for the backward pass, but only use the
-                    # extensions necessary.
-                    with backpack(*cockpit_tracker.extensions(global_step)):
+                    # Use BackPACK for the backward pass
+                    with cockpit_tracker(global_step):
                         batch_loss.backward(create_graph=True)
 
                     opt.step()
