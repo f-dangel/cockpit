@@ -131,7 +131,8 @@ class ScheduleCockpitRunner(PTRunner):
                 cockpit_tracker.write()
                 # Produce the last cockpit view, save it, and optionally show it
                 cockpit_plotter.plot(
-                    show_plot=training_params["show_plots"], save_plot=True
+                    show_plot=training_params["show_plots"],
+                    save_plot=training_params["save_plots"],
                 )
                 break
 
