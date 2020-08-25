@@ -47,7 +47,7 @@ test:
 	@pytest -vx --cov=backboard tests
 
 test-light:
-	@pytest -vx --cov=backboard tests/test_utils_tracking
+	@pytest -vx --cov=backboard tests
 
 ###
 # Linter and autoformatter
