@@ -7,7 +7,7 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from backboard import CockpitPlotter, CockpitTracker
 from backobs import extend_with_access_unreduced_loss
-from backpack import backpack, extend
+from backpack import backpack
 from deepobs.pytorch.runners.runner import PTRunner
 
 
