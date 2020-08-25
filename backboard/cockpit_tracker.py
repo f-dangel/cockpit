@@ -150,7 +150,6 @@ class CockpitTracker:
             # dtravel re-uses the grad norms, so compute after
             tracking.track_dtravel(self, self.optimizer.param_groups[0]["lr"])
             tracking.track_trace(self)
-            tracking.track_ev(self, batch_loss)
 
             # Tracked the "before" part of the iteration, but not yet the "after"
             self.iteration_complete = False
@@ -187,6 +186,8 @@ class CockpitTracker:
 
             tracking.track_d2init(self)
             tracking.track_alpha(self)
+
+            tracking.track_ev(self, batch_loss)
 
             tracking.track_norm_test_radius(self)
             tracking.track_global_norm_test_radius(self)
