@@ -1,7 +1,7 @@
 .PHONY: help
 .PHONY: black black-check flake8
 .PHONY: install install-dev install-devtools install-test install-lint install-docs
-.PHONY: test
+.PHONY: test test-light
 .PHONY: conda-env
 .PHONY: black isort format
 .PHONY: black-check isort-check format-check
@@ -14,6 +14,8 @@
 help:
 	@echo "test"
 	@echo "        Run pytest on the project and report coverage"
+	@echo "test-light"
+	@echo "        Run pytest on 'small' tests and report coverage"
 	@echo "black"
 	@echo "        Run black on the project"
 	@echo "black-check"
@@ -42,7 +44,10 @@ help:
 ###
 # Test coverage
 test:
-	@pytest -vx --ignore=src --cov=backboard .
+	@pytest -vx --cov=backboard tests
+
+test-light:
+	@pytest -vx --cov=backboard tests
 
 ###
 # Linter and autoformatter

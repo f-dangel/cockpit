@@ -6,7 +6,8 @@ import warnings
 from torch.optim.lr_scheduler import LambdaLR
 
 from backboard import CockpitPlotter, CockpitTracker
-from backpack import backpack, extend
+from backobs import extend_with_access_unreduced_loss
+from backpack import backpack
 from deepobs.pytorch.runners.runner import PTRunner
 
 
@@ -69,14 +70,10 @@ class ScheduleCockpitRunner(PTRunner):
             track_interval=training_params["track_interval"],
         )
         cockpit_plotter = CockpitPlotter(logpath)
+
         # Integrate BackPACK
-        extend(tproblem.net)
-        tproblem._old_loss = tproblem.loss_function
+        tproblem = extend_with_access_unreduced_loss(tproblem)
 
-        def hotfix_lossfunc(reduction="mean"):
-            return extend(tproblem._old_loss(reduction=reduction))
-
-        tproblem.loss_function = hotfix_lossfunc
         # End Cockpit Stuff #
 
         # Lists to log train/test loss and accuracy.
@@ -131,7 +128,8 @@ class ScheduleCockpitRunner(PTRunner):
                 cockpit_tracker.write()
                 # Produce the last cockpit view, save it, and optionally show it
                 cockpit_plotter.plot(
-                    show_plot=training_params["show_plots"], save_plot=True
+                    show_plot=training_params["show_plots"],
+                    save_plot=training_params["save_plots"],
                 )
                 break
 
