@@ -22,5 +22,12 @@ def run_command(cmd, filter_download_progress=True):
     print(stdout)
 
     if result.returncode != 0:
-        print(result.stderr.decode("utf-8"))
+        stderr = result.stderr.decode("utf-8").splitlines()
+
+        if filter_download_progress:
+            stderr = [line for line in stderr if not is_download(line)]
+
+        stderr = "\n".join(stderr)
+        print(stderr)
+
         raise RuntimeError(f"Command {cmd} crashed")
