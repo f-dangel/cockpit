@@ -145,10 +145,10 @@ def _get_alpha(mu, t):
     """Compute the local step size alpha.
 
     It will be expressed in terms of the local quadratic fit. A local step size
-    of 1, is equal to `stepping on the other side of the quadratic`, while a 
+    of 1, is equal to `stepping on the other side of the quadratic`, while a
     step size of 0 means `stepping to the minimum`.
 
-    If 
+    If
 
     Args:
         mu (list): Parameters of the quadratic fit.

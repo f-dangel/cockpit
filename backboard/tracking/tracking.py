@@ -139,7 +139,9 @@ def track_ev(self, batch_loss):
     """
     trainable_params = [p for p in self.parameters() if p.requires_grad]
     HVP = HVPLinearOperator(
-        batch_loss, trainable_params, grad_params=[p.grad for p in trainable_params],
+        batch_loss,
+        trainable_params,
+        grad_params=[p.grad for p in trainable_params],
     )
     eigvals = eigsh(HVP, k=1, which="LA", return_eigenvectors=False)
 
@@ -187,7 +189,10 @@ def track_alpha(self):
     mu = _fit_quadratic(
         t,
         [self.iter_tracking["f0"][-1], self.iter_tracking["f1"][-1]],
-        [sum(self.iter_tracking["df0"][-1]), sum(self.iter_tracking["df1"][-1]),],
+        [
+            sum(self.iter_tracking["df0"][-1]),
+            sum(self.iter_tracking["df1"][-1]),
+        ],
         [self.iter_tracking["var_f0"][-1], self.iter_tracking["var_f1"][-1]],
         [
             sum(self.iter_tracking["var_df0"][-1]),
