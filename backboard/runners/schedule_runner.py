@@ -229,7 +229,7 @@ class ScheduleCockpitRunner(PTRunner):
         hyperparams,
         **training_params
     ):
-        """Remove the training_params from the output
+        """Remove the training_params from the output.
 
         Since some training parameters (e.g. the lr_schedule) are not JSON
         serializable, we need to remove them from the output.
