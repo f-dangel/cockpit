@@ -1,6 +1,9 @@
 """Utility functions for running tests."""
 
+import os
 import subprocess
+
+REPO_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def run_command(cmd, filter_download_progress=True):

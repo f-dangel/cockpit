@@ -5,9 +5,7 @@ Note: Changing the path of this file can lead to its failure.
 
 import os
 
-from tests.utils import run_command
-
-REPO_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from tests.utils import REPO_ROOT_DIR, run_command
 
 
 def test_orthogonality_test_math_rearrangements():
