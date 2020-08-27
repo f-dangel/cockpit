@@ -72,7 +72,14 @@ def create_basic_plot(
             the x-axis and the second to the y-axis. Defaults to False.
     """
     sns.scatterplot(
-        x=x, y=y, hue="iteration", palette=cmap, edgecolor=None, s=10, data=data, ax=ax,
+        x=x,
+        y=y,
+        hue="iteration",
+        palette=cmap,
+        edgecolor=None,
+        s=10,
+        data=data,
+        ax=ax,
     )
 
     # Save what is being ploted as labels, if not otherwise given
