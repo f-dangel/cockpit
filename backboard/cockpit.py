@@ -1,0 +1,180 @@
+"""Cockpit."""
+
+import contextlib
+import inspect
+import json
+import os
+from collections import defaultdict
+
+from backobs import extend_with_access_unreduced_loss
+from backpack import backpack
+from deepobs.pytorch.testproblems.testproblem import TestProblem
+
+from .cockpit_plotter import CockpitPlotter
+from .quantities import Quantity
+from .quantities.utils_quantities import _update_dicts
+
+
+class Cockpit:
+    """Cockpit class."""
+
+    def __init__(self, tproblem, logpath, track_interval=1, quantities=None):
+        """Initialize the Cockpit.
+
+        Args:
+            tproblem (deepobs.pytorch.testproblem): A DeepOBS testproblem.
+                Alternatively, it ccould also be a general Pytorch Net.
+            logpath (str): Path to the log file.
+            track_interval (int, optional): Tracking rate.
+                Defaults to 1 meaning every iteration is tracked.
+            quantities (list, optional): List of quantities (classes or instances)
+                that should be tracked. Defaults to None, which would use all
+                implemented ones.
+        """
+        # Store all parameters as attributes
+        params = locals()
+        del params["self"]
+        self.__dict__ = params
+        self.create_graph = False
+        self.output = defaultdict(dict)
+
+        # Collect quantities
+        self.quantities = self._collect_quantities(quantities, track_interval)
+
+        # Extend testproblem
+        if isinstance(tproblem, TestProblem):
+            extend_with_access_unreduced_loss(tproblem)
+        else:
+            # TODO How do we handle general PyTorch nets?
+            raise NotImplementedError
+
+        # Prepare logpath
+        self._prepare_logpath(logpath)
+
+        # Create a Cockpit Plotter instance
+        self.cockpit_plotter = CockpitPlotter(self.logpath)
+
+    def __call__(self, global_step):
+        """Returns the backpack extensions that should be used in this iteration.
+
+        Args:
+            global_step (int): Current number of iteration.
+
+        Returns:
+            backpack.backpack: BackPACK with the appropriate extensions, or the
+                nullcontext
+        """
+        # Collect needed extensions
+        ext = []
+        for q in self.quantities:
+            ext += q.extensions(global_step)
+        ext = list(set(ext))
+
+        # Collect if create graph is needed and set switch
+        self.create_graph = any(q.create_graph(global_step) for q in self.quantities)
+
+        # return context_manager
+        if ext:
+
+            def context_manager():
+                return backpack(*ext)
+
+        else:
+            context_manager = contextlib.nullcontext
+
+        return context_manager()
+
+    def track(self, global_step, batch_loss):
+        """Tracking all quantities.
+
+        Args:
+            global_step (int): Current number of iteration.
+            batch_loss (torch.Tensor): The batch loss of the current iteration.
+        """
+        for q in self.quantities:
+            q.compute(global_step, self.tproblem.net.parameters, batch_loss)
+
+    def log(
+        self,
+        global_step,
+        epoch_count,
+        train_losses,
+        valid_losses,
+        test_losses,
+        train_accuracies,
+        valid_accuracies,
+        test_accuracies,
+        learning_rate,
+    ):
+        """Tracking function for quantities computed at every epoch.
+
+        Args:
+            global_step (int): Current number of iteration/global step.
+            epoch_count (int): Current number of epoch.
+            train_losses (float): Loss on the train (eval) set.
+            valid_losses (float): Loss on the validation set.
+            test_losses (float): Loss on the test set.
+            train_accuracies (float): Accuracy on the train (eval) set.
+            valid_accuracies (float): Accuracy on the validation set.
+            test_accuracies (float): Accuracy on the test set.
+            learning_rate (float): Learning rate of the optimizer. We assume,
+                that the optimizer uses a single global learning rate, which is
+                used for all parameter groups.
+        """
+        # Loop over inputs, w/o self & global_step, adding them to the output dict
+        params = locals()
+        del params["self"]
+        del params["global_step"]
+
+        for k, v in params.items():
+            self.output[global_step][k] = v
+
+    def plot(self, *args, **kwargs):
+        """Plot the Cockpit with the current state of the log file."""
+        # self.cockpit_plotter.plot(*args, **kwargs)
+
+    def write(self):
+        """[summary]."""
+        # Update the cockpit with the outputs from the individual quantities
+        for q in self.quantities:
+            _update_dicts(self.output, q.output)
+
+        # Dump to file
+        with open(self.logpath + ".json", "w") as json_file:
+            json.dump(self.output, json_file, indent=4, sort_keys=True)
+        print("Cockpit-Log written...")
+
+    @staticmethod
+    def _prepare_logpath(logpath):
+        """Prepare the logpath by creating it if necessary.
+
+        Args:
+            logpath (str): The path where the logs should be stored
+        """
+        logdir, logfile = os.path.split(logpath)
+        os.makedirs(logdir, exist_ok=True)
+
+    @staticmethod
+    def _collect_quantities(quantities, track_interval):
+        """Collect all quantities that should be used for tracking.
+
+        Args:
+            quantities (list, None) A list of quantities (classes or instances)
+                that should be tracked. Can also be None, in this case all
+                implemented quantities are being returned.
+            track_interval (int, optional): Tracking rate.
+
+        Returns:
+            list: List of quantities (classes) that should be used for tracking.
+        """
+        if quantities is None:
+            quantities = Quantity.__subclasses__()
+
+        quants = []
+        for q in quantities:
+            if inspect.isclass(q):
+                quants.append(q(track_interval))
+            else:
+                quants.append(q)
+
+        return quants

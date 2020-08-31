@@ -5,8 +5,7 @@ import warnings
 
 from torch.optim.lr_scheduler import LambdaLR
 
-from backboard import CockpitPlotter, CockpitTracker
-from backobs import extend_with_access_unreduced_loss
+from backboard import Cockpit
 from deepobs.pytorch.runners.runner import PTRunner
 
 
@@ -59,19 +58,9 @@ class ScheduleCockpitRunner(PTRunner):
         lr_sched = training_params["lr_schedule"](num_epochs)
         scheduler = LambdaLR(opt, lr_lambda=lr_sched)
 
-        # Extra Cockpit Stuff #
-        # Init Cockpit
+        # COCKPIT: Initialize it #
         logpath = os.path.join(self._run_directory, self._file_name + "__log")
-        cockpit_tracker = CockpitTracker(
-            tproblem.net.parameters,
-            opt,
-            logpath,
-            track_interval=training_params["track_interval"],
-        )
-        cockpit_plotter = CockpitPlotter(logpath)
-        # Integrate BackPACK
-        tproblem = extend_with_access_unreduced_loss(tproblem)
-        # End Cockpit Stuff #
+        cockpit = Cockpit(tproblem, logpath, training_params["track_interval"])
 
         # Lists to log train/test loss and accuracy.
         train_losses = []
@@ -81,7 +70,6 @@ class ScheduleCockpitRunner(PTRunner):
         valid_accuracies = []
         test_accuracies = []
         minibatch_train_losses = []
-        batch_losses = []  # so it exists the first time we pass it to cockpit
 
         if tb_log:
             try:
@@ -109,24 +97,27 @@ class ScheduleCockpitRunner(PTRunner):
                 valid_accuracies,
                 test_accuracies,
             )
-            cockpit_tracker.track_epoch(
-                epoch_count,
+
+            # COCKPIT: Log already computed quantities #
+            cockpit.log(
                 global_step,
+                epoch_count,
                 train_losses[-1],
                 valid_losses[-1],
                 test_losses[-1],
                 train_accuracies[-1],
                 valid_accuracies[-1],
                 test_accuracies[-1],
+                opt.param_groups[0]["lr"],
             )
 
             # Break from train loop after the last round of evaluation
             if epoch_count == num_epochs:
-                cockpit_tracker.write()
-                # Produce the last cockpit view, save it, and optionally show it
-                cockpit_plotter.plot(
-                    show_plot=training_params["show_plots"],
-                    save_plot=training_params["save_final_plot"],
+                # COCKPIT: Write to file and optionally plot after last epoch #
+                cockpit.write()
+                cockpit.plot(
+                    training_params["show_plots"],
+                    training_params["save_final_plot"],
                 )
                 break
 
@@ -137,26 +128,16 @@ class ScheduleCockpitRunner(PTRunner):
             batch_count = 0
             while True:
                 try:
-                    cockpit_tracker.track_before(batch_losses, global_step)
-
-                    batch_loss, _ = tproblem.get_batch_loss_and_accuracy(
-                        reduction="mean"  # changed for cockpit
-                    )
-                    # Check if losses is matrix, then take mean over second axis.
-                    # This is a hotfix necessary for quadratic_deep
-                    batch_losses = batch_loss._unreduced_loss
-                    if len(batch_losses.shape) == 2:
-                        batch_losses = batch_losses.mean(1)
-
-                    # do zero_grad after forward pass, so we don't set it to
-                    # zero when there is no more batch in this epoch
                     opt.zero_grad()
 
-                    # Use BackPACK for the backward pass
-                    with cockpit_tracker(global_step):
-                        batch_loss.backward(create_graph=True)
+                    batch_loss, _ = tproblem.get_batch_loss_and_accuracy(
+                        reduction="mean"
+                    )
 
-                    cockpit_tracker.track_after(batch_losses, global_step)
+                    # COCKPIT: Use necessary BackPACK extensions and track #
+                    with cockpit(global_step):
+                        batch_loss.backward(create_graph=cockpit.create_graph)
+                    cockpit.track(global_step, batch_loss)
 
                     opt.step()
 
@@ -182,13 +163,12 @@ class ScheduleCockpitRunner(PTRunner):
             # Next step in LR Schedule
             scheduler.step()
 
-            # Write to log file
-            cockpit_tracker.write()
-            # Create Cockpit Plot if hitting the interval
+            # COCKPIT: Write to file and optionally plot after each epoch #
+            cockpit.write()
             if epoch_count % training_params["plot_interval"] == 0:
-                cockpit_plotter.plot(
-                    show_plot=training_params["show_plots"],
-                    save_plot=training_params["save_plots"],
+                cockpit.plot(
+                    training_params["show_plots"],
+                    training_params["save_plots"],
                     savename_append="__epoch__" + str(epoch_count),
                 )
 

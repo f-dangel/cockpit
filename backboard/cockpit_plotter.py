@@ -10,7 +10,8 @@ import seaborn as sns
 
 from deepobs import config
 
-from .plotting import instruments, utils_plotting
+from . import instruments
+from .instruments import utils_plotting
 
 
 class CockpitPlotter:
