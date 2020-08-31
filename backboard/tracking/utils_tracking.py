@@ -148,7 +148,7 @@ def _get_alpha(mu, t):
     of 1, is equal to `stepping on the other side of the quadratic`, while a
     step size of 0 means `stepping to the minimum`.
 
-    If
+    If no quadratic approximation could be computed, return None.
 
     Args:
         mu (list): Parameters of the quadratic fit.
