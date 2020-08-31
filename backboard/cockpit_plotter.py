@@ -62,9 +62,9 @@ class CockpitPlotter:
         # First Row #
         # first spot is reserved for the legend which is computed later!
         # Alpha vs Trace
-        # instruments.alpha_trace_gauge(self, self.fig, self.grid_spec[0, -2])
+        instruments.alpha_trace_gauge(self, self.fig, self.grid_spec[0, -2])
         # Alpha Gauge
-        # instruments.alpha_gauge(self, self.fig, self.grid_spec[0, -1])
+        instruments.alpha_gauge(self, self.fig, self.grid_spec[0, -1])
 
         # Second Row #
         # Max EV
@@ -72,7 +72,7 @@ class CockpitPlotter:
         # Cond Number Gauge
         instruments.cond_gauge(self, self.fig, self.grid_spec[1, -2])
         # Cond Number vs Alpha
-        # instruments.cond_alpha_gauge(self, self.fig, self.grid_spec[1, -1])
+        instruments.cond_alpha_gauge(self, self.fig, self.grid_spec[1, -1])
 
         # Third Row
         # per part trace

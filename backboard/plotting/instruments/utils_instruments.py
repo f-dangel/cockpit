@@ -139,7 +139,8 @@ def _beautify_plot(
     color_summary_plots = "#ababba"
 
     ax.set_title(title, fontweight=fontweight, fontsize="large")
-    ax.get_legend().remove()
+    if ax.get_legend() is not None:
+        ax.get_legend().remove()
 
     if x_scale is not None:
         ax.set_xscale(x_scale)
