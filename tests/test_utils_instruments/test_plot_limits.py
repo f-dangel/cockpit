@@ -72,10 +72,13 @@ def test_compute_plot_limits(xlim, ylim, expected_xlim, expected_ylim):
     # Create a simple plot with known limits
     x, y, _, _, _ = _simple_problem()
 
-    fig, ax = plt.subplots()
-    ax.plot(x, y)
+    plt.clf()
+    plt.plot(x, y)
+    ax = plt.gca()
 
     o_xlim, o_ylim = _compute_plot_limits(ax, xlim, ylim)
 
     assert o_xlim == expected_xlim
     assert o_ylim == expected_ylim
+
+    plt.clf()

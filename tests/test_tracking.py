@@ -57,6 +57,7 @@ def test_tracking(lr, num_epochs, track_interval, lr_schedule):
         plot_interval=10,
         show_plots=False,
         save_plots=False,
+        save_final_plot=False,
         track_time=False,
         lr_schedule=lr_schedule,
     )

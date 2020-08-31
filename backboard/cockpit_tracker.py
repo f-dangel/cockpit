@@ -1,10 +1,11 @@
 """Cockpit Tracker."""
 
+import contextlib
 import json
 
 import torch
 
-from backpack import extensions
+from backpack import backpack, extensions
 
 from .tracking import tracking, utils_tracking
 
@@ -49,6 +50,37 @@ class CockpitTracker:
         self.search_dir = [torch.zeros_like(p) for p in self.parameters()]
         # We need to store the initial parameters
         self.p_init = [p.data.clone().detach() for p in self.parameters()]
+
+    def __call__(self, global_step):
+        """Returns the backpack extensions that should be used in this iteration.
+
+        Args:
+            global_step (int): Current number of iteration.
+
+        Returns:
+            backpack.backpack: BackPACK with the appropriate extensions, or the
+                nullcontext
+        """
+        if (
+            global_step % self.track_interval == 0
+            or global_step % self.track_interval == 1
+        ):
+            ext = [
+                extensions.SumGradSquared(),
+                # TODO: Use SumGradSquared, Variance recomputes summed gradient
+                extensions.Variance(),
+                extensions.BatchGrad(),
+                extensions.DiagHessian(),
+                extensions.BatchL2Grad(),
+            ]
+
+            def context_manager():
+                return backpack(*ext)
+
+        else:
+            context_manager = contextlib.nullcontext
+
+        return context_manager()
 
     def track_epoch(
         self,
@@ -118,7 +150,6 @@ class CockpitTracker:
             # dtravel re-uses the grad norms, so compute after
             tracking.track_dtravel(self, self.optimizer.param_groups[0]["lr"])
             tracking.track_trace(self)
-            tracking.track_ev(self, batch_loss)
 
             # Tracked the "before" part of the iteration, but not yet the "after"
             self.iteration_complete = False
@@ -156,6 +187,8 @@ class CockpitTracker:
             tracking.track_d2init(self)
             tracking.track_alpha(self)
 
+            tracking.track_ev(self, batch_loss)
+
             tracking.track_norm_test_radius(self)
             tracking.track_global_norm_test_radius(self)
 
@@ -187,32 +220,6 @@ class CockpitTracker:
         with open(self.logpath + ".json", "w") as json_file:
             json.dump(tracking, json_file, indent=4)
         print("Cockpit-Log written...")
-
-    def extensions(self, global_step):
-        """Returns the backpack extensions that should be used in this iteration.
-
-        Args:
-            global_step (int): Current number of iteration.
-
-        Returns:
-            list: A list of backPACK extensions to use. Could be empty.
-        """
-        # Use BackPACK either if we want to track this or the next iteration.
-        # We need both because of the track_before, track_after split.
-        if (
-            global_step % self.track_interval == 0
-            or global_step % self.track_interval == 1
-        ):
-            return (
-                extensions.SumGradSquared(),
-                # TODO: Use SumGradSquared, Variance recomputes summed gradient
-                extensions.Variance(),
-                extensions.BatchGrad(),
-                extensions.DiagHessian(),
-                extensions.BatchL2Grad(),
-            )
-        else:
-            return []
 
     def _should_track(self, global_step):
         """Returns wether we want to track in the current step.

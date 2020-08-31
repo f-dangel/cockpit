@@ -7,7 +7,6 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from backboard import CockpitPlotter, CockpitTracker
 from backobs import extend_with_access_unreduced_loss
-from backpack import backpack
 from deepobs.pytorch.runners.runner import PTRunner
 
 
@@ -70,10 +69,8 @@ class ScheduleCockpitRunner(PTRunner):
             track_interval=training_params["track_interval"],
         )
         cockpit_plotter = CockpitPlotter(logpath)
-
         # Integrate BackPACK
         tproblem = extend_with_access_unreduced_loss(tproblem)
-
         # End Cockpit Stuff #
 
         # Lists to log train/test loss and accuracy.
@@ -129,7 +126,7 @@ class ScheduleCockpitRunner(PTRunner):
                 # Produce the last cockpit view, save it, and optionally show it
                 cockpit_plotter.plot(
                     show_plot=training_params["show_plots"],
-                    save_plot=training_params["save_plots"],
+                    save_plot=training_params["save_final_plot"],
                 )
                 break
 
@@ -142,30 +139,26 @@ class ScheduleCockpitRunner(PTRunner):
                 try:
                     cockpit_tracker.track_before(batch_losses, global_step)
 
-                    batch_losses, _ = tproblem.get_batch_loss_and_accuracy(
+                    batch_loss, _ = tproblem.get_batch_loss_and_accuracy(
                         reduction="mean"  # changed for cockpit
                     )
+                    # Check if losses is matrix, then take mean over second axis.
+                    # This is a hotfix necessary for quadratic_deep
+                    batch_losses = batch_loss._unreduced_loss
+                    if len(batch_losses.shape) == 2:
+                        batch_losses = batch_losses.mean(1)
 
                     # do zero_grad after forward pass, so we don't set it to
                     # zero when there is no more batch in this epoch
                     opt.zero_grad()
 
-                    # Check if losses is matrix, then sum
-                    # This is a hotfix necessary for our current quadratic_deep
-                    # implementation.
-                    if len(batch_losses.shape) == 2:
-                        batch_losses = batch_losses.sum(1)
-
-                    batch_loss = batch_losses.mean()
-
-                    # Use BackPACK for the backward pass, but only use the
-                    # extensions necessary.
-                    with backpack(*cockpit_tracker.extensions(global_step)):
+                    # Use BackPACK for the backward pass
+                    with cockpit_tracker(global_step):
                         batch_loss.backward(create_graph=True)
 
-                    opt.step()
-
                     cockpit_tracker.track_after(batch_losses, global_step)
+
+                    opt.step()
 
                     if batch_count % train_log_interval == 0:
                         minibatch_train_losses.append(batch_loss.item())
@@ -236,7 +229,7 @@ class ScheduleCockpitRunner(PTRunner):
         hyperparams,
         **training_params
     ):
-        """Remove the training_params from the output
+        """Remove the training_params from the output.
 
         Since some training parameters (e.g. the lr_schedule) are not JSON
         serializable, we need to remove them from the output.
