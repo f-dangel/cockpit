@@ -123,20 +123,20 @@ def _fit_quadratic(t, fs, dfs, fs_var, dfs_var):
 
     Phi = np.array([[1, 0, 0], [1, t, t ** 2], [0, 1, 0], [0, 1, 2 * t]]).T
 
-    try:
-        # Covariance matrix
-        lambda_inv = np.linalg.inv(np.diag(fs_var + dfs_var))
+    # small value to use if one of the variances is 0.
+    eps = 1e-10
+    if 0 in fs_var:
+        warnings.warn("The variance of f is 0, using a small value instead.")
+        fs_var = list(map(lambda i: eps if i == 0 else i, fs_var))
+    if 0 in dfs_var:
+        warnings.warn("The variance of df is 0, using a small value instead.")
+        dfs_var = list(map(lambda i: eps if i == 0 else i, dfs_var))
 
-        # Maximum Likelihood Estimation
-        mu = np.linalg.inv(Phi @ lambda_inv @ Phi.T) @ Phi @ lambda_inv @ (fs + dfs)
-    except np.linalg.LinAlgError:
-        if 0 in dfs_var:
-            warnings.warn("The variance of df is 0, couldn't compute alpha.")
-        elif 0 in fs_var:
-            warnings.warn("The variance of f is 0, couldn't compute alpha.")
-        else:
-            warnings.warn("Couldn't compute alpha for some unknown reason.")
-        mu = None
+    # Covariance matrix
+    lambda_inv = np.linalg.inv(np.diag(fs_var + dfs_var))
+
+    # Maximum Likelihood Estimation
+    mu = np.linalg.inv(Phi @ lambda_inv @ Phi.T) @ Phi @ lambda_inv @ (fs + dfs)
 
     return mu
 
@@ -145,10 +145,10 @@ def _get_alpha(mu, t):
     """Compute the local step size alpha.
 
     It will be expressed in terms of the local quadratic fit. A local step size
-    of 1, is equal to `stepping on the other side of the quadratic`, while a 
+    of 1, is equal to `stepping on the other side of the quadratic`, while a
     step size of 0 means `stepping to the minimum`.
 
-    If 
+    If
 
     Args:
         mu (list): Parameters of the quadratic fit.
