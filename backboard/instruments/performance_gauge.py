@@ -2,7 +2,10 @@
 
 import seaborn as sns
 
-from .utils_instruments import _add_last_value_to_legend, create_basic_plot
+from backboard.instruments.utils_instruments import (
+    _add_last_value_to_legend,
+    create_basic_plot,
+)
 
 
 def performance_gauge(self, fig, gridspec):

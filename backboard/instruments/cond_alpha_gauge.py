@@ -1,6 +1,6 @@
 """Condition number vs. Alpha Gauge."""
 
-from .utils_instruments import create_basic_plot
+from backboard.instruments.utils_instruments import create_basic_plot
 
 
 def cond_alpha_gauge(self, fig, gridspec):

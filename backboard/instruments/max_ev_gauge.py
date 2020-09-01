@@ -1,6 +1,6 @@
 """Max EV Gauge."""
 
-from .utils_instruments import create_basic_plot
+from backboard.instruments.utils_instruments import create_basic_plot
 
 
 def max_ev_gauge(self, fig, gridspec):

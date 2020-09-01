@@ -8,10 +8,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+from backboard import instruments
+from backboard.instruments import utils_plotting
 from deepobs import config
-
-from . import instruments
-from .instruments import utils_plotting
 
 
 class CockpitPlotter:

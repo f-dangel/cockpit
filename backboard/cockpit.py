@@ -6,13 +6,12 @@ import json
 import os
 from collections import defaultdict
 
+from backboard.cockpit_plotter import CockpitPlotter
+from backboard.quantities import Quantity
+from backboard.quantities.utils_quantities import _update_dicts
 from backobs import extend_with_access_unreduced_loss
 from backpack import backpack
 from deepobs.pytorch.testproblems.testproblem import TestProblem
-
-from .cockpit_plotter import CockpitPlotter
-from .quantities import Quantity
-from .quantities.utils_quantities import _update_dicts
 
 
 class Cockpit:

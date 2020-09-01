@@ -2,7 +2,10 @@
 
 import seaborn as sns
 
-from .utils_instruments import _add_last_value_to_legend, _beautify_plot
+from backboard.instruments.utils_instruments import (
+    _add_last_value_to_legend,
+    _beautify_plot,
+)
 
 
 def hyperparameter_gauge(self, fig, gridspec):

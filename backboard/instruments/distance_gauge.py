@@ -1,6 +1,6 @@
 """Distance Gauge."""
 
-from .utils_instruments import create_basic_plot
+from backboard.instruments.utils_instruments import create_basic_plot
 
 
 def distance_gauge(self, fig, gridspec, part="all"):

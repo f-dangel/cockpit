@@ -4,7 +4,7 @@ import numpy as np
 import seaborn as sns
 from scipy import stats
 
-from .utils_instruments import _beautify_plot
+from backboard.instruments.utils_instruments import _beautify_plot
 
 
 def alpha_gauge(self, fig, gridspec):

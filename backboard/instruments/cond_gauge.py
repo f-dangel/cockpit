@@ -1,6 +1,6 @@
 """(Average) Condition Number Gauge."""
 
-from .utils_instruments import create_basic_plot
+from backboard.instruments.utils_instruments import create_basic_plot
 
 
 def cond_gauge(self, fig, gridspec):

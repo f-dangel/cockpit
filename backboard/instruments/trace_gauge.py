@@ -1,6 +1,6 @@
 """Trace Gauge."""
 
-from .utils_instruments import create_basic_plot
+from backboard.instruments.utils_instruments import create_basic_plot
 
 
 def trace_gauge(self, fig, gridspec, part="all"):
