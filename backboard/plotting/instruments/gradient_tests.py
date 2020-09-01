@@ -34,7 +34,7 @@ def gradient_tests(self, fig, gridspec):
     steps = 30
     log = create_fake_data(steps)
 
-    fig = plt.figure(constrained_layout=True)
+    fig = plt.figure()
     fig.subplots_adjust(wspace=0.0, hspace=0.0)
 
     # tiling
