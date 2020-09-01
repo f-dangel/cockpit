@@ -134,7 +134,7 @@ class Cockpit:
         # self.cockpit_plotter.plot(*args, **kwargs)
 
     def write(self):
-        """[summary]."""
+        """Write the tracked Quantities of the Cockpit to file."""
         # Update the cockpit with the outputs from the individual quantities
         for q in self.quantities:
             _update_dicts(self.output, q.output)

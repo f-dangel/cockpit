@@ -55,8 +55,5 @@ class Quantity:
             global_step (int): The current iteration number.
             params ([torch.Tensor]): List of parameters considered in the computation.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
-
-        Returns:
-            torch.Tensor: The quantity's value.
         """
         raise NotImplementedError
