@@ -22,7 +22,7 @@ class Loss(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of parameters considered in the computation.
+            params (method): Function to access the parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if global_step % self._track_interval == 0:

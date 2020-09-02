@@ -25,7 +25,7 @@ class Distance(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of parameters considered in the computation.
+            params (method): Function to access the parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         self._compute_d2init(global_step, params, batch_loss)
@@ -36,7 +36,7 @@ class Distance(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of parameters considered in the computation.
+            params (method): Function to access the parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         # Store initial parameters
@@ -57,7 +57,7 @@ class Distance(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of parameters considered in the computation.
+            params (method): Function to access the parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         pass

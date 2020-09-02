@@ -14,6 +14,12 @@ class MaxEV(Quantity):
     """Maximum Hessian Eigenvalue Quantitiy Class."""
 
     def __init__(self, track_interval, verbose=False):
+        """Initialize.
+
+        Args:
+            track_interval (int): Tracking rate.
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
+        """
         super().__init__(track_interval)
         self._verbose = verbose
 
@@ -45,7 +51,7 @@ class MaxEV(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of parameters considered in the computation.
+            params (method): Function to access the parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if global_step % self._track_interval == 0:
@@ -59,12 +65,13 @@ class MaxEV(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of parameters considered in the computation.
+            params (method): Function to access the parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        params = [p for p in params() if p.requires_grad]
-        grads = [p.grad for p in params]
-        HVP = HVPLinearOperator(batch_loss, params, grad_params=grads)
+        params = self._fetch_params(params)
+        HVP = HVPLinearOperator(
+            batch_loss, params, grad_params=self._fetch_grad(params)
+        )
 
         max_ev = eigsh(HVP, k=1, which="LA", return_eigenvectors=False)[0]
 
