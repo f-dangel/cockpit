@@ -1,7 +1,5 @@
 """Class for tracking the Paramter Distances."""
 
-from copy import deepcopy
-
 from backboard.quantities.quantity import Quantity
 
 
@@ -45,7 +43,7 @@ class Distance(Quantity):
         """
         # Store initial parameters
         if global_step == 0:
-            self.parameter_init = deepcopy(params)
+            self.parameter_init = [p.data.clone().detach() for p in params]
 
         if global_step % self._track_interval == 0:
             d2init = [
@@ -83,11 +81,11 @@ class Distance(Quantity):
                 if self._verbose:
                     print(f"Update size: {sum(update_size):.4f}")
             # store current parameters
-            self.old_params = deepcopy(params)
+            self.old_params = [p.data.clone().detach() for p in params]
         else:
             if global_step % self._track_interval == 0:
                 # store current parameters
-                self.old_params = deepcopy(params)
+                self.old_params = [p.data.clone().detach() for p in params]
             elif global_step % self._track_interval == 1:
                 # Compute update size
                 update_size = [
