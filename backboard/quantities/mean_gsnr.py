@@ -136,7 +136,7 @@ class MeanGSNR(Quantity):
             grad_second_moment = (rescaled_batch_grad ** 2).mean(0)
             grad_variance = grad_second_moment - grad_first_moment_squared
 
-            if has_negative(grad_variance):
+            if has_negative(grad_variance + self._epsilon):
                 raise ValueError("Gradient variances from batch_grad are negative.")
 
             if has_zeros(grad_variance + self._epsilon):
