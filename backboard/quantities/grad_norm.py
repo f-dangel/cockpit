@@ -29,8 +29,12 @@ class GradNorm(Quantity):
             torch.Tensor: The quantity's value.
         """
         if global_step % self._track_interval == 0:
-            self.output[global_step]["grad_norm"] = [
+            grad_norm = [
                 p.grad.data.norm(2).item() for p in params() if p.requires_grad
             ]
+            self.output[global_step]["grad_norm"] = grad_norm
+
+            if self._verbose:
+                print(f"Grad norm: {sum(grad_norm):.4f}")
         else:
             pass

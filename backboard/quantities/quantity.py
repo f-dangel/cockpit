@@ -15,7 +15,7 @@ class Quantity:
     2. They can ask for certain BackPACK extensions being computed.
     """
 
-    def __init__(self, track_interval=1):
+    def __init__(self, track_interval=1, verbose=False):
         """Initialize the Quantity by storing the track interval.
 
         Crucially, it creates the output dictionary, that is meant to store all
@@ -23,8 +23,10 @@ class Quantity:
 
         Args:
             track_interval (int, optional): Tracking rate. Defaults to 1.
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
         """
         self._track_interval = track_interval
+        self._verbose = verbose
         self.output = defaultdict(dict)
 
     def create_graph(self, global_step):

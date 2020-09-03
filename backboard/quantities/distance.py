@@ -46,11 +46,15 @@ class Distance(Quantity):
             self.parameter_init = [p.data.clone().detach() for p in params()]
 
         if global_step % self._track_interval == 0:
-            self.output[global_step]["d2init"] = [
+            d2init = [
                 (init - p).norm(2).item()
                 for init, p in zip(self.parameter_init, params())
                 if p.requires_grad
             ]
+            self.output[global_step]["d2init"] = d2init
+
+            if self._verbose:
+                print(f"Distance to initialization: {sum(d2init):.4f}")
         else:
             pass
 
@@ -73,6 +77,9 @@ class Distance(Quantity):
                     for old_p, p in zip(self.old_params, params)
                 ]
                 self.output[global_step - 1]["update_size"] = update_size
+
+                if self._verbose:
+                    print(f"Update size: {sum(update_size):.4f}")
             # store current parameters
             self.old_params = deepcopy(params)
         else:
@@ -87,3 +94,6 @@ class Distance(Quantity):
                     for old_p, p in zip(self.old_params, params)
                 ]
                 self.output[global_step - 1]["update_size"] = update_size
+
+                if self._verbose:
+                    print(f"Update size: {sum(update_size):.4f}")

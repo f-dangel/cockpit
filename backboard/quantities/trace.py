@@ -31,8 +31,11 @@ class Trace(Quantity):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if global_step % self._track_interval == 0:
-            self.output[global_step]["trace"] = [
-                p.diag_h.sum().item() for p in params() if p.requires_grad
-            ]
+            trace = [p.diag_h.sum().item() for p in params() if p.requires_grad]
+            self.output[global_step]["trace"] = trace
+
+            if self._verbose:
+                print(f"Trace: {sum(trace):.4f}")
+
         else:
             pass

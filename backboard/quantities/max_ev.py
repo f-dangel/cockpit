@@ -13,16 +13,6 @@ from backpack.utils.convert_parameters import vector_to_parameter_list
 class MaxEV(Quantity):
     """Maximum Hessian Eigenvalue Quantitiy Class."""
 
-    def __init__(self, track_interval, verbose=False):
-        """Initialize.
-
-        Args:
-            track_interval (int): Tracking rate.
-            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
-        """
-        super().__init__(track_interval)
-        self._verbose = verbose
-
     def create_graph(self, global_step):
         """Return whether access to the forward pass computation graph is needed.
 

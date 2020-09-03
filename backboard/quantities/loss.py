@@ -27,5 +27,8 @@ class Loss(Quantity):
         """
         if global_step % self._track_interval == 0:
             self.output[global_step]["mini_batch_loss"] = [batch_loss.item()]
+
+            if self._verbose:
+                print(f"Loss: {batch_loss.item():.4f}")
         else:
             pass

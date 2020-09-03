@@ -1,11 +1,12 @@
-"""Tests for the computation of the plot limits."""
+"""Tests for the utility functions of the instruments."""
 
 import matplotlib.pyplot as plt
 import pytest
 
-from backboard.plotting.instruments.utils_instruments import _compute_plot_limits
+from backboard.instruments.utils_instruments import _compute_plot_limits
 
 
+# Test Plot Limits
 def _simple_problem():
     x = [0, 1]
     y = [-2, 2]
