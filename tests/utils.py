@@ -44,19 +44,16 @@ def report_nonclose_values(x, y, atol=1e-8, rtol=1e-5):
 
 def has_negative(tensor, verbose=True):
     """Does a tensor contain negative entries."""
-    negative = False
-    negative_count = 0
+    tensor_numpy = tensor.data.cpu().numpy().flatten()
+    where_negative = numpy.argwhere(tensor_numpy < 0)
 
-    def is_negative(value):
-        return value < 0
+    if verbose:
+        for idx in where_negative:
+            value = float(tensor_numpy[idx])
+            print(f"Encountered negative value: {value:.5f}")
 
-    for value in tensor.flatten():
-        if is_negative(value):
-            negative = True
-            negative_count += 1
-
-            if verbose:
-                print(f"Encountered negative value: {value:.5f}")
+    negative_count = len(where_negative)
+    negative = negative_count != 0
 
     if verbose and negative:
         print(f"Encountered {negative_count} negative values")
@@ -66,37 +63,27 @@ def has_negative(tensor, verbose=True):
 
 def has_nans(tensor, verbose=True):
     """Does a tensor contain NaNs."""
-    nans = False
-    nan_count = 0
+    tensor_numpy = tensor.data.cpu().numpy().flatten()
+    where_nan = numpy.argwhere(tensor_numpy != tensor_numpy)
 
-    def is_nan(value):
-        return value != value
+    nan_count = len(where_nan)
+    nan = nan_count != 0
 
-    for value in tensor.flatten():
-        if is_nan(value):
-            nans = True
-            nan_count += 1
-
-    if verbose and nans:
+    if verbose and nan:
         print(f"Encountered {nan_count} NaNs")
 
-    return nans
+    return nan
 
 
 def has_zeros(tensor, verbose=True):
     """Does a tensor contain zeros."""
-    zeros = False
-    zeros_count = 0
+    tensor_numpy = tensor.data.cpu().numpy().flatten()
+    where_zero = numpy.argwhere(tensor_numpy == 0.0)
 
-    def is_zero(value):
-        return value == 0.0
+    zero_count = len(where_zero)
+    zero = zero_count != 0
 
-    for value in tensor.flatten():
-        if is_zero(value):
-            zeros = True
-            zeros_count += 1
+    if verbose and zero:
+        print(f"Encountered {zero_count} zeros")
 
-    if verbose and zeros:
-        print(f"Encountered {zeros_count} zeros")
-
-    return zeros
+    return zero
