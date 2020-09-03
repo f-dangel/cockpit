@@ -1,5 +1,7 @@
 """Class for tracking the Orthogonality Test."""
 
+import math
+
 import torch
 
 from backboard.quantities.quantity import Quantity
