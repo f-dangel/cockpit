@@ -273,5 +273,5 @@ def run_sgd_test_runner(
         testproblem=testproblem,
         num_epochs=num_epochs,
         batch_size=batch_size,
-        l2_reg=0.0,
+        l2_reg=l2_reg,
     )
