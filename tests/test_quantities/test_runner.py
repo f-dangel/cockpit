@@ -140,7 +140,6 @@ class TestRunner(PTRunner):
                     # Quit after a few (three) steps
                     if batch_count == 3:
                         warnings.warn("This mockup performs only 3 steps per epoch.")
-                        self._hard_stop = True
                         raise StopIteration
 
                     opt.step()
