@@ -1,5 +1,7 @@
 """Class for tracking the Paramter Distances."""
 
+from copy import deepcopy
+
 from backboard.quantities.quantity import Quantity
 
 
@@ -60,16 +62,28 @@ class Distance(Quantity):
             params (method): Function to access the parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        pass
-        # Store initial parameters
-        # if global_step == 0:
-        #     self.parameter_init = [p.data.clone().detach() for p in params()]
-
-        # if global_step % self._track_interval == 0:
-        #     self.output[global_step]["d2init"] = [
-        #         (init - p).norm(2).item()
-        #         for init, p in zip(self.parameter_init, params())
-        #         if p.requires_grad
-        #     ]
-        # else:
-        #     pass
+        if self._track_interval == 1:
+            # Special case if we want to track every iteration, since then the two
+            # computation steps of the quantity overlap.
+            params = self._fetch_params(params)
+            if hasattr(self, "old_params"):
+                # compute update size of last (!) step
+                update_size = [
+                    (old_p - p).norm(2).item()
+                    for old_p, p in zip(self.old_params, params)
+                ]
+                self.output[global_step - 1]["update_size"] = update_size
+            # store current parameters
+            self.old_params = deepcopy(params)
+        else:
+            if global_step % self._track_interval == 0:
+                # store current parameters
+                self.old_params = deepcopy(self._fetch_params(params))
+            elif global_step % self._track_interval == 1:
+                # Compute update size
+                params = self._fetch_params(params)
+                update_size = [
+                    (old_p - p).norm(2).item()
+                    for old_p, p in zip(self.old_params, params)
+                ]
+                self.output[global_step - 1]["update_size"] = update_size
