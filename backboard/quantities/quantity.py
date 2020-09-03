@@ -204,9 +204,9 @@ class Quantity:
         gradients are returned.
 
         Args:
-            params ([torch.Tensor]): List of parameters whose individual gradient
-                pairwise dot products will be fetched.
-            aggregate (bool): Sum dot products over parameter blocks.
+            params ([torch.Tensor]): List of parameters whose sum of squared individual
+                gradients will be fetched.
+            aggregate (bool): Concatenate (vectorize) results over parameter blocks.
 
         Returns:
             [torch.Tensor] if ``aggregate`` is False: List of same length as ``params``
@@ -220,3 +220,31 @@ class Quantity:
             sum_grad_squared = torch.cat([sgs.flatten() for sgs in sum_grad_squared])
 
         return sum_grad_squared
+
+    @staticmethod
+    def _fetch_diag_curvature(params, savefield, aggregate=True):
+        """Return diagonal curvature approximation.
+
+        Diagonal curvature can be aggregated (vectorized) among parameters.
+        For a model with D parameters, the aggregated diagonal curvature has
+        shape ``[D]``. Without aggregation, the block-wise diagonal curvature
+        is returned.
+
+        Args:
+            params ([torch.Tensor]): List of parameters whose diagonal curvature
+                will be fetched.
+            savefield (str): Field name where BackPACK stores the curvature
+            aggregate (bool): Concatenate (vectorize) results over parameter blocks.
+
+        Returns:
+            [torch.Tensor] if ``aggregate`` is False: List of same length as ``params``
+                with items of same shape containing the diagonal curvatures.
+            torch.Tensor if ``aggregate`` is True: Diagonal curvature of vectorized
+                parameters.
+        """
+        diag_curvature = [getattr(p, savefield) for p in params]
+
+        if aggregate:
+            diag_curvature = torch.cat([c.flatten() for c in diag_curvature])
+
+        return diag_curvature
