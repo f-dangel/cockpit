@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+from backboard import instruments
+from backboard.instruments import utils_plotting
 from deepobs import config
-
-from .plotting import instruments, utils_plotting
 
 
 class CockpitPlotter:
@@ -41,6 +41,9 @@ class CockpitPlotter:
             block (bool, optional): Whether the halt the computation after
                 blocking or not. Defaults to False.
         """
+        if not hasattr(self, "fig"):
+            self.fig = plt.figure(constrained_layout=True)
+
         # read in results
         self._read_tracking_results()
 
@@ -122,7 +125,6 @@ class CockpitPlotter:
 
         # Apply the settings
         mpl.rcParams["figure.figsize"] = [plot_scale * e for e in plot_size_default]
-        self.fig = plt.figure(constrained_layout=True)
 
     def _read_tracking_results(self):
         """Read the tracking results from the JSON file into an internal DataFrame."""

@@ -1,27 +1,31 @@
-"""Schedule Runner using a learning rate schedule."""
+"""Mockup implementations of runner and cockpit required for integration tests."""
 
 import os
 import warnings
 
-from torch.optim.lr_scheduler import LambdaLR
+from torch.optim import SGD
 
 from backboard import Cockpit
 from deepobs.pytorch.runners.runner import PTRunner
 
 
-class ScheduleCockpitRunner(PTRunner):
-    """Schedule Runner using a learning rate schedule."""
+class TestRunner(PTRunner):
+    """Runner specifically used for testing.
 
-    def __init__(self, optimizer_class, hyperparameter_names):
+    Note:
+        Only performs 3 steps per epoch.
+    """
+
+    def __init__(self, optimizer_class, hyperparameter_names, quantities):
         """Initialize the runner.
 
         Args:
             optimizer_class (torch.optim): The optimizer.
             hyperparameter_names (dict): Hyperparameters of the optimizer.
+            quantities (list): List of quantities to track in the Cockpit.
         """
-        super(ScheduleCockpitRunner, self).__init__(
-            optimizer_class, hyperparameter_names
-        )
+        super().__init__(optimizer_class, hyperparameter_names)
+        self._quantities = quantities
 
     def training(  # noqa: C901
         self,
@@ -54,13 +58,13 @@ class ScheduleCockpitRunner(PTRunner):
         """
         opt = self._optimizer_class(tproblem.net.parameters(), **hyperparams)
 
-        # Using a LR Scheduler
-        lr_sched = training_params["lr_schedule"](num_epochs)
-        scheduler = LambdaLR(opt, lr_lambda=lr_sched)
-
         # COCKPIT: Initialize it #
         logpath = os.path.join(self._run_directory, self._file_name + "__log")
-        cockpit = Cockpit(tproblem, logpath, training_params["track_interval"])
+        cockpit = Cockpit(
+            tproblem,
+            logpath,
+            quantities=self._quantities,
+        )
 
         # Lists to log train/test loss and accuracy.
         train_losses = []
@@ -86,39 +90,33 @@ class ScheduleCockpitRunner(PTRunner):
 
         for epoch_count in range(num_epochs + 1):
             # Evaluate at beginning of epoch.
-            self.evaluate_all(
-                epoch_count,
-                num_epochs,
-                tproblem,
-                train_losses,
-                valid_losses,
-                test_losses,
-                train_accuracies,
-                valid_accuracies,
-                test_accuracies,
-            )
+            # self.evaluate_all(
+            #     epoch_count,
+            #     num_epochs,
+            #     tproblem,
+            #     train_losses,
+            #     valid_losses,
+            #     test_losses,
+            #     train_accuracies,
+            #     valid_accuracies,
+            #     test_accuracies,
+            # )
 
             # COCKPIT: Log already computed quantities #
-            cockpit.log(
-                global_step,
-                epoch_count,
-                train_losses[-1],
-                valid_losses[-1],
-                test_losses[-1],
-                train_accuracies[-1],
-                valid_accuracies[-1],
-                test_accuracies[-1],
-                opt.param_groups[0]["lr"],
-            )
+            # cockpit.log(
+            #     global_step,
+            #     epoch_count,
+            #     train_losses[-1],
+            #     valid_losses[-1],
+            #     test_losses[-1],
+            #     train_accuracies[-1],
+            #     valid_accuracies[-1],
+            #     test_accuracies[-1],
+            #     opt.param_groups[0]["lr"],
+            # )
 
             # Break from train loop after the last round of evaluation
             if epoch_count == num_epochs:
-                # COCKPIT: Write to file and optionally plot after last epoch #
-                cockpit.write()
-                cockpit.plot(
-                    training_params["show_plots"],
-                    training_params["save_final_plot"],
-                )
                 break
 
             # Training #
@@ -138,6 +136,11 @@ class ScheduleCockpitRunner(PTRunner):
                     with cockpit(global_step):
                         batch_loss.backward(create_graph=cockpit.create_graph)
                     cockpit.track(global_step, batch_loss)
+
+                    # Quit after a few (three) steps
+                    if batch_count == 3:
+                        warnings.warn("This mockup performs only 3 steps per epoch.")
+                        raise StopIteration
 
                     opt.step()
 
@@ -159,18 +162,6 @@ class ScheduleCockpitRunner(PTRunner):
 
                 except StopIteration:
                     break
-
-            # Next step in LR Schedule
-            scheduler.step()
-
-            # COCKPIT: Write to file and optionally plot after each epoch #
-            cockpit.write()
-            if epoch_count % training_params["plot_interval"] == 0:
-                cockpit.plot(
-                    training_params["show_plots"],
-                    training_params["save_plots"],
-                    savename_append="__epoch__" + str(epoch_count),
-                )
 
         if tb_log:
             summary_writer.close()
@@ -252,3 +243,35 @@ class ScheduleCockpitRunner(PTRunner):
         }
 
         return output
+
+
+def run_sgd_test_runner(
+    quantities,
+    testproblem,
+    num_epochs=1,
+    batch_size=3,
+    lr=0.01,
+    momentum=0.0,
+    l2_reg=0.0,
+):
+    """Perform short debug run (three steps per epoch) with SGD."""
+    optimizer_class_sgd = SGD
+    hyperparams_sgd = {
+        "lr": {
+            "type": float,
+            "default": lr,
+        },
+        "momentum": {
+            "type": float,
+            "default": momentum,
+        },
+    }
+
+    runner = TestRunner(optimizer_class_sgd, hyperparams_sgd, quantities)
+
+    runner.run(
+        testproblem=testproblem,
+        num_epochs=num_epochs,
+        batch_size=batch_size,
+        l2_reg=l2_reg,
+    )
