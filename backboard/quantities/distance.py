@@ -27,7 +27,8 @@ class Distance(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params (method): Function to access the parameters.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         self._compute_d2init(global_step, params, batch_loss)
@@ -38,17 +39,18 @@ class Distance(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params (method): Function to access the parameters.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         # Store initial parameters
         if global_step == 0:
-            self.parameter_init = [p.data.clone().detach() for p in params()]
+            self.parameter_init = deepcopy(params)
 
         if global_step % self._track_interval == 0:
             d2init = [
                 (init - p).norm(2).item()
-                for init, p in zip(self.parameter_init, params())
+                for init, p in zip(self.parameter_init, params)
                 if p.requires_grad
             ]
             self.output[global_step]["d2init"] = d2init
@@ -63,13 +65,13 @@ class Distance(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params (method): Function to access the parameters.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if self._track_interval == 1:
             # Special case if we want to track every iteration, since then the two
             # computation steps of the quantity overlap.
-            params = self._fetch_params(params)
             if hasattr(self, "old_params"):
                 # compute update size of last (!) step
                 update_size = [
@@ -85,10 +87,9 @@ class Distance(Quantity):
         else:
             if global_step % self._track_interval == 0:
                 # store current parameters
-                self.old_params = deepcopy(self._fetch_params(params))
+                self.old_params = deepcopy(params)
             elif global_step % self._track_interval == 1:
                 # Compute update size
-                params = self._fetch_params(params)
                 update_size = [
                     (old_p - p).norm(2).item()
                     for old_p, p in zip(self.old_params, params)

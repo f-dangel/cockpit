@@ -57,24 +57,11 @@ class Quantity:
 
         Args:
             global_step (int): The current iteration number.
-            params (method): Function to access the parameters.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         raise NotImplementedError
-
-    @staticmethod
-    def _fetch_params(params):
-        """Return parameters.
-
-        Args:
-            params (method): Function to access the parameters.
-
-        Returns:
-            [torch.Tensor] List of trainable ``params``.
-        """
-        params = [p for p in params() if p.requires_grad]
-
-        return params
 
     @staticmethod
     def _fetch_grad(params, aggregate=False):

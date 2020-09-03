@@ -60,7 +60,8 @@ class InnerProductTest(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params (method): Function to access the parameters.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if global_step % self._track_interval == 0:
@@ -78,10 +79,10 @@ class InnerProductTest(Quantity):
         The inner product test is defined by Equation (2.6) in bollapragada2017adaptive.
 
         Args:
-            params (method): Function to access the parameters.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        params = self._fetch_params(params)
         batch_dot = self._fetch_batch_dot(params, aggregate=True)
         grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
         batch_size = batch_dot.size(0)
@@ -184,7 +185,6 @@ class InnerProductTest(Quantity):
 
         # sanity check 1: Variances of projected individual gradients should match
         # result from computation with individual gradients.
-        params = self._fetch_params(params)
         batch_dot = self._fetch_batch_dot(params, aggregate=True)
         grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
         batch_size = batch_dot.size(0)

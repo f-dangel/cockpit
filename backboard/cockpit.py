@@ -90,8 +90,9 @@ class Cockpit:
             global_step (int): Current number of iteration.
             batch_loss (torch.Tensor): The batch loss of the current iteration.
         """
+        params = [p for p in self.tproblem.net.parameters() if p.requires_grad]
         for q in self.quantities:
-            q.compute(global_step, self.tproblem.net.parameters, batch_loss)
+            q.compute(global_step, params, batch_loss)
 
     def log(
         self,

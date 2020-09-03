@@ -55,7 +55,8 @@ class NormTest(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params (method): Function to access the parameters.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if global_step % self._track_interval == 0:
@@ -73,10 +74,10 @@ class NormTest(Quantity):
         The norm test is defined by Equation (3.9) in byrd2012sample.
 
         Args:
-            params (method): Function to access the parameters.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        params = self._fetch_params(params)
         batch_l2_squared = self._fetch_batch_l2_squared(params, aggregate=True)
         grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
         batch_size = batch_l2_squared.size(0)
@@ -172,7 +173,6 @@ class NormTest(Quantity):
 
         # sanity check 1: ample variance ℓ₁  norm via individual gradients should match
         # result from computation with individual gradients ℓ₂ norms.
-        params = self._fetch_params(params)
         batch_l2_squared = self._fetch_batch_l2_squared(params, aggregate=True)
         grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
         batch_size = batch_l2_squared.size(0)

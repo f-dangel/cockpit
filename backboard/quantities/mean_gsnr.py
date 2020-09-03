@@ -66,7 +66,8 @@ class MeanGSNR(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params (method): Function to access the parameters.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if global_step % self._track_interval == 0:
@@ -84,10 +85,10 @@ class MeanGSNR(Quantity):
         The norm test is defined by Equation (3.9) in byrd2012sample.
 
         Args:
-            params (method): Function to access the parameters.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        params = self._fetch_params(params)
         self._batch_size = len(batch_loss._unreduced_loss)
         mean_gsnr = self._compute_gsnr(params, batch_loss).mean()
 
@@ -145,7 +146,6 @@ class MeanGSNR(Quantity):
             return grad_first_moment_squared / (grad_variance + self._epsilon)
 
         # sanity check 1: Both GSNRs do not contain NaNs
-        params = self._fetch_params(params)
         gsnr_from_batch_grad = _compute_gsnr_from_batch_grad(params)
         assert not has_nans(gsnr_from_batch_grad), "GSNR from batch_grad has NaNs"
 

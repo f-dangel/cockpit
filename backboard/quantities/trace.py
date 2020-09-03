@@ -27,11 +27,12 @@ class Trace(Quantity):
 
         Args:
             global_step (int): The current iteration number.
-            params (method): Function to access the parameters.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if global_step % self._track_interval == 0:
-            trace = [p.diag_h.sum().item() for p in params() if p.requires_grad]
+            trace = [p.diag_h.sum().item() for p in params]
             self.output[global_step]["trace"] = trace
 
             if self._verbose:
