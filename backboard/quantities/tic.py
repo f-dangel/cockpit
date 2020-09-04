@@ -9,8 +9,8 @@ from tests.utils import has_negative, has_zeros, report_nonclose_values
 # TODO Read up where to use mini-batch and dataset size
 # TODO Maybe use the cheaper approximation: fraction of traces
 
-ATOL = 1e-7
-RTOL = 1e-5
+ATOL = 1e-5
+RTOL = 5e-4
 
 
 class TakeuchiInformationCriterion(Quantity):
