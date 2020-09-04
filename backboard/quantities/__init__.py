@@ -1,5 +1,6 @@
 """Quantities tracked during training."""
 
+from backboard.quantities.alpha import Alpha
 from backboard.quantities.distance import Distance
 from backboard.quantities.grad_norm import GradNorm
 from backboard.quantities.inner_product_test import InnerProductTest
@@ -12,6 +13,7 @@ from backboard.quantities.quantity import Quantity
 from backboard.quantities.trace import Trace
 
 __all__ = [
+    "Alpha",
     "Distance",
     "GradNorm",
     "InnerProductTest",
