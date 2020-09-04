@@ -6,8 +6,6 @@ from backboard.quantities.quantity import Quantity
 from backpack import extensions
 from tests.utils import has_negative, has_zeros, report_nonclose_values
 
-# TODO Make invariant under mini-batch size
-
 ATOL = 1e-5
 RTOL = 5e-4
 
@@ -135,7 +133,9 @@ class TICDiag(TIC):
             sum_grad_squared = sum_grad_squared.double()
             curvature = curvature.double()
 
-        return (sum_grad_squared / (curvature + self._epsilon)).sum()
+        batch_size = self._fetch_batch_size_hotfix(batch_loss)
+
+        return (batch_size * sum_grad_squared / (curvature + self._epsilon)).sum()
 
     def __run_check(self, params, batch_loss):
         """Run sanity checks for TICDiag."""
@@ -157,7 +157,9 @@ class TICDiag(TIC):
             if has_negative(curv_stable):
                 raise ValueError("Diagonal curvature + ε has negative entries.")
 
-            return torch.einsum("j,nj->", 1 / curv_stable, batch_grad ** 2)
+            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+
+            return torch.einsum("j,nj->", 1 / curv_stable, batch_size * batch_grad ** 2)
 
         # sanity check 1: Both TICDiags match
         tic_from_sgs = self._compute(params, batch_loss)
@@ -221,7 +223,9 @@ class TICTrace(TIC):
             sum_grad_squared = sum_grad_squared.double()
             curvature = curvature.double()
 
-        return sum_grad_squared.sum() / (curvature.sum() + self._epsilon)
+        batch_size = self._fetch_batch_size_hotfix(batch_loss)
+
+        return batch_size * sum_grad_squared.sum() / (curvature.sum() + self._epsilon)
 
     def __run_check(self, params, batch_loss):
         """Run sanity checks for TICTrace."""
@@ -243,7 +247,9 @@ class TICTrace(TIC):
             if has_negative(curv_trace_stable):
                 raise ValueError("Curvature trace + ε has negative entries.")
 
-            return (batch_grad ** 2).sum() / curv_trace_stable
+            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+
+            return batch_size * (batch_grad ** 2).sum() / curv_trace_stable
 
         # sanity check 1: Both TICTraces match
         tic_from_sgs = self._compute(params, batch_loss)
