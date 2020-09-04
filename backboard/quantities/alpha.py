@@ -47,7 +47,9 @@ class Alpha(Quantity):
 
     def _is_end(self, global_step):
         """Return whether current iteration is the end of a quadratic fit."""
-        return global_step % self._track_interval == 0
+        first_step = global_step == 0
+
+        return global_step % self._track_interval == 0 or first_step
 
     def compute(self, global_step, params, batch_loss):
         """Evaluate the current parameter distances.
@@ -61,22 +63,16 @@ class Alpha(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        first_step = global_step == 0
+        if self._is_end(global_step):
+            self._store_values_at_end(global_step, params, batch_loss)
+            self.output[global_step - 1]["alpha"] = self._compute_alpha()
 
-        if first_step:
-            self._store_values_at_start(global_step, params, batch_loss)
-
-        else:
+        elif self._is_start(global_step):
             if self._is_end(global_step):
-                self._store_values_at_end(global_step, params, batch_loss)
-                self.output[global_step - 1]["alpha"] = self._compute_alpha()
-
-            elif self._is_start(global_step):
-                if self._is_end(global_step):
-                    # values were already computed and stored, they just need to be moved
-                    self._copy_values_end_to_start()
-                else:
-                    self._store_values_at_start(global_step, params, batch_loss)
+                # values were already computed and stored, they just need to be moved
+                self._copy_values_end_to_start()
+            else:
+                self._store_values_at_start(global_step, params, batch_loss)
 
     def _store_values_at_start(self, global_step, params, batch_loss):
         """Update values at start point of the fit in ``self``."""
