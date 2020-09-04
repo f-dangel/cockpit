@@ -2,7 +2,7 @@
 
 import pytest
 
-from backboard.quantities.tic import TakeuchiInformationCriterion
+from backboard.quantities.tic import TICDiag, TICTrace
 from deepobs.config import set_data_dir
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
@@ -21,10 +21,10 @@ TRACK_INTERVAL = 1
 
 
 @pytest.mark.parametrize("testproblem", TESTPROBLEMS, ids=TESTPROBLEMS)
-def test_tic_precision(
+def test_tic_diag_precision(
     testproblem, num_epochs=1, batch_size=3, epsilon=1e-8, lr=0.01, momentum=0.0
 ):
-    """Compare values of TIC computed with different extensions.
+    """Compare values of TICDiag computed with different extensions.
 
     Note: This test does not check if the value itself makes sense/is correct.
     """
@@ -33,7 +33,40 @@ def test_tic_precision(
     hotfix_deepobs_argparse()
 
     quantities = [
-        TakeuchiInformationCriterion(
+        TICDiag(
+            TRACK_INTERVAL,
+            curvature="diag_h",
+            epsilon=epsilon,
+            use_double=False,
+            verbose=True,
+            check=True,
+        )
+    ]
+
+    run_sgd_test_runner(
+        quantities,
+        testproblem,
+        num_epochs=num_epochs,
+        batch_size=batch_size,
+        lr=lr,
+        momentum=momentum,
+    )
+
+
+@pytest.mark.parametrize("testproblem", TESTPROBLEMS, ids=TESTPROBLEMS)
+def test_tic_trace_precision(
+    testproblem, num_epochs=1, batch_size=3, epsilon=1e-8, lr=0.01, momentum=0.0
+):
+    """Compare values of TICTrace computed with different extensions.
+
+    Note: This test does not check if the value itself makes sense/is correct.
+    """
+    set_deepobs_seed(0)
+    set_data_dir("~/tmp/data_deepobs")
+    hotfix_deepobs_argparse()
+
+    quantities = [
+        TICTrace(
             TRACK_INTERVAL,
             curvature="diag_h",
             epsilon=epsilon,
