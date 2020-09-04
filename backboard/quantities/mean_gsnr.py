@@ -89,7 +89,6 @@ class MeanGSNR(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        self._batch_size = len(batch_loss._unreduced_loss)
         mean_gsnr = self._compute_gsnr(params, batch_loss).mean()
 
         if self._verbose:
@@ -113,8 +112,10 @@ class MeanGSNR(Quantity):
             grad_squared = self._fetch_grad(params, aggregate=True) ** 2
             sum_grad_squared = self._fetch_sum_grad_squared(params, aggregate=True)
 
+        batch_size = self._fetch_batch_size_hotfix(batch_loss)
+
         return grad_squared / (
-            self._batch_size * sum_grad_squared - grad_squared + self._epsilon
+            batch_size * sum_grad_squared - grad_squared + self._epsilon
         )
 
     def __run_check(self, params, batch_loss):
@@ -131,7 +132,9 @@ class MeanGSNR(Quantity):
             if self._use_double:
                 batch_grad = batch_grad.double()
 
-            rescaled_batch_grad = self._batch_size * batch_grad
+            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+
+            rescaled_batch_grad = batch_size * batch_grad
 
             grad_first_moment_squared = (rescaled_batch_grad).mean(0) ** 2
             grad_second_moment = (rescaled_batch_grad ** 2).mean(0)
