@@ -49,7 +49,7 @@ class Alpha(Quantity):
         """Return whether current iteration is the end of a quadratic fit."""
         first_step = global_step == 0
 
-        return global_step % self._track_interval == 0 or first_step
+        return global_step % self._track_interval == 1 or first_step
 
     def compute(self, global_step, params, batch_loss):
         """Evaluate the current parameter distances.
