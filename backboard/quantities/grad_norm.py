@@ -1,6 +1,7 @@
 """Class for tracking the Gradient Norm."""
 
 from backboard.quantities.quantity import Quantity
+from backboard.quantities.utils_quantities import _root_sum_of_squares
 
 
 class GradNorm(Quantity):
@@ -34,6 +35,6 @@ class GradNorm(Quantity):
             self.output[global_step]["grad_norm"] = grad_norm
 
             if self._verbose:
-                print(f"Grad norm: {sum(grad_norm):.4f}")
+                print(f"Grad norm: {_root_sum_of_squares(grad_norm):.4f}")
         else:
             pass
