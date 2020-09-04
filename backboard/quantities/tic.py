@@ -36,6 +36,12 @@ class TIC(Quantity):
     ):
         """Initialize TIC quantity.
 
+        Note:
+            The curvature options "diag_h" and "diag_ggn_exact" are more expensive than
+            "diag_ggn_mc", but more precise. For a classification task with ``C``
+            classes, the former require that ``C`` times more information be backpropa-
+            gated through the computation graph.
+
         Args:
             track_interval (int): Tracking rate.
             curvature (string): Which diagonal curvature approximation should be used.
