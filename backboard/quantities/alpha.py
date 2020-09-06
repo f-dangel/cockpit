@@ -76,19 +76,19 @@ class Alpha(Quantity):
 
         The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
         """
-        if pos not in self._positions:
-            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
-
         info = {}
 
         # TODO this is currently only correctly implemented for SGD!
         # TODO raise NotImplementedError when optimizer is not SGD with 0 momentum
-        search_dir = [-g for g in self._fetch_grad(params)]
+        if pos == "start":
+            search_dir = [-g for g in self._fetch_grad(params)]
+            info["search_dir"] = search_dir
+        elif pos == "end":
+            search_dir = self._start_info["search_dir"]
+        else:
+            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
 
         info["params"] = [p.data.clone().detach() for p in params]
-
-        if pos == "start":
-            info["search_dir"] = search_dir
 
         # 0ᵗʰ order info
         info["f"] = batch_loss.item()
