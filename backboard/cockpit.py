@@ -4,6 +4,7 @@ import contextlib
 import inspect
 import json
 import os
+import warnings
 from collections import defaultdict
 
 from backboard.cockpit_plotter import CockpitPlotter
@@ -11,6 +12,7 @@ from backboard.quantities import Quantity
 from backboard.quantities.utils_quantities import _update_dicts
 from backobs import extend_with_access_unreduced_loss
 from backpack import backpack
+from backpack.extensions import BatchGradTransforms
 from deepobs.pytorch.testproblems.testproblem import TestProblem
 
 
@@ -67,6 +69,9 @@ class Cockpit:
         ext = []
         for q in self.quantities:
             ext += q.extensions(global_step)
+
+        ext = self._process_multiple_batch_grad_transforms(ext)
+
         ext = list(set(ext))
 
         # Collect if create graph is needed and set switch
@@ -178,3 +183,31 @@ class Cockpit:
                 quants.append(q)
 
         return quants
+
+    def _process_multiple_batch_grad_transforms(self, ext):
+        """Handle multiple occurrences of ``BatchGradTransforms`` by combining them."""
+        transforms = [e for e in ext if isinstance(e, BatchGradTransforms)]
+        no_transforms = [e for e in ext if not isinstance(e, BatchGradTransforms)]
+
+        batch_grad_transforms = self._merge_batch_grad_transforms(transforms)
+
+        return no_transforms + [batch_grad_transforms]
+
+    @staticmethod
+    def _merge_batch_grad_transforms(batch_grad_transforms):
+        """Merge multiple ``BatchGradTransform``s into a single one."""
+        transforms = [t.get_transforms() for t in batch_grad_transforms]
+
+        # Check for no duplicates. In principle this may be okay if same keys really
+        # computed the same quantity. For now, simply avoid that.
+        keys = []
+        for t in transforms:
+            keys += list(t.keys())
+        if not len(keys) == len(set(keys)):
+            raise ValueError(f"Found non-unique transforms: {keys}")
+
+        combined_transforms = {}
+        for t in transforms:
+            combined_transforms.update(t)
+
+        return BatchGradTransforms(combined_transforms)
