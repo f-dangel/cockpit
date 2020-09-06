@@ -17,13 +17,20 @@ from backpack import extensions
 class Alpha(Quantity):
     """Alpha Quantity Class."""
 
+    _positions = ["start", "end"]
+
     def __init__(self, track_interval=1, verbose=False, check=False):
         super().__init__(track_interval=track_interval, verbose=verbose)
-
+        self.clear_info()
         self._check = check
 
         if self._check:
             raise NotImplementedError()
+
+    def clear_info(self):
+        """Reset information of start and end points."""
+        self._start_info = {}
+        self._end_info = {}
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -36,20 +43,13 @@ class Alpha(Quantity):
         """
         ext = []
 
-        if self._is_start(global_step) or self._is_end(global_step):
+        if self._is_position(global_step, "start"):
+            ext.append(extensions.BatchGrad())
+
+        if self._is_position(global_step, "end"):
             ext.append(extensions.BatchGrad())
 
         return ext
-
-    def _is_start(self, global_step):
-        """Return whether current iteration is the start of a quadratic fit."""
-        return global_step % self._track_interval == 0
-
-    def _is_end(self, global_step):
-        """Return whether current iteration is the end of a quadratic fit."""
-        first_step = global_step == 0
-
-        return global_step % self._track_interval == 1 or first_step
 
     def compute(self, global_step, params, batch_loss):
         """Evaluate the current parameter distances.
@@ -63,69 +63,59 @@ class Alpha(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if self._is_end(global_step):
-            self._store_values_at_end(global_step, params, batch_loss)
+        if self._is_position(global_step, pos="end"):
+            self._end_info = self._fetch_values(params, batch_loss, pos="end")
             self.output[global_step - 1]["alpha"] = self._compute_alpha()
+            self.clear_info()
 
-        elif self._is_start(global_step):
-            if self._is_end(global_step):
-                # values were already computed and stored, they just need to be moved
-                self._copy_values_end_to_start()
-            else:
-                self._store_values_at_start(global_step, params, batch_loss)
+        if self._is_position(global_step, pos="start"):
+            self._start_info = self._fetch_values(params, batch_loss, pos="start")
 
-    def _store_values_at_start(self, global_step, params, batch_loss):
-        """Update values at start point of the fit in ``self``."""
-        # Store values and wait for next step #
-        # (Variance of) loss
-        self.f0 = batch_loss.item()
-        self.var_f0 = _unreduced_loss_hotfix(batch_loss).var().item()
+    def _fetch_values(self, params, batch_loss, pos):
+        """Fetch values for quadratic fit. Return as dictionary.
 
-        # Store search direction
+        The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
+        """
+        if pos not in self._positions:
+            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
+
+        info = {}
+
         # TODO this is currently only correctly implemented for SGD!
         # TODO raise NotImplementedError when optimizer is not SGD with 0 momentum
-        self.search_dir = [-g for g in self._fetch_grad(params)]
+        search_dir = [-g for g in self._fetch_grad(params)]
 
-        # Store current parameters (for update size)
-        self.params0 = [p.data.clone().detach() for p in params]
+        info["params"] = [p.data.clone().detach() for p in params]
 
-        # (Variance of) projected gradient
-        self.df0 = _projected_gradient(self._fetch_grad(params), self.search_dir)
-        self.var_df0 = _exact_variance(self._fetch_batch_grad(params), self.search_dir)
+        if pos == "start":
+            info["search_dir"] = search_dir
 
-    def _store_values_at_end(self, global_step, params, batch_loss):
-        """Update values at end point of the fit in ``self``."""
-        # Gather necessary values, compute alpha and store it #
-        # (Variance of) loss
-        self.f1 = batch_loss.item()
-        self.var_f1 = _unreduced_loss_hotfix(batch_loss).var().item()
+        # 0ᵗʰ order info
+        info["f"] = batch_loss.item()
+        info["var_f"] = _unreduced_loss_hotfix(batch_loss).var().item()
 
-        # (Variance of) projected gradient
-        print(global_step)
-        self.df1 = _projected_gradient(self._fetch_grad(params), self.search_dir)
-        self.var_df1 = _exact_variance(self._fetch_batch_grad(params), self.search_dir)
+        # 1ˢᵗ order info
+        info["df"] = _projected_gradient(self._fetch_grad(params), search_dir)
+        info["var_df"] = _exact_variance(self._fetch_batch_grad(params), search_dir)
 
-        self.params1 = self.params0 = [p.data.clone().detach() for p in params]
+        return info
 
-    def _copy_values_end_to_start(self):
-        """Overwrite values at start point with values from end point."""
-        self.f0 = self.f1
-        self.df0 = self.df1
-        self.var_df0 = self.var_df1
-        self.params0 = self.params1
+    def _is_position(self, global_step, pos):
+        """Return whether current iteration is the start/end of a quadratic fit."""
+        if pos == "start":
+            return global_step % self._track_interval == 0
+        elif pos == "end":
+            return global_step % self._track_interval == 1
+        else:
+            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
 
     def _compute_alpha(self):
         """Compute and return alpha, assuming all quantities have been stored."""
-        # Update size
-        t = _root_sum_of_squares(
-            [(old_p - p).norm(2).item() for old_p, p in zip(self.params0, self.params1)]
-        )
-
-        # Combine
-        fs = [self.f0, self.f1]
-        dfs = [self.df0, self.df1]
-        var_fs = [self.var_f0, self.var_f1]
-        var_dfs = [1e-6, 1e-6]
+        t = self._compute_step_length()
+        fs = self._get_info("f")
+        dfs = self._get_info("df")
+        var_fs = self._get_info("var_f")
+        var_dfs = self._get_info("var_df")
 
         # Compute alpha
         mu = _fit_quadratic(t, fs, dfs, var_fs, var_dfs)
@@ -137,6 +127,28 @@ class Alpha(Quantity):
             # print(f"α: {alpha:.4f}")
 
         return alpha
+
+    def _compute_step_length(self):
+        """Return distance between start and end point."""
+        return _root_sum_of_squares(
+            [(old_p - p).norm(2).item() for old_p, p in zip(*self._get_info("params"))]
+        )
+
+    def _get_info(self, key):
+        """Return list with the requested information at start and end point.
+
+        Args:
+            key (str): Label of the information requested for start and end point
+                of the quadratic fit.
+        """
+        if key == "var_df":
+            # TODO Replace dummy
+            dummy = [1e-6, 1e-6]
+            warnings.warn(f"Info 'var_df' is using dummy values {dummy}")
+            return dummy
+
+        else:
+            return [self._start_info[key], self._end_info[key]]
 
 
 def _projected_gradient(u, v):
