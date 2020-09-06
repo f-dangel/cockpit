@@ -5,7 +5,7 @@ scipy
 seaborn
 torch
 # BatchDotGrad extensions
--e git://github.com/f-dangel/backpack.git@writing-new-layers#egg=backpack
+-e git://github.com/f-dangel/backpack.git@batch-grad-transform#egg=backpack
 # -e git://github.com/f-dangel/backpack.git@development#egg=backpack
 -e git://github.com/fsschneider/DeepOBS.git@develop#egg=deepobs
 -e git://github.com/f-dangel/backobs.git@master#egg=backobs
