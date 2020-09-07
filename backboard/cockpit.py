@@ -98,12 +98,12 @@ class Cockpit:
         self,
         global_step,
         epoch_count,
-        train_losses,
-        valid_losses,
-        test_losses,
-        train_accuracies,
-        valid_accuracies,
-        test_accuracies,
+        train_loss,
+        valid_loss,
+        test_loss,
+        train_accuracy,
+        valid_accuracy,
+        test_accuracy,
         learning_rate,
     ):
         """Tracking function for quantities computed at every epoch.
