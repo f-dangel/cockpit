@@ -174,7 +174,12 @@ class AlphaExpensive(_Alpha):
 
         # 1ˢᵗ order info
         info["df"] = _projected_gradient(self._fetch_grad(params), search_dir)
-        info["var_df"] = _exact_variance(self._fetch_batch_grad(params), search_dir)
+
+        # If L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's BatchGrad computes ¹/ₙ ∇ℓᵢ and we have to rescale
+        batch_grads = self._fetch_batch_grad(params)
+        batch_size = self._fetch_batch_size_hotfix(batch_loss)
+        batch_grads = [batch_size * g for g in batch_grads]
+        info["var_df"] = _exact_variance(batch_grads, search_dir)
 
         return info
 
