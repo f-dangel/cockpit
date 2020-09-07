@@ -4,7 +4,6 @@ import contextlib
 import inspect
 import json
 import os
-import warnings
 from collections import defaultdict
 
 from backboard.cockpit_plotter import CockpitPlotter
