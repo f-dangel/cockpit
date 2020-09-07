@@ -79,12 +79,12 @@ class _Alpha(Quantity):
         """Return distance between start and end point."""
         start_params, end_params = self._get_info("params")
 
-        dists_squared = [
+        dists = [
             (end_params[key] - start_params[key]).norm(2).item()
             for key in start_params.keys()
         ]
 
-        return _root_sum_of_squares(dists_squared)
+        return _root_sum_of_squares(dists)
 
     def _get_info(self, key, start=True, end=True):
         """Return list with the requested information at start and/or end point.
@@ -237,7 +237,7 @@ class AlphaOptimized(_Alpha):
 
             # TODO this is currently only correctly implemented for SGD!
             # TODO raise NotImplementedError when optimizer is not SGD with 0 momentum
-            search_dir_flat = batch_grad.sum(0).flatten()
+            search_dir_flat = -1 * (batch_grad.sum(0).flatten())
             batch_grad_flat = batch_grad.flatten(start_dim=1)
 
             search_dir_l2_squared = (search_dir_flat ** 2).sum()
@@ -305,7 +305,7 @@ class AlphaOptimized(_Alpha):
             [p.grad_batch_transforms[key]["search_dir_l2_squared"] for p in params]
         )
 
-        projections = dot_products / search_dir_l2_squared
+        projections = dot_products / search_dir_l2_squared.sqrt()
 
         df = projections.mean().item()
         df_var = projections.var().item()

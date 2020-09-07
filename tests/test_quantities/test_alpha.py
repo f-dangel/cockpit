@@ -210,6 +210,9 @@ def test_integration_alpha_expensive(
         momentum=momentum,
     )
 
+    alpha = quantities[0].output
+    return alpha
+
 
 @pytest.mark.parametrize("testproblem", TESTPROBLEMS, ids=TESTPROBLEMS)
 def test_integration_alpha_optimized(
@@ -234,3 +237,80 @@ def test_integration_alpha_optimized(
         lr=lr,
         momentum=momentum,
     )
+
+    alpha = quantities[0].output
+    return alpha
+
+
+def compare_outputs(output1, output2, atol=1e-5, rtol=1e-8):
+    """Compare outputs of two quantities."""
+    assert len(list(output1.keys())) == len(
+        list(output2.keys())
+    ), "Different number of entries"
+
+    for key in output1.keys():
+        if isinstance(output1[key], dict):
+            compare_outputs(output1[key], output2[key])
+        else:
+            val1, val2 = output1[key], output2[key]
+            if isinstance(val1, float) and isinstance(val2, float):
+                assert np.isclose(val1, val2, atol=atol, rtol=rtol)
+            else:
+                raise NotImplementedError("No comparison available for this data type.")
+
+
+@pytest.mark.parametrize("testproblem", TESTPROBLEMS, ids=TESTPROBLEMS)
+def test_expensive_matches_optimized_alpha_separate_runs(
+    testproblem, num_epochs=1, batch_size=2, lr=0.01, momentum=0.0
+):
+    """Compare results of expensive and optimized alpha."""
+    alpha_optimized = test_integration_alpha_optimized(
+        testproblem,
+        num_epochs=num_epochs,
+        batch_size=batch_size,
+        lr=lr,
+        momentum=momentum,
+    )
+
+    alpha_expensive = test_integration_alpha_expensive(
+        testproblem,
+        num_epochs=num_epochs,
+        batch_size=batch_size,
+        lr=lr,
+        momentum=momentum,
+    )
+
+    compare_outputs(alpha_optimized, alpha_expensive)
+
+
+@pytest.mark.parametrize("testproblem", TESTPROBLEMS, ids=TESTPROBLEMS)
+def test_expensive_matches_optimized_alpha_joint_run(
+    testproblem, num_epochs=1, batch_size=2, lr=0.01, momentum=0.0
+):
+    """Integration test for expensive alpha quantity.
+
+    Computes the effective local step size alpha during a short training.
+    Note: This test only verifies that the computation passes.
+    """
+    set_deepobs_seed(0)
+    set_data_dir("~/tmp/data_deepobs")
+    hotfix_deepobs_argparse()
+
+    quantities = [
+        AlphaOptimized(TRACK_INTERVAL, verbose=True),
+        AlphaExpensive(TRACK_INTERVAL, verbose=True),
+    ]
+
+    run_sgd_test_runner(
+        quantities,
+        testproblem,
+        num_epochs=num_epochs,
+        batch_size=batch_size,
+        lr=lr,
+        momentum=momentum,
+    )
+
+    alpha_optimized = quantities[0].output
+    alpha_expensive = quantities[1].output
+
+    compare_outputs(alpha_optimized, alpha_expensive)
