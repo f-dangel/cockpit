@@ -211,6 +211,21 @@ def test_integration_alpha_expensive(
     )
 
 
+@pytest.mark.parametrize("testproblem", TESTPROBLEMS, ids=TESTPROBLEMS)
+def test_integration_alpha_optimized(
+    testproblem, num_epochs=1, batch_size=2, lr=0.01, momentum=0.0
+):
+    """Integration test for expensive alpha quantity.
+
+    Computes the effective local step size alpha during a short training.
+    Note: This test only verifies that the computation passes.
+    """
+    set_deepobs_seed(0)
+    set_data_dir("~/tmp/data_deepobs")
+    hotfix_deepobs_argparse()
+
+    quantities = [AlphaOptimized(TRACK_INTERVAL, verbose=True)]
+
     run_sgd_test_runner(
         quantities,
         testproblem,
