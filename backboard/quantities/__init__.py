@@ -13,7 +13,8 @@ from backboard.quantities.quantity import Quantity
 from backboard.quantities.trace import Trace
 
 __all__ = [
-    "Alpha",
+    "AlphaExpensive",
+    "AlphaOptimized",
     "Distance",
     "GradNorm",
     "InnerProductTest",

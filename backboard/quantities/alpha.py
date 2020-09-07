@@ -287,11 +287,9 @@ class AlphaOptimized(_Alpha):
         else:
             raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
 
-        dot_products = sum(
-            [p.grad_batch_transforms[key]["dot_products"] for p in params]
-        )
+        dot_products = sum(p.grad_batch_transforms[key]["dot_products"] for p in params)
         search_dir_l2_squared = sum(
-            [p.grad_batch_transforms[key]["search_dir_l2_squared"] for p in params]
+            p.grad_batch_transforms[key]["search_dir_l2_squared"] for p in params
         )
 
         projections = dot_products / search_dir_l2_squared.sqrt()
