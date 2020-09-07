@@ -93,24 +93,10 @@ class _Alpha(Quantity):
         """
         start_value, end_value = None, None
 
-        # TODO Replace dummy
-        DUMMY = 1e-6
-
         if start:
-            if key == "var_df":
-                # TODO Replace dummy
-                warnings.warn("Info 'var_df' is using dummy values")
-                start_value = DUMMY
-            else:
-                start_value = self._start_info[key]
-
+            start_value = self._start_info[key]
         if end:
-            if key == "var_df":
-                # TODO Replace dummy
-                warnings.warn("Info 'var_df' is using dummy values")
-                end_value = DUMMY
-            else:
-                end_value = self._end_info[key]
+            end_value = self._end_info[key]
 
         return [start_value, end_value]
 
