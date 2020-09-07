@@ -69,8 +69,6 @@ class _Alpha(Quantity):
         alpha = _get_alpha(mu, t)
 
         if self._verbose:
-            # print(f"α: {alpha}")
-            # TODO α sometimes seems to be None. Then this fails:
             print(f"α: {alpha:.4f}")
 
         return alpha
