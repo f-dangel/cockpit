@@ -68,7 +68,7 @@ class OrthogonalityTest(Quantity):
         """
         if global_step % self._track_interval == 0:
             orthogonality_test = self._compute(params, batch_loss)
-            self.output[global_step]["orthogonality_test"] = [orthogonality_test.item()]
+            self.output[global_step]["orthogonality_test"] = orthogonality_test.item()
 
             if self._check:
                 self.__run_check(params, batch_loss)

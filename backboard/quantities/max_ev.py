@@ -47,7 +47,7 @@ class MaxEV(Quantity):
         """
         if global_step % self._track_interval == 0:
             max_ev = np.float64(self._compute_max_ev(global_step, params, batch_loss))
-            self.output[global_step]["max_ev"] = [max_ev]
+            self.output[global_step]["max_ev"] = max_ev
         else:
             pass
 

@@ -61,7 +61,7 @@ class NormTest(Quantity):
         """
         if global_step % self._track_interval == 0:
             norm_test = self._compute(params, batch_loss)
-            self.output[global_step]["norm_test"] = [norm_test.item()]
+            self.output[global_step]["norm_test"] = norm_test.item()
 
             if self._check:
                 self.__run_check(params, batch_loss)
