@@ -188,7 +188,7 @@ TRACK_INTERVAL = 2
 
 @pytest.mark.parametrize("testproblem", TESTPROBLEMS, ids=TESTPROBLEMS)
 def test_integration_alpha_expensive(
-    testproblem, num_epochs=1, batch_size=2, lr=0.01, momentum=0.0
+    testproblem, num_epochs=1, batch_size=4, lr=0.01, momentum=0.0
 ):
     """Integration test for expensive alpha quantity.
 
@@ -216,7 +216,7 @@ def test_integration_alpha_expensive(
 
 @pytest.mark.parametrize("testproblem", TESTPROBLEMS, ids=TESTPROBLEMS)
 def test_integration_alpha_optimized(
-    testproblem, num_epochs=1, batch_size=2, lr=0.01, momentum=0.0
+    testproblem, num_epochs=1, batch_size=4, lr=0.01, momentum=0.0
 ):
     """Integration test for expensive alpha quantity.
 
@@ -242,7 +242,7 @@ def test_integration_alpha_optimized(
     return alpha
 
 
-def compare_outputs(output1, output2, atol=1e-5, rtol=1e-8):
+def compare_outputs(output1, output2, rtol=1e-5, atol=1e-6):
     """Compare outputs of two quantities."""
     assert len(list(output1.keys())) == len(
         list(output2.keys())
@@ -261,7 +261,7 @@ def compare_outputs(output1, output2, atol=1e-5, rtol=1e-8):
 
 @pytest.mark.parametrize("testproblem", TESTPROBLEMS, ids=TESTPROBLEMS)
 def test_expensive_matches_optimized_alpha_separate_runs(
-    testproblem, num_epochs=1, batch_size=2, lr=0.01, momentum=0.0
+    testproblem, num_epochs=1, batch_size=4, lr=0.01, momentum=0.0
 ):
     """Compare results of expensive and optimized alpha."""
     alpha_optimized = test_integration_alpha_optimized(
@@ -285,7 +285,7 @@ def test_expensive_matches_optimized_alpha_separate_runs(
 
 @pytest.mark.parametrize("testproblem", TESTPROBLEMS, ids=TESTPROBLEMS)
 def test_expensive_matches_optimized_alpha_joint_run(
-    testproblem, num_epochs=1, batch_size=2, lr=0.01, momentum=0.0
+    testproblem, num_epochs=1, batch_size=4, lr=0.01, momentum=0.0
 ):
     """Integration test for expensive alpha quantity.
 
