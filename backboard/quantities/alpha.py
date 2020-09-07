@@ -84,7 +84,7 @@ class Alpha(Quantity):
             search_dir = [-g for g in self._fetch_grad(params)]
             info["search_dir"] = search_dir
         elif pos == "end":
-            search_dir = self._start_info["search_dir"]
+            search_dir, _ = self._get_info("search_dir", end=False)
         else:
             raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
 
@@ -139,21 +139,35 @@ class Alpha(Quantity):
 
         return _root_sum_of_squares(dists_squared)
 
-    def _get_info(self, key):
-        """Return list with the requested information at start and end point.
+    def _get_info(self, key, start=True, end=True):
+        """Return list with the requested information at start and/or end point.
 
         Args:
             key (str): Label of the information requested for start and end point
                 of the quadratic fit.
         """
-        if key == "var_df":
-            # TODO Replace dummy
-            dummy = [1e-6, 1e-6]
-            warnings.warn(f"Info 'var_df' is using dummy values {dummy}")
-            return dummy
+        start_value, end_value = None, None
 
-        else:
-            return [self._start_info[key], self._end_info[key]]
+        # TODO Replace dummy
+        DUMMY = 1e-6
+
+        if start:
+            if key == "var_df":
+                # TODO Replace dummy
+                warnings.warn("Info 'var_df' is using dummy values")
+                start_value = DUMMY
+            else:
+                start_value = self._start_info[key]
+
+        if end:
+            if key == "var_df":
+                # TODO Replace dummy
+                warnings.warn("Info 'var_df' is using dummy values")
+                end_value = DUMMY
+            else:
+                end_value = self._end_info[key]
+
+        return [start_value, end_value]
 
 
 def _projected_gradient(u, v):
