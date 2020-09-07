@@ -3,7 +3,12 @@
 import numpy as np
 import pytest
 
-from backboard.quantities.alpha import Alpha, _fit_quadratic, _get_alpha
+from backboard.quantities.alpha import (
+    AlphaExpensive,
+    AlphaOptimized,
+    _fit_quadratic,
+    _get_alpha,
+)
 from deepobs.config import set_data_dir
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
@@ -182,10 +187,10 @@ TRACK_INTERVAL = 2
 
 
 @pytest.mark.parametrize("testproblem", TESTPROBLEMS, ids=TESTPROBLEMS)
-def test_integration_alpha(
+def test_integration_alpha_expensive(
     testproblem, num_epochs=1, batch_size=2, lr=0.01, momentum=0.0
 ):
-    """Integration test for alpha quantity.
+    """Integration test for expensive alpha quantity.
 
     Computes the effective local step size alpha during a short training.
     Note: This test only verifies that the computation passes.
@@ -194,7 +199,17 @@ def test_integration_alpha(
     set_data_dir("~/tmp/data_deepobs")
     hotfix_deepobs_argparse()
 
-    quantities = [Alpha(TRACK_INTERVAL, verbose=True)]
+    quantities = [AlphaExpensive(TRACK_INTERVAL, verbose=True)]
+
+    run_sgd_test_runner(
+        quantities,
+        testproblem,
+        num_epochs=num_epochs,
+        batch_size=batch_size,
+        lr=lr,
+        momentum=momentum,
+    )
+
 
     run_sgd_test_runner(
         quantities,

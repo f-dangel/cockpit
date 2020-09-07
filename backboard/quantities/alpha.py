@@ -4,6 +4,7 @@ import itertools
 import warnings
 
 import numpy as np
+import torch
 
 from backboard.quantities.quantity import Quantity
 from backboard.quantities.utils_quantities import (
@@ -14,42 +15,19 @@ from backboard.quantities.utils_quantities import (
 from backpack import extensions
 
 
-class Alpha(Quantity):
-    """Alpha Quantity Class."""
+class _Alpha(Quantity):
+    """Base class for α computation."""
 
     _positions = ["start", "end"]
 
-    def __init__(self, track_interval=1, verbose=False, check=False):
+    def __init__(self, track_interval=1, verbose=False):
         super().__init__(track_interval=track_interval, verbose=verbose)
         self.clear_info()
-        self._check = check
-
-        if self._check:
-            raise NotImplementedError()
 
     def clear_info(self):
         """Reset information of start and end points."""
         self._start_info = {}
         self._end_info = {}
-
-    def extensions(self, global_step):
-        """Return list of BackPACK extensions required for the computation.
-
-        Args:
-            global_step (int): The current iteration number.
-
-        Returns:
-            list: (Potentially empty) list with required BackPACK quantities.
-        """
-        ext = []
-
-        if self._is_position(global_step, "start"):
-            ext.append(extensions.BatchGrad())
-
-        if self._is_position(global_step, "end"):
-            ext.append(extensions.BatchGrad())
-
-        return ext
 
     def compute(self, global_step, params, batch_loss):
         """Evaluate the current parameter distances.
@@ -76,38 +54,7 @@ class Alpha(Quantity):
 
         The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
         """
-        info = {}
-
-        # TODO this is currently only correctly implemented for SGD!
-        # TODO raise NotImplementedError when optimizer is not SGD with 0 momentum
-        if pos == "start":
-            search_dir = [-g for g in self._fetch_grad(params)]
-            info["search_dir"] = search_dir
-        elif pos == "end":
-            search_dir, _ = self._get_info("search_dir", end=False)
-        else:
-            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
-
-        info["params"] = {id(p): p.data.clone().detach() for p in params}
-
-        # 0ᵗʰ order info
-        info["f"] = batch_loss.item()
-        info["var_f"] = _unreduced_loss_hotfix(batch_loss).var().item()
-
-        # 1ˢᵗ order info
-        info["df"] = _projected_gradient(self._fetch_grad(params), search_dir)
-        info["var_df"] = _exact_variance(self._fetch_batch_grad(params), search_dir)
-
-        return info
-
-    def _is_position(self, global_step, pos):
-        """Return whether current iteration is the start/end of a quadratic fit."""
-        if pos == "start":
-            return global_step % self._track_interval == 0
-        elif pos == "end":
-            return global_step % self._track_interval == 1
-        else:
-            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
+        raise NotImplementedError
 
     def _compute_alpha(self):
         """Compute and return alpha, assuming all quantities have been stored."""
@@ -122,9 +69,9 @@ class Alpha(Quantity):
         alpha = _get_alpha(mu, t)
 
         if self._verbose:
-            print(f"α: {alpha}")
+            # print(f"α: {alpha}")
             # TODO α sometimes seems to be None. Then this fails:
-            # print(f"α: {alpha:.4f}")
+            print(f"α: {alpha:.4f}")
 
         return alpha
 
@@ -169,7 +116,204 @@ class Alpha(Quantity):
 
         return [start_value, end_value]
 
+    def _is_position(self, global_step, pos):
+        """Return whether current iteration is the start/end of a quadratic fit."""
+        if pos == "start":
+            return global_step % self._track_interval == 0
+        elif pos == "end":
+            if self._track_interval == 1:
+                first_step = 0
+                return global_step != first_step
+            else:
+                return global_step % self._track_interval == 1
+        else:
+            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
 
+
+class AlphaExpensive(_Alpha):
+    """Compute α but requires storing individual gradients."""
+
+    def extensions(self, global_step):
+        """Return list of BackPACK extensions required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            list: (Potentially empty) list with required BackPACK quantities.
+        """
+        ext = []
+
+        if self._is_position(global_step, "start") or self._is_position(
+            global_step, "end"
+        ):
+            ext.append(extensions.BatchGrad())
+
+        return ext
+
+    def _fetch_values(self, params, batch_loss, pos):
+        """Fetch values for quadratic fit. Return as dictionary.
+
+        The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
+        """
+        info = {}
+
+        if pos == "start":
+            # TODO this is currently only correctly implemented for SGD!
+            # TODO raise NotImplementedError if optimizer is not SGD with 0 momentum
+            search_dir = [-g for g in self._fetch_grad(params)]
+            info["search_dir"] = search_dir
+        elif pos == "end":
+            search_dir, _ = self._get_info("search_dir", end=False)
+        else:
+            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
+
+        info["params"] = {id(p): p.data.clone().detach() for p in params}
+
+        # 0ᵗʰ order info
+        info["f"] = batch_loss.item()
+        info["var_f"] = _unreduced_loss_hotfix(batch_loss).var().item()
+
+        # 1ˢᵗ order info
+        info["df"] = _projected_gradient(self._fetch_grad(params), search_dir)
+        info["var_df"] = _exact_variance(self._fetch_batch_grad(params), search_dir)
+
+        return info
+
+
+class AlphaOptimized(_Alpha):
+    """Optimized α Quantity Class. Does not require storing individual gradients."""
+
+    def extensions(self, global_step):
+        """Return list of BackPACK extensions required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            list: (Potentially empty) list with required BackPACK quantities.
+        """
+        ext = []
+
+        if self._is_position(global_step, "start"):
+            ext.append(self._start_search_dir_projection_info())
+        if self._is_position(global_step, "end"):
+            ext.append(self._end_search_dir_projection_info())
+
+        return ext
+
+    def _fetch_values(self, params, batch_loss, pos):
+        """Fetch values for quadratic fit. Return as dictionary.
+
+        The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
+        """
+        info = {}
+
+        info["params"] = {id(p): p.data.clone().detach() for p in params}
+
+        # 0ᵗʰ order info
+        info["f"] = batch_loss.item()
+        info["var_f"] = _unreduced_loss_hotfix(batch_loss).var().item()
+
+        # 1ˢᵗ order info
+        info["df"], info["var_df"] = self._fetch_df_and_var_df(params, pos)
+
+        return info
+
+    def _start_search_dir_projection_info(self):
+        """Compute information for individual gradient projections onto search dir.
+
+        The search direction at a start point depends on the optimizer.
+
+        We want to compute dᵀgᵢ / ||d||₂² where d is the search direction and gᵢ are
+        individual gradients. However, this fraction cannot be aggregated among
+        parameters. We have to split the computation into components that can be
+        aggregated, namely dᵀgᵢ and ||d||₂².
+        """
+
+        def compute_start_projection_info(batch_grad):
+            """Compute information to project individual gradients onto the gradient."""
+            batch_size = batch_grad.size(0)
+
+            # TODO this is currently only correctly implemented for SGD!
+            # TODO raise NotImplementedError when optimizer is not SGD with 0 momentum
+            search_dir_flat = batch_grad.sum(0).flatten()
+            batch_grad_flat = batch_grad.flatten(start_dim=1)
+
+            search_dir_l2_squared = (search_dir_flat ** 2).sum()
+            dot_products = torch.einsum(
+                "ni,i->n", batch_size * batch_grad_flat, search_dir_flat
+            )
+
+            return {
+                "dot_products": dot_products,
+                "search_dir_l2_squared": search_dir_l2_squared,
+            }
+
+        return extensions.BatchGradTransforms(
+            {"start_projection_info": compute_start_projection_info}
+        )
+
+    def _end_search_dir_projection_info(self):
+        """Compute information for individual gradient projections onto search dir.
+
+        The search direction at an end point is inferred from the model parameters.
+
+        We want to compute dᵀgᵢ / ||d||₂² where d is the search direction and gᵢ are
+        individual gradients. However, this fraction cannot be aggregated among
+        parameters. We have to split the computation into components that can be
+        aggregated, namely dᵀgᵢ and ||d||₂².
+        """
+
+        def compute_end_projection_info(batch_grad):
+            """Compute information to project individual gradients onto the gradient."""
+            batch_size = batch_grad.size(0)
+
+            end_param = batch_grad._param_weakref()
+            start_param = self._get_info("params", end=False)[0][id(end_param)]
+
+            search_dir_flat = (end_param.data - start_param).flatten()
+            batch_grad_flat = batch_grad.flatten(start_dim=1)
+
+            search_dir_l2_squared = (search_dir_flat ** 2).sum()
+            dot_products = torch.einsum(
+                "ni,i->n", batch_size * batch_grad_flat, search_dir_flat
+            )
+
+            return {
+                "dot_products": dot_products,
+                "search_dir_l2_squared": search_dir_l2_squared,
+            }
+
+        return extensions.BatchGradTransforms(
+            {"end_projection_info": compute_end_projection_info}
+        )
+
+    def _fetch_df_and_var_df(self, params, pos):
+        """Compute projected gradient and variance from after-backward quantities."""
+        if pos == "start":
+            key = "start_projection_info"
+        elif pos == "end":
+            key = "end_projection_info"
+        else:
+            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
+
+        dot_products = sum(
+            [p.grad_batch_transforms[key]["dot_products"] for p in params]
+        )
+        search_dir_l2_squared = sum(
+            [p.grad_batch_transforms[key]["search_dir_l2_squared"] for p in params]
+        )
+
+        projections = dot_products / search_dir_l2_squared
+
+        df = projections.mean().item()
+        df_var = projections.var().item()
+
+        return df, df_var
+
+
+# TODO Move inside class
 def _projected_gradient(u, v):
     """Computes magnitude of a projection of one vector onto another.
 
@@ -185,6 +329,7 @@ def _projected_gradient(u, v):
     return dot_product / norm
 
 
+# TODO Move inside class
 def _exact_variance(grads, search_dir):
     """Computes the exact variance of individual projected gradients.
 
@@ -210,6 +355,7 @@ def _exact_variance(grads, search_dir):
     return np.var(proj_grad, ddof=1)
 
 
+# TODO Move inside class
 def _fit_quadratic(t, fs, dfs, fs_var, dfs_var):
     """Fit a quadratic, given two (noisy) function & gradient observations.
 
@@ -259,6 +405,7 @@ def _fit_quadratic(t, fs, dfs, fs_var, dfs_var):
     return mu
 
 
+# TODO Move inside class
 def _get_alpha(mu, t):
     """Compute the local step size alpha.
 
