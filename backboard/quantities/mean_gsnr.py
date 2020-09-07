@@ -3,8 +3,13 @@
 import torch
 
 from backboard.quantities.quantity import Quantity
+from backboard.quantities.utils_quantities import (
+    has_nans,
+    has_negative,
+    has_zeros,
+    report_nonclose_values,
+)
 from backpack import extensions
-from tests.utils import has_nans, has_negative, has_zeros, report_nonclose_values
 
 ATOL = 1e-5
 RTOL = 5e-4
@@ -72,7 +77,7 @@ class MeanGSNR(Quantity):
         """
         if global_step % self._track_interval == 0:
             mean_gsnr = self._compute(params, batch_loss)
-            self.output[global_step]["mean_gsnr"] = [mean_gsnr.item()]
+            self.output[global_step]["mean_gsnr"] = mean_gsnr.item()
 
             if self._check:
                 self.__run_check(params, batch_loss)
