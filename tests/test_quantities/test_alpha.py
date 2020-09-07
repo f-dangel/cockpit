@@ -242,7 +242,7 @@ def test_integration_alpha_optimized(
     return alpha
 
 
-def compare_outputs(output1, output2, rtol=1e-4, atol=1e-5):
+def compare_outputs(output1, output2, rtol=5e-4, atol=1e-5):
     """Compare outputs of two quantities."""
     assert len(list(output1.keys())) == len(
         list(output2.keys())
