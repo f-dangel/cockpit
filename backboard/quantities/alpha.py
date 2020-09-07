@@ -88,7 +88,7 @@ class Alpha(Quantity):
         else:
             raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
 
-        info["params"] = [p.data.clone().detach() for p in params]
+        info["params"] = {id(p): p.data.clone().detach() for p in params}
 
         # 0ᵗʰ order info
         info["f"] = batch_loss.item()
@@ -130,9 +130,14 @@ class Alpha(Quantity):
 
     def _compute_step_length(self):
         """Return distance between start and end point."""
-        return _root_sum_of_squares(
-            [(old_p - p).norm(2).item() for old_p, p in zip(*self._get_info("params"))]
-        )
+        start_params, end_params = self._get_info("params")
+
+        dists_squared = [
+            (end_params[key] - start_params[key]).norm(2).item()
+            for key in start_params.keys()
+        ]
+
+        return _root_sum_of_squares(dists_squared)
 
     def _get_info(self, key):
         """Return list with the requested information at start and end point.
