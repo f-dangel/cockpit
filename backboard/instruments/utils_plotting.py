@@ -1,7 +1,5 @@
 """Utility functions for the CockpitPlotter."""
 
-import warnings
-
 
 def _split_logpath(logpath):
     """Split the logpath to identify test problem, data set, etc.
