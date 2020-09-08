@@ -43,40 +43,34 @@ def alpha_gauge(self, fig, gridspec):
     # Alpha Histogram
     ax2 = ax.twinx()
     # All alphas
-    try:
-        sns.distplot(
-            self.iter_tracking["alpha"],
-            ax=ax2,
-            # norm_hist=True,
-            fit=stats.norm,
-            kde=False,
-            color=color_all,
-            fit_kws={"color": color_all},
-            hist_kws={"linewidth": 0, "alpha": 0.25},
-            label="all",
-        )
-        (mu_all, _) = stats.norm.fit(self.iter_tracking["alpha"])
-    except ValueError:
-        print("Alphas included NaN and could therefore not be plotted.")
-        mu_all = None
+    sns.distplot(
+        self.tracking_data["alpha"].dropna(),
+        ax=ax2,
+        # norm_hist=True,
+        fit=stats.norm,
+        kde=False,
+        color=color_all,
+        fit_kws={"color": color_all},
+        hist_kws={"linewidth": 0, "alpha": 0.25},
+        label="all",
+    )
+    (mu_all, _) = stats.norm.fit(self.tracking_data["alpha"].dropna())
     # Last 10% alphas
-    try:
-        len_last_elements = int(len(self.iter_tracking["alpha"]) / 10)
-        sns.distplot(
-            self.iter_tracking["alpha"][-len_last_elements:],
-            ax=ax2,
-            # norm_hist=True,
-            fit=stats.norm,
-            kde=False,
-            color=color_last,
-            fit_kws={"color": color_last},
-            hist_kws={"linewidth": 0, "alpha": 0.65},
-            label="last 10 %",
-        )
-        (mu_last, _) = stats.norm.fit(self.iter_tracking["alpha"][-len_last_elements:])
-    except ValueError:
-        print("Alphas included NaN and could therefore not be plotted.")
-        mu_last = None
+    len_last_elements = int(len(self.tracking_data["alpha"]) / 10)
+    sns.distplot(
+        self.tracking_data["alpha"][-len_last_elements:].dropna(),
+        ax=ax2,
+        # norm_hist=True,
+        fit=stats.norm,
+        kde=False,
+        color=color_last,
+        fit_kws={"color": color_last},
+        hist_kws={"linewidth": 0, "alpha": 0.65},
+        label="last 10 %",
+    )
+    (mu_last, _) = stats.norm.fit(
+        self.tracking_data["alpha"][-len_last_elements:].dropna()
+    )
 
     # Manually beautify the plot:
     # Adding Zone Lines
@@ -89,7 +83,7 @@ def alpha_gauge(self, fig, gridspec):
     ax.set_xlabel(r"Local step length $\alpha$")
     ax2.set_ylabel(r"$\alpha$ density")
     # Add indicator for outliers
-    if max(self.iter_tracking["alpha"][-len_last_elements:]) > plot_args["xlim"][1]:
+    if max(self.tracking_data["alpha"][-len_last_elements:]) > plot_args["xlim"][1]:
         ax.annotate(
             "",
             xy=(1.8, 0.3),
@@ -97,7 +91,7 @@ def alpha_gauge(self, fig, gridspec):
             size=20,
             arrowprops=dict(color=color_last),
         )
-    elif max(self.iter_tracking["alpha"]) > plot_args["xlim"][1]:
+    elif max(self.tracking_data["alpha"]) > plot_args["xlim"][1]:
         ax.annotate(
             "",
             xy=(1.8, 0.3),
@@ -105,7 +99,7 @@ def alpha_gauge(self, fig, gridspec):
             size=20,
             arrowprops=dict(color=color_all),
         )
-    if min(self.iter_tracking["alpha"][-len_last_elements:]) < plot_args["xlim"][0]:
+    if min(self.tracking_data["alpha"][-len_last_elements:]) < plot_args["xlim"][0]:
         ax.annotate(
             "",
             xy=(-1.8, 0.3),
@@ -113,7 +107,7 @@ def alpha_gauge(self, fig, gridspec):
             size=20,
             arrowprops=dict(color=color_last),
         )
-    elif min(self.iter_tracking["alpha"]) < plot_args["xlim"][0]:
+    elif min(self.tracking_data["alpha"]) < plot_args["xlim"][0]:
         ax.annotate(
             "",
             xy=(-1.8, 0.3),

@@ -1,9 +1,10 @@
 """Distance Gauge."""
 
 from backboard.instruments.utils_instruments import create_basic_plot
+from backboard.instruments.utils_plotting import _root_sum_of_squares
 
 
-def distance_gauge(self, fig, gridspec, part="all"):
+def distance_gauge(self, fig, gridspec):
     """Showing the parameter L2-distance to the initialization versus iteration.
 
     Args:
@@ -11,17 +12,19 @@ def distance_gauge(self, fig, gridspec, part="all"):
         fig (matplotlib.figure): Figure of the Cockpit.
         gridspec (matplotlib.gridspec): GridSpec where the instrument should be
             placed
-        part (str/int, optional): Defines which part of the network should be
-            plotted. If a integer is given, it uses this part of the network.
-            If "all" then it consideres the whole network. Defaults to "all".
     """
     # Plot Trace vs iteration
     title = "Distance"
-    title += "" if isinstance(part, str) else " for Part " + str(part)
+
+    # Compute
+    self.tracking_data["d2init_all"] = self.tracking_data.d2init.map(
+        lambda x: _root_sum_of_squares(x) if type(x) == list else x
+    )
+
     plot_args = {
         "x": "iteration",
-        "y": "d2init",
-        "data": self.iter_tracking,
+        "y": "d2init_all",
+        "data": self.tracking_data,
         "y_scale": "linear",
         "cmap": self.cmap,
         "EMA": "y",
@@ -30,10 +33,8 @@ def distance_gauge(self, fig, gridspec, part="all"):
         "title": title,
         "xlim": "tight",
         "ylim": None,
-        "fontweight": "normal" if type(part) is int else "bold",
-        "facecolor": None if type(part) is int else "summary",
+        "fontweight": "bold",
+        "facecolor": "summary",
     }
-    # part that should be plotted
-    plot_args["y"] += "" if isinstance(part, str) else "_part_" + str(part)
     ax = fig.add_subplot(gridspec)
     create_basic_plot(**plot_args, ax=ax)
