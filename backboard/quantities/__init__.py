@@ -1,7 +1,7 @@
 """Quantities tracked during training."""
 
 from backboard.quantities.alpha import AlphaExpensive, AlphaOptimized
-from backboard.quantities.batch_grad_hists import BatchGradHistogram
+from backboard.quantities.batch_grad_hists import BatchGradHistogram1d
 from backboard.quantities.distance import Distance
 from backboard.quantities.grad_norm import GradNorm
 from backboard.quantities.inner_product_test import InnerProductTest
@@ -26,5 +26,5 @@ __all__ = [
     "OrthogonalityTest",
     "Quantity",
     "Trace",
-    "BatchGradHistogram",
+    "BatchGradHistogram1d",
 ]
