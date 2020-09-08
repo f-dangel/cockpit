@@ -90,6 +90,8 @@ class _Alpha(Quantity):
         Args:
             key (str): Label of the information requested for start and end point
                 of the quadratic fit.
+            start (bool, optional): Whether to get info at start. Defaults to `True`.
+            end (bool, optional): Whether to get info at end. Defaults to `True`.
         """
         start_value, end_value = None, None
 
