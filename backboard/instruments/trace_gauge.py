@@ -3,7 +3,7 @@
 from backboard.instruments.utils_instruments import create_basic_plot
 
 
-def trace_gauge(self, fig, gridspec, part="all"):
+def trace_gauge(self, fig, gridspec):
     """Trace gauge, showing the trace of the Hessian versus iteration.
 
     Args:
@@ -32,8 +32,8 @@ def trace_gauge(self, fig, gridspec, part="all"):
         "title": title,
         "xlim": "tight",
         "ylim": None,
-        "fontweight": "normal" if type(part) is int else "bold",
-        "facecolor": None if type(part) is int else "summary",
+        "fontweight": "bold",
+        "facecolor": "summary",
     }
     ax = fig.add_subplot(gridspec)
     create_basic_plot(**plot_args, ax=ax)
