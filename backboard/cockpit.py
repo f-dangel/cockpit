@@ -68,6 +68,9 @@ class Cockpit:
         ext = []
         for q in self.quantities:
             ext += q.extensions(global_step)
+
+        ext = self._process_multiple_batch_grad_transforms(ext)
+
         ext = list(set(ext))
 
         ext = self._process_multiple_batch_grad_transforms(ext)

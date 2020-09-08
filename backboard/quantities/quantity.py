@@ -63,6 +63,21 @@ class Quantity:
         """
         raise NotImplementedError
 
+    def _fetch_batch_size_hotfix(self, batch_loss):
+        """Return the batch size from individual losses in ``batch_loss``.
+
+        Note:
+            Requires access to unreduced losses made accessible by BackOBS.
+
+        Args:
+            batch_loss (torch.Tensor): Mini-batch loss computed from a forward
+                of a DeepOBS testproblem extended by BackOBS.
+
+        Returns:
+            int: Mini-batch size
+        """
+        return len(batch_loss._unreduced_loss)
+
     @staticmethod
     def _fetch_grad(params, aggregate=False):
         """Return parameter gradients.
@@ -248,18 +263,3 @@ class Quantity:
             diag_curvature = torch.cat([c.flatten() for c in diag_curvature])
 
         return diag_curvature
-
-    def _fetch_batch_size_hotfix(self, batch_loss):
-        """Return the batch size from individual losses in ``batch_loss``.
-
-        Note:
-            Requires access to unreduced losses made accessible by BackOBS.
-
-        Args:
-            batch_loss (torch.Tensor): Mini-batch loss computed from a forward
-                of a DeepOBS testproblem extended by BackOBS.
-
-        Returns:
-            int: Mini-batch size
-        """
-        return len(batch_loss._unreduced_loss)
