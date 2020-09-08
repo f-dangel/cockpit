@@ -178,6 +178,8 @@ class Cockpit:
             cockpit_quantities = [
                 # quantities.AlphaExpensive,
                 quantities.AlphaOptimized,
+                quantities.BatchGradHistogram1d,
+                quantities.BatchGradHistogram2d,
                 quantities.Distance,
                 quantities.GradNorm,
                 quantities.InnerProductTest,

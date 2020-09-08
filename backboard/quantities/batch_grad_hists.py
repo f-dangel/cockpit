@@ -13,12 +13,17 @@ class BatchGradHistogram1d(Quantity):
     def __init__(
         self, track_interval, xmin=-2, xmax=2, bins=100, verbose=False, check=False
     ):
-        """
+        """Initialize the 1D Histogram of individual gradient elements.
 
         Args:
+            track_interval (int): Tracking rate.
             xmin (float): Lower clipping bound for individual gradients in histogram.
             xmax (float): Upper clipping bound for individual gradients in histogram.
             bins (int): Number of bins
+            verbose (bool): Turns on verbose mode. Defaults to ``False``.
+            check (bool): If True, this quantity will be computed via two different
+                ways and compared. Defaults to ``False``.
+
         """
         super().__init__(track_interval, verbose=verbose)
         self._xmin = xmin
@@ -40,7 +45,7 @@ class BatchGradHistogram1d(Quantity):
         if global_step % self._track_interval == 0:
             ext.append(
                 extensions.BatchGradTransforms(
-                    transforms={"hist": self._compute_histogram}
+                    transforms={"hist_1d": self._compute_histogram}
                 )
             )
 
@@ -57,7 +62,7 @@ class BatchGradHistogram1d(Quantity):
         """
         if global_step % self._track_interval == 0:
             edges = self._get_current_bin_edges()
-            hist = sum(p.grad_batch_transforms["hist"] for p in params)
+            hist = sum(p.grad_batch_transforms["hist_1d"] for p in params)
 
             if self._check:
                 batch_size = self._fetch_batch_size_hotfix(batch_loss)
@@ -65,8 +70,8 @@ class BatchGradHistogram1d(Quantity):
                 num_counts = hist.sum()
                 assert batch_size * num_params == num_counts
 
-            self.output[global_step]["hist"] = hist.cpu().numpy()
-            self.output[global_step]["edges"] = edges.cpu().numpy()
+            self.output[global_step]["hist_1d"] = hist.cpu().numpy().tolist()
+            self.output[global_step]["edges"] = edges.cpu().numpy().tolist()
 
             if self._verbose:
                 print(f"Histogram bin edges 0,...,10: {edges[:10]}")
@@ -91,7 +96,7 @@ class BatchGradHistogram1d(Quantity):
         # clip to interval, elements outside [xmin, xmax] would be ignored
         batch_grad_clamped = torch.clamp(
             batch_size * batch_grad, self._xmin, self._xmax
-        )
+        ).detach()
 
         return torch.histc(
             batch_grad_clamped, bins=self._bins, min=self._xmin, max=self._xmax
@@ -125,12 +130,20 @@ class BatchGradHistogram2d(Quantity):
         verbose=False,
         check=False,
     ):
-        """
+        """Initialize the 2D Histogram of individual gradient elements over parameters.
 
         Args:
+            track_interval (int): Tracking rate.
             xmin (float): Lower clipping bound for individual gradients in histogram.
             xmax (float): Upper clipping bound for individual gradients in histogram.
             xbins (int): Number of bins in x-direction
+            ymin (float): Lower clipping bound for parameters in histogram.
+            ymax (float): Upper clipping bound for parameters in histogram.
+            ybins (int): Number of bins in y-direction
+            verbose (bool): Turns on verbose mode. Defaults to ``False``.
+            check (bool): If True, this quantity will be computed via two different
+                ways and compared. Defaults to ``False``.
+
         """
         super().__init__(track_interval, verbose=verbose)
         self._xmin = xmin
@@ -155,7 +168,7 @@ class BatchGradHistogram2d(Quantity):
         if global_step % self._track_interval == 0:
             ext.append(
                 extensions.BatchGradTransforms(
-                    transforms={"hist": self._compute_histogram}
+                    transforms={"hist_2d": self._compute_histogram}
                 )
             )
 
@@ -172,7 +185,7 @@ class BatchGradHistogram2d(Quantity):
         """
         if global_step % self._track_interval == 0:
             x_edges, y_edges = self._get_current_bin_edges()
-            hist = sum(p.grad_batch_transforms["hist"] for p in params)
+            hist = sum(p.grad_batch_transforms["hist_2d"] for p in params)
 
             if self._check:
                 batch_size = self._fetch_batch_size_hotfix(batch_loss)
@@ -180,9 +193,9 @@ class BatchGradHistogram2d(Quantity):
                 num_counts = hist.sum()
                 assert batch_size * num_params == num_counts
 
-            self.output[global_step]["hist"] = hist.cpu().numpy()
-            self.output[global_step]["x_edges"] = x_edges.cpu().numpy()
-            self.output[global_step]["y_edges"] = y_edges.cpu().numpy()
+            self.output[global_step]["hist_2d"] = hist.cpu().numpy().tolist()
+            self.output[global_step]["x_edges"] = x_edges.cpu().numpy().tolist()
+            self.output[global_step]["y_edges"] = y_edges.cpu().numpy().tolist()
 
             if self._verbose:
                 print(f"Histogram bin x_edges 0,...,5: {x_edges[:5]}")
@@ -202,9 +215,11 @@ class BatchGradHistogram2d(Quantity):
         batch_size = batch_grad.size(0)
 
         # clip to interval, elements outside [xmin, xmax] would be ignored
-        batch_grad_clamped = torch.clamp(
-            batch_size * batch_grad, self._xmin, self._xmax
-        ).flatten()
+        batch_grad_clamped = (
+            torch.clamp(batch_size * batch_grad, self._xmin, self._xmax)
+            .flatten()
+            .detach()
+        )
 
         param = batch_grad._param_weakref().data
         param_clamped = torch.clamp(param, self._ymin, self._ymax)
