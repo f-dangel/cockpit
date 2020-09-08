@@ -48,6 +48,8 @@ def create_basic_plot(
             Defaults to None.
         EMA_cmap (matplotlib.cmap, optional): A colormap for the EMA.
             Defaults to None.
+        marker (str, optional): Marker type to use in the plot. Defaults to "o".
+        EMA_marker (str, optional): Marker for the EMA. Defaults to ",".
         xlabel (str, optional): Label for the x-axis. Defaults to None, meaning
             it uses `x`.
         ylabel (str, optional): Label for the y-axis. Defaults to None, meaning
