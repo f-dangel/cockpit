@@ -62,10 +62,12 @@ def _root_sum_of_squares(list):
 
 def report_nonclose_values(x, y, atol=1e-8, rtol=1e-5):
     """Report non-close values.
+
     Note: ``numpy.allclose`` and ``torch.allclose`` don't always
     seem to match when using the same parameters for ``atol`` and
     ``rtol``. Maybe related to data types, but I could not find
     a helpful reference.
+
     Therefore it may happen that nonclose values are reported,
     while the tests pass at the same time.
     """
