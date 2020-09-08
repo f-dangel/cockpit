@@ -3,8 +3,12 @@
 import torch
 
 from backboard.quantities.quantity import Quantity
+from backboard.quantities.utils_quantities import (
+    has_negative,
+    has_zeros,
+    report_nonclose_values,
+)
 from backpack import extensions
-from tests.utils import has_negative, has_zeros, report_nonclose_values
 
 ATOL = 1e-5
 RTOL = 5e-4
@@ -102,7 +106,7 @@ class TICDiag(TIC):
         """
         if global_step % self._track_interval == 0:
             tic = self._compute(params, batch_loss)
-            self.output[global_step]["tic_diag"] = [tic.item()]
+            self.output[global_step]["tic_diag"] = tic.item()
 
             if self._check:
                 self.__run_check(params, batch_loss)
@@ -121,7 +125,7 @@ class TICDiag(TIC):
         tic = self._compute_tic(params, batch_loss)
 
         if self._verbose:
-            print(f"Takeuchi Information Criterion TICDiagDiag={tic:.4f}")
+            print(f"Takeuchi Information Criterion TICDiag={tic:.4f}")
 
         return tic
 
@@ -181,7 +185,7 @@ class TICTrace(TIC):
     """TIC approximation using the trace of curvature and gradient covariance."""
 
     def compute(self, global_step, params, batch_loss):
-        """Compute TICTrace
+        """Compute TICTrace.
 
         Args:
             global_step (int): The current iteration number.
@@ -192,7 +196,7 @@ class TICTrace(TIC):
         """
         if global_step % self._track_interval == 0:
             tic = self._compute(params, batch_loss)
-            self.output[global_step]["tic_trace"] = [tic.item()]
+            self.output[global_step]["tic_trace"] = tic.item()
 
             if self._check:
                 self.__run_check(params, batch_loss)
