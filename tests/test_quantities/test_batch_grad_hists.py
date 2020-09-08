@@ -2,7 +2,7 @@
 
 import pytest
 
-from backboard.quantities import BatchGradHistogram1d
+from backboard.quantities import BatchGradHistogram1d, BatchGradHistogram2d
 from deepobs.config import set_data_dir
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
@@ -34,6 +34,32 @@ def test_integration_batch_grad_histogram_1d(
 
     quantities = [
         BatchGradHistogram1d(TRACK_INTERVAL, verbose=True, check=True),
+    ]
+
+    run_sgd_test_runner(
+        quantities,
+        testproblem,
+        num_epochs=num_epochs,
+        batch_size=batch_size,
+        lr=lr,
+        momentum=momentum,
+    )
+
+
+@pytest.mark.parametrize("testproblem", TESTPROBLEMS, ids=TESTPROBLEMS)
+def test_integration_batch_grad_histogram_2d(
+    testproblem, num_epochs=1, batch_size=4, lr=0.01, momentum=0.0
+):
+    """Integration test for individual gradient histograms.
+
+    Note: This test only verifies that the computation passes.
+    """
+    set_deepobs_seed(0)
+    set_data_dir("~/tmp/data_deepobs")
+    hotfix_deepobs_argparse()
+
+    quantities = [
+        BatchGradHistogram2d(TRACK_INTERVAL, verbose=True, check=True),
     ]
 
     run_sgd_test_runner(
