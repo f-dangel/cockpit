@@ -15,7 +15,22 @@ from backpack import extensions
 
 
 class Alpha(Quantity):
-    """Alpha Quantitiy Class."""
+    """Alpha Quantity Class."""
+
+    _positions = ["start", "end"]
+
+    def __init__(self, track_interval=1, verbose=False, check=False):
+        super().__init__(track_interval=track_interval, verbose=verbose)
+        self.clear_info()
+        self._check = check
+
+        if self._check:
+            raise NotImplementedError()
+
+    def clear_info(self):
+        """Reset information of start and end points."""
+        self._start_info = {}
+        self._end_info = {}
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -26,7 +41,15 @@ class Alpha(Quantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
-        return [extensions.BatchGrad()]
+        ext = []
+
+        if self._is_position(global_step, "start"):
+            ext.append(extensions.BatchGrad())
+
+        if self._is_position(global_step, "end"):
+            ext.append(extensions.BatchGrad())
+
+        return ext
 
     def compute(self, global_step, params, batch_loss):
         """Evaluate the current parameter distances.
@@ -40,107 +63,92 @@ class Alpha(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if self._track_interval == 1:
-            # Special case if we track every iteration, since then the two computation
-            # steps of the quantitiy overlap.
-            if hasattr(self, "f0"):
-                # compute alpha of last (!) step
-                self.f1 = batch_loss.item()
-                self.var_f1 = _unreduced_loss_hotfix(batch_loss).var().item()
-                self.df1 = _projected_gradient(
-                    self._fetch_grad(params), self.search_dir
-                )
-                self.var_df1 = _exact_variance(
-                    self._fetch_batch_grad(params), self.search_dir
-                )
-                update_size = _root_sum_of_squares(
-                    [
-                        (old_p - p).norm(2).item()
-                        for old_p, p in zip(self.old_params, params)
-                    ]
-                )
-                # Combine
-                t = update_size
-                fs = [self.f0, self.f1]
-                dfs = [self.df0, self.df1]
-                var_fs = [self.var_f0, self.var_f1]
-                var_dfs = [self.var_df0, self.var_df1]
+        if self._is_position(global_step, pos="end"):
+            self._end_info = self._fetch_values(params, batch_loss, pos="end")
+            self.output[global_step - 1]["alpha"] = self._compute_alpha()
+            self.clear_info()
 
-                # Compute alpha
-                mu = _fit_quadratic(t, fs, dfs, var_fs, var_dfs)
-                alpha = _get_alpha(mu, t)
-                self.output[global_step - 1]["alpha"] = alpha
+        if self._is_position(global_step, pos="start"):
+            self._start_info = self._fetch_values(params, batch_loss, pos="start")
 
-                if self._verbose:
-                    print(f"Alpha: {alpha:.4f}")
+    def _fetch_values(self, params, batch_loss, pos):
+        """Fetch values for quadratic fit. Return as dictionary.
 
-            self.f0 = batch_loss.item()
-            self.var_f0 = _unreduced_loss_hotfix(batch_loss).var().item()
-            # TODO this is currently only correctly implemented for SGD!
-            self.search_dir = [-g for g in self._fetch_grad(params)]
-            self.old_params = [p.data.clone().detach() for p in params]
-            self.df0 = _projected_gradient(self._fetch_grad(params), self.search_dir)
-            self.var_df0 = _exact_variance(
-                self._fetch_batch_grad(params), self.search_dir
-            )
+        The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
+        """
+        info = {}
+
+        # TODO this is currently only correctly implemented for SGD!
+        # TODO raise NotImplementedError when optimizer is not SGD with 0 momentum
+        if pos == "start":
+            search_dir = [-g for g in self._fetch_grad(params)]
+            info["search_dir"] = search_dir
+        elif pos == "end":
+            search_dir = self._start_info["search_dir"]
+        else:
+            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
+
+        info["params"] = [p.data.clone().detach() for p in params]
+
+        # 0ᵗʰ order info
+        info["f"] = batch_loss.item()
+        info["var_f"] = _unreduced_loss_hotfix(batch_loss).var().item()
+
+        # 1ˢᵗ order info
+        info["df"] = _projected_gradient(self._fetch_grad(params), search_dir)
+        info["var_df"] = _exact_variance(self._fetch_batch_grad(params), search_dir)
+
+        return info
+
+    def _is_position(self, global_step, pos):
+        """Return whether current iteration is the start/end of a quadratic fit."""
+        if pos == "start":
+            return global_step % self._track_interval == 0
+        elif pos == "end":
+            return global_step % self._track_interval == 1
+        else:
+            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
+
+    def _compute_alpha(self):
+        """Compute and return alpha, assuming all quantities have been stored."""
+        t = self._compute_step_length()
+        fs = self._get_info("f")
+        dfs = self._get_info("df")
+        var_fs = self._get_info("var_f")
+        var_dfs = self._get_info("var_df")
+
+        # Compute alpha
+        mu = _fit_quadratic(t, fs, dfs, var_fs, var_dfs)
+        alpha = _get_alpha(mu, t)
+
+        if self._verbose:
+            print(f"α: {alpha}")
+            # TODO α sometimes seems to be None. Then this fails:
+            # print(f"α: {alpha:.4f}")
+
+        return alpha
+
+    def _compute_step_length(self):
+        """Return distance between start and end point."""
+        return _root_sum_of_squares(
+            [(old_p - p).norm(2).item() for old_p, p in zip(*self._get_info("params"))]
+        )
+
+    def _get_info(self, key):
+        """Return list with the requested information at start and end point.
+
+        Args:
+            key (str): Label of the information requested for start and end point
+                of the quadratic fit.
+        """
+        if key == "var_df":
+            # TODO Replace dummy
+            dummy = [1e-6, 1e-6]
+            warnings.warn(f"Info 'var_df' is using dummy values {dummy}")
+            return dummy
 
         else:
-            if global_step % self._track_interval == 0:
-                # Store values and wait for next step #
-                # (Variance of) loss
-                self.f0 = batch_loss.item()
-                self.var_f0 = _unreduced_loss_hotfix(batch_loss).var().item()
-
-                # Store search direction
-                # TODO this is currently only correctly implemented for SGD!
-                self.search_dir = [-g for g in self._fetch_grad(params)]
-
-                # Store current parameters (for update size)
-                self.old_params = [p.data.clone().detach() for p in params]
-
-                # (Variance of) projected gradient
-                self.df0 = _projected_gradient(
-                    self._fetch_grad(params), self.search_dir
-                )
-                self.var_df0 = _exact_variance(
-                    self._fetch_batch_grad(params), self.search_dir
-                )
-            elif global_step % self._track_interval == 1:
-                # Gather necessary values, compute alpha and store it #
-                # (Variance of) loss
-                self.f1 = batch_loss.item()
-                self.var_f1 = _unreduced_loss_hotfix(batch_loss).var().item()
-
-                # (Variance of) projected gradient
-                self.df1 = _projected_gradient(
-                    self._fetch_grad(params), self.search_dir
-                )
-                self.var_df1 = _exact_variance(
-                    self._fetch_batch_grad(params), self.search_dir
-                )
-
-                # Update size
-                update_size = _root_sum_of_squares(
-                    [
-                        (old_p - p).norm(2).item()
-                        for old_p, p in zip(self.old_params, params)
-                    ]
-                )
-
-                # Combine
-                t = update_size
-                fs = [self.f0, self.f1]
-                dfs = [self.df0, self.df1]
-                var_fs = [self.var_f0, self.var_f1]
-                var_dfs = [self.var_df0, self.var_df1]
-
-                # Compute alpha
-                mu = _fit_quadratic(t, fs, dfs, var_fs, var_dfs)
-                alpha = _get_alpha(mu, t)
-                self.output[global_step - 1]["alpha"] = alpha
-
-                if self._verbose:
-                    print(f"Alpha: {alpha:.4f}")
+            return [self._start_info[key], self._end_info[key]]
 
 
 def _projected_gradient(u, v):
