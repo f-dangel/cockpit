@@ -168,7 +168,7 @@ class InnerProductTest(Quantity):
             in bollapragada2017adaptive (https://arxiv.org/pdf/1710.11258.pdf)
             """
             batch_grad = self._fetch_batch_grad(params, aggregate=True)
-            batch_size = batch_grad.size(0)
+            batch_size = self._fetch_batch_size_hotfix(batch_loss)
             grad = self._fetch_grad(params, aggregate=True)
             grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
 
