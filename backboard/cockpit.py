@@ -176,7 +176,8 @@ class Cockpit:
         """
         if cockpit_quantities is None:
             cockpit_quantities = [
-                quantities.Alpha,
+                # quantities.AlphaExpensive,
+                quantities.AlphaOptimized,
                 quantities.Distance,
                 quantities.GradNorm,
                 quantities.InnerProductTest,
@@ -186,7 +187,7 @@ class Cockpit:
                 quantities.NormTest,
                 quantities.OrthogonalityTest,
                 quantities.TICDiag,
-                quantities.TICTrace,
+                # quantities.TICTrace,
                 quantities.Trace,
             ]
 
