@@ -1,6 +1,7 @@
 """Class for tracking the Paramter Distances."""
 
 from backboard.quantities.quantity import Quantity
+from backboard.quantities.utils_quantities import _root_sum_of_squares
 
 
 class Distance(Quantity):
@@ -54,7 +55,7 @@ class Distance(Quantity):
             self.output[global_step]["d2init"] = d2init
 
             if self._verbose:
-                print(f"Distance to initialization: {sum(d2init):.4f}")
+                print(f"Distance to initialization: {_root_sum_of_squares(d2init):.4f}")
         else:
             pass
 
@@ -79,7 +80,7 @@ class Distance(Quantity):
                 self.output[global_step - 1]["update_size"] = update_size
 
                 if self._verbose:
-                    print(f"Update size: {sum(update_size):.4f}")
+                    print(f"Update size: {_root_sum_of_squares(update_size):.4f}")
             # store current parameters
             self.old_params = [p.data.clone().detach() for p in params]
         else:
@@ -95,4 +96,4 @@ class Distance(Quantity):
                 self.output[global_step - 1]["update_size"] = update_size
 
                 if self._verbose:
-                    print(f"Update size: {sum(update_size):.4f}")
+                    print(f"Update size: {_root_sum_of_squares(update_size):.4f}")

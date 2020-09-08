@@ -6,11 +6,12 @@ import json
 import os
 from collections import defaultdict
 
+from backboard import quantities
 from backboard.cockpit_plotter import CockpitPlotter
-from backboard.quantities import Quantity
 from backboard.quantities.utils_quantities import _update_dicts
 from backobs import extend_with_access_unreduced_loss
 from backpack import backpack
+from backpack.extensions import BatchGradTransforms
 from deepobs.pytorch.testproblems.testproblem import TestProblem
 
 
@@ -67,7 +68,13 @@ class Cockpit:
         ext = []
         for q in self.quantities:
             ext += q.extensions(global_step)
+
+        ext = self._process_multiple_batch_grad_transforms(ext)
+
         ext = list(set(ext))
+
+        ext = self._process_multiple_batch_grad_transforms(ext)
+        ext = self._process_duplicate_extensions(ext)
 
         # Collect if create graph is needed and set switch
         self.create_graph = any(q.create_graph(global_step) for q in self.quantities)
@@ -98,12 +105,12 @@ class Cockpit:
         self,
         global_step,
         epoch_count,
-        train_losses,
-        valid_losses,
-        test_losses,
-        train_accuracies,
-        valid_accuracies,
-        test_accuracies,
+        train_loss,
+        valid_loss,
+        test_loss,
+        train_accuracy,
+        valid_accuracy,
+        test_accuracy,
         learning_rate,
     ):
         """Tracking function for quantities computed at every epoch.
@@ -111,12 +118,12 @@ class Cockpit:
         Args:
             global_step (int): Current number of iteration/global step.
             epoch_count (int): Current number of epoch.
-            train_losses (float): Loss on the train (eval) set.
-            valid_losses (float): Loss on the validation set.
-            test_losses (float): Loss on the test set.
-            train_accuracies (float): Accuracy on the train (eval) set.
-            valid_accuracies (float): Accuracy on the validation set.
-            test_accuracies (float): Accuracy on the test set.
+            train_loss (float): Loss on the train (eval) set.
+            valid_loss (float): Loss on the validation set.
+            test_loss (float): Loss on the test set.
+            train_accuracy (float): Accuracy on the train (eval) set.
+            valid_accuracy (float): Accuracy on the validation set.
+            test_accuracy (float): Accuracy on the test set.
             learning_rate (float): Learning rate of the optimizer. We assume,
                 that the optimizer uses a single global learning rate, which is
                 used for all parameter groups.
@@ -131,7 +138,7 @@ class Cockpit:
 
     def plot(self, *args, **kwargs):
         """Plot the Cockpit with the current state of the log file."""
-        # self.cockpit_plotter.plot(*args, **kwargs)
+        self.cockpit_plotter.plot(*args, **kwargs)
 
     def write(self):
         """Write the tracked Quantities of the Cockpit to file."""
@@ -155,7 +162,7 @@ class Cockpit:
         os.makedirs(logdir, exist_ok=True)
 
     @staticmethod
-    def _collect_quantities(quantities, track_interval):
+    def _collect_quantities(cockpit_quantities, track_interval):
         """Collect all quantities that should be used for tracking.
 
         Args:
@@ -167,14 +174,81 @@ class Cockpit:
         Returns:
             list: List of quantities (classes) that should be used for tracking.
         """
-        if quantities is None:
-            quantities = Quantity.__subclasses__()
+        if cockpit_quantities is None:
+            cockpit_quantities = [
+                # quantities.AlphaExpensive,
+                quantities.AlphaOptimized,
+                quantities.Distance,
+                quantities.GradNorm,
+                quantities.InnerProductTest,
+                quantities.Loss,
+                quantities.MaxEV,
+                quantities.MeanGSNR,
+                quantities.NormTest,
+                quantities.OrthogonalityTest,
+                quantities.TICDiag,
+                # quantities.TICTrace,
+                quantities.Trace,
+            ]
 
         quants = []
-        for q in quantities:
+        for q in cockpit_quantities:
             if inspect.isclass(q):
                 quants.append(q(track_interval))
             else:
                 quants.append(q)
 
         return quants
+
+    def _process_duplicate_extensions(self, ext):
+        """Remove duplicate BackPACK extensions.
+
+        TODO Once we notice two instances of the same extensions, we just remove
+        the latter one. This could be problematic if those extensions use different
+        inputs (e.g. number of samples for MC extensions).
+
+        Args:
+            ext ([backpack.extensions]): A list of BackPACK extensions,
+                potentially containing duplicates.
+
+        Returns:
+            [backpack.extensions]: A list of unique BackPACK extensions
+        """
+        ext_dict = dict()
+        no_duplicate_ext = []
+        for e in ext:
+            if type(e) in ext_dict:
+                pass
+            else:
+                no_duplicate_ext.append(e)
+                ext_dict[type(e)] = True
+
+        return no_duplicate_ext
+
+    def _process_multiple_batch_grad_transforms(self, ext):
+        """Handle multiple occurrences of ``BatchGradTransforms`` by combining them."""
+        transforms = [e for e in ext if isinstance(e, BatchGradTransforms)]
+        no_transforms = [e for e in ext if not isinstance(e, BatchGradTransforms)]
+
+        batch_grad_transforms = self._merge_batch_grad_transforms(transforms)
+
+        return no_transforms + [batch_grad_transforms]
+
+    @staticmethod
+    def _merge_batch_grad_transforms(batch_grad_transforms):
+        """Merge multiple ``BatchGradTransform``s into a single one."""
+        transforms = [t.get_transforms() for t in batch_grad_transforms]
+
+        # Check for no duplicates. In principle this may be okay if same keys really
+        # computed the same quantity. For now, simply avoid that.
+        keys = []
+        for t in transforms:
+            keys += list(t.keys())
+        if not len(keys) == len(set(keys)):
+            raise ValueError(f"Found non-unique transforms: {keys}")
+
+        combined_transforms = {}
+        for t in transforms:
+            combined_transforms.update(t)
+
+        return BatchGradTransforms(combined_transforms)

@@ -20,15 +20,14 @@ def performance_gauge(self, fig, gridspec):
     # Mini-batch train loss
     plot_args = {
         "x": "iteration",
-        "y": "f0",
-        "data": self.iter_tracking,
+        "y": "mini_batch_loss",
+        "data": self.tracking_data,
         "EMA": "y",
         "EMA_alpha": self.EMA_alpha,
         "EMA_cmap": self.cmap2,
         "x_scale": "linear",
         "y_scale": "linear",
         "cmap": self.cmap,
-        "ylabel": "Mini-batch losses",
         "title": "Performance Plot",
         "xlim": "tight",
         "ylim": None,
@@ -42,7 +41,7 @@ def performance_gauge(self, fig, gridspec):
     plot_args = {
         "x": "iteration",
         "y": "train_accuracy",
-        "data": self.epoch_tracking,
+        "data": self.tracking_data,
     }
     ax2 = ax.twinx()
     sns.lineplot(
@@ -53,7 +52,7 @@ def performance_gauge(self, fig, gridspec):
     plot_args = {
         "x": "iteration",
         "y": "valid_accuracy",
-        "data": self.epoch_tracking,
+        "data": self.tracking_data,
     }
     sns.lineplot(
         **plot_args, ax=ax2, label=plot_args["y"].title().replace("_", " "), linewidth=2
