@@ -364,7 +364,7 @@ def _fit_quadratic(t, fs, dfs, fs_var, dfs_var):
 
     Phi = np.array([[1, 0, 0], [1, t, t ** 2], [0, 1, 0], [0, 1, 2 * t]]).T
 
-    # small value to use if one of the variances is 0.
+    # small value to use if one of the variances or t is 0.
     eps = 1e-10
     if 0 in fs_var:
         warnings.warn(
@@ -376,6 +376,10 @@ def _fit_quadratic(t, fs, dfs, fs_var, dfs_var):
             "The variance of df is 0, using a small value instead.", stacklevel=2
         )
         dfs_var = list(map(lambda i: eps if i == 0 else i, dfs_var))
+    if t == 0.0:
+        warnings.warn(
+            "The two observations were (almost) at the same point.", stacklevel=2
+        )
 
     try:
         # Covariance matrix
@@ -409,9 +413,10 @@ def _get_alpha(mu, t):
     Returns:
         float: Local effective step size.
     """
-    # If we couldn't compute a quadratic approx., return None.
+    # If we couldn't compute a quadratic approx., return None or -1 if it was
+    # due to a very small step
     if mu is None:
-        return None
+        return -1 if t == 0.0 else None
     elif mu[2] < 0:
         # Concave setting: Since this means that it is still going downhill
         # where we stepped to, we will log it as -1.

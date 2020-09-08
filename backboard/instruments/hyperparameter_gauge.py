@@ -23,7 +23,7 @@ def hyperparameter_gauge(self, fig, gridspec):
     plot_args = {
         "x": "iteration",
         "y": "learning_rate",
-        "data": self.epoch_tracking,
+        "data": self.tracking_data,
     }
     ylabel = plot_args["y"].replace("_", " ").title()
     sns.lineplot(**plot_args, ax=ax, label=ylabel, linewidth=2)

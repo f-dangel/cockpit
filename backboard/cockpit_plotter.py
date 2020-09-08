@@ -50,56 +50,39 @@ class CockpitPlotter:
         # Plotting
         self.fig.clf()  # clear the cockpit figure to replace it
 
-        # Subplot grid: Currently looks like this. Instruments with an index,
-        # have a flexible amount of plots (one for each part.)
+        # Subplot grid: Currently looks like this.
         # +-----------------------+------------------------+--------------------+
-        # | Legend                | Alpha vs. Trace      | Alpha Gauge          |
-        # | Max Eigenvalues Gauge | Cond. Number Gauge   |Cond. Number vs. Alpha|
-        # | Trace Gauge_0         | Trace Gauge_1        | Trace Gauge_all      |
-        # | Distance Gauge_0      | Distance Gauge_1     | Distance Gauge_all   |
+        # | TIC (tbd)             | Gradient Tests Gauge | Alpha Gauge          |
+        # | Max Ev                | Trace (layerwise)    | Distance (layerwise) |
         # |                         Performance Gauge                           |
         # |                         Hyperparameter Gauge                        |
         # +-----------------------+------------------------+--------------------+
-        self.grid_spec = self.fig.add_gridspec(6, max(self.parts, 2) + 1)
+        self.grid_spec = self.fig.add_gridspec(4, 3)
 
-        # First Row #
-        # first spot is reserved for the legend which is computed later!
-        # Alpha vs Trace
-        instruments.alpha_trace_gauge(self, self.fig, self.grid_spec[0, -2])
+        # First (upper) Row #
+        # TIC
+        instruments.tic_gauge(self, self.fig, self.grid_spec[0, 0])
+
+        # Gradient Tests Gauge
+        instruments.gradient_tests_gauge(self, self.fig, self.grid_spec[0, 1])
         # Alpha Gauge
-        instruments.alpha_gauge(self, self.fig, self.grid_spec[0, -1])
+        instruments.alpha_gauge(self, self.fig, self.grid_spec[0, 2])
 
         # Second Row #
-        # Max EV
-        instruments.max_ev_gauge(self, self.fig, self.grid_spec[1, -3])
-        # Cond Number Gauge
-        instruments.cond_gauge(self, self.fig, self.grid_spec[1, -2])
-        # Cond Number vs Alpha
-        instruments.cond_alpha_gauge(self, self.fig, self.grid_spec[1, -1])
+        # Max Ev
+        instruments.max_ev_gauge(self, self.fig, self.grid_spec[1, 0])
+        # Trace (layerwise)
+        instruments.trace_gauge(self, self.fig, self.grid_spec[1, 1])
+        # Distance (layerwise)
+        instruments.distance_gauge(self, self.fig, self.grid_spec[1, 2])
 
-        # Third Row
-        # per part trace
-        for i in range(self.parts):
-            instruments.trace_gauge(self, self.fig, self.grid_spec[2, i], part=i)
-        # overall trace
-        instruments.trace_gauge(self, self.fig, self.grid_spec[2, -1])
+        # Third Row #
+        instruments.performance_gauge(self, self.fig, self.grid_spec[2, :])
 
-        # Fourth Row #
-        # per part distance traveled
-        for i in range(self.parts):
-            instruments.distance_gauge(self, self.fig, self.grid_spec[3, i], part=i)
-        # overall distance traveled
-        instruments.distance_gauge(self, self.fig, self.grid_spec[3, -1])
+        # Fourth (bottom) Row #
+        instruments.hyperparameter_gauge(self, self.fig, self.grid_spec[3, :])
 
-        # Fifth Row #
-        # mini-batch train loss + train & valid accuracy
-        instruments.performance_gauge(self, self.fig, self.grid_spec[4, :])
-
-        # Sixth Row #
-        # learning rate
-        instruments.hyperparameter_gauge(self, self.fig, self.grid_spec[5, :])
-
-        # compute legend
+        # Post Process Title, Legend etc.
         self._post_process_plot()
 
         # Show or Save plots
@@ -120,6 +103,8 @@ class CockpitPlotter:
         self.save_format = ".svg"  # how the plots should be saved
         self.cmap = plt.cm.viridis  # primary color map
         self.cmap2 = plt.cm.cool  # secondary color map
+        self.cmap_backup = plt.cm.Wistia  # primary backup color map
+        self.cmap2_backup = plt.cm.autumn  # secondary backup color map
         self.color_summary_plots = "#ababba"  # highlight color of summary plots
         self.EMA_alpha = 0.2  # Decay factor of the exponential moving avg.
 
@@ -131,14 +116,14 @@ class CockpitPlotter:
         with open(self.logpath) as f:
             data = json.load(f)
 
-        self.iter_tracking = pd.DataFrame.from_dict(data["iter_tracking"])
-        self.epoch_tracking = pd.DataFrame.from_dict(data["epoch_tracking"])
-
-        # Compute number of layers and parts of the model
-        self.layers, self.parts = utils_plotting._compute_layers_parts(self)
-
-        # Process data, e.g. merge layers, etc.
-        utils_plotting._process_tracking_results(self)
+        # Read data into a DataFrame
+        self.tracking_data = pd.DataFrame.from_dict(data, orient="index")
+        # Change data type of index to numeric
+        self.tracking_data.index = pd.to_numeric(self.tracking_data.index)
+        # Sort by this index
+        self.tracking_data = self.tracking_data.sort_index()
+        # Rename index to 'iteration' and store it in seperate column
+        self.tracking_data = self.tracking_data.rename_axis("iteration").reset_index()
 
     def _save(self, savename_append=None):
         """Save the (internal) figure to file.

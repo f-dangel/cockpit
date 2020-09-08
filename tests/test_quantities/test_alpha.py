@@ -82,7 +82,7 @@ def test_determinstic_fit_concave():
     r"""Verify that fitting works in the noise free case.
 
     This is an example where we start at a local maxima _
-                                                         \
+                                                         \.
     """
     # Observations
     t = 1  # where

@@ -66,7 +66,7 @@ class InnerProductTest(Quantity):
         """
         if global_step % self._track_interval == 0:
             inner_product_test = self._compute(params, batch_loss)
-            self.output[global_step]["inner_product_test"] = [inner_product_test.item()]
+            self.output[global_step]["inner_product_test"] = inner_product_test.item()
 
             if self._check:
                 self.__run_check(params, batch_loss)

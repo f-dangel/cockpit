@@ -10,6 +10,7 @@ from backboard.quantities.mean_gsnr import MeanGSNR
 from backboard.quantities.norm_test import NormTest
 from backboard.quantities.orthogonality_test import OrthogonalityTest
 from backboard.quantities.quantity import Quantity
+from backboard.quantities.tic import TICDiag, TICTrace
 from backboard.quantities.trace import Trace
 
 __all__ = [
@@ -24,5 +25,7 @@ __all__ = [
     "NormTest",
     "OrthogonalityTest",
     "Quantity",
+    "TICDiag",
+    "TICTrace",
     "Trace",
 ]
