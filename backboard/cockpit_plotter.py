@@ -61,6 +61,7 @@ class CockpitPlotter:
 
         # First (upper) Row #
         # TIC
+        instruments.tic_gauge(self, self.fig, self.grid_spec[0, 0])
 
         # Gradient Tests Gauge
         instruments.gradient_tests_gauge(self, self.fig, self.grid_spec[0, 1])
@@ -102,6 +103,8 @@ class CockpitPlotter:
         self.save_format = ".svg"  # how the plots should be saved
         self.cmap = plt.cm.viridis  # primary color map
         self.cmap2 = plt.cm.cool  # secondary color map
+        self.cmap_backup = plt.cm.Wistia  # primary backup color map
+        self.cmap2_backup = plt.cm.autumn  # secondary backup color map
         self.color_summary_plots = "#ababba"  # highlight color of summary plots
         self.EMA_alpha = 0.2  # Decay factor of the exponential moving avg.
 

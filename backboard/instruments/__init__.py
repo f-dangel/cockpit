@@ -6,6 +6,7 @@ from backboard.instruments.gradient_tests_gauge import gradient_tests_gauge
 from backboard.instruments.hyperparameter_gauge import hyperparameter_gauge
 from backboard.instruments.max_ev_gauge import max_ev_gauge
 from backboard.instruments.performance_gauge import performance_gauge
+from backboard.instruments.tic_gauge import tic_gauge
 from backboard.instruments.trace_gauge import trace_gauge
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "hyperparameter_gauge",
     "max_ev_gauge",
     "performance_gauge",
+    "tic_gauge",
     "trace_gauge",
 ]
