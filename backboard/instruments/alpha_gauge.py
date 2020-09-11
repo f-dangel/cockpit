@@ -57,20 +57,23 @@ def alpha_gauge(self, fig, gridspec):
     (mu_all, _) = stats.norm.fit(self.tracking_data["alpha"].dropna())
     # Last 10% alphas
     len_last_elements = int(len(self.tracking_data["alpha"]) / 10)
-    sns.distplot(
-        self.tracking_data["alpha"][-len_last_elements:].dropna(),
-        ax=ax2,
-        # norm_hist=True,
-        fit=stats.norm,
-        kde=False,
-        color=color_last,
-        fit_kws={"color": color_last},
-        hist_kws={"linewidth": 0, "alpha": 0.65},
-        label="last 10 %",
-    )
-    (mu_last, _) = stats.norm.fit(
-        self.tracking_data["alpha"][-len_last_elements:].dropna()
-    )
+    try:
+        sns.distplot(
+            self.tracking_data["alpha"][-len_last_elements:].dropna(),
+            ax=ax2,
+            # norm_hist=True,
+            fit=stats.norm,
+            kde=False,
+            color=color_last,
+            fit_kws={"color": color_last},
+            hist_kws={"linewidth": 0, "alpha": 0.65},
+            label="last 10 %",
+        )
+        (mu_last, _) = stats.norm.fit(
+            self.tracking_data["alpha"][-len_last_elements:].dropna()
+        )
+    except ValueError:
+        mu_last = None
 
     # Manually beautify the plot:
     # Adding Zone Lines
@@ -118,9 +121,9 @@ def alpha_gauge(self, fig, gridspec):
     # Legend
     # Get the fitted parameters used by sns
     lines2, labels2 = ax2.get_legend_handles_labels()
-    ax2.legend(
-        [
-            "{0} ($\mu=${1:.2f})".format(labels2[0], mu_all),  # noqa: W605
-            "{0} ($\mu=${1:.2f})".format(labels2[1], mu_last),  # noqa: W605
-        ]
-    )
+    legend = []
+    if mu_all is not None:
+        legend.append("{0} ($\mu=${1:.2f})".format(labels2[0], mu_all))  # noqa: W605
+    if mu_last is not None:
+        legend.append("{0} ($\mu=${1:.2f})".format(labels2[1], mu_last))  # noqa: W605
+    ax2.legend(legend)
