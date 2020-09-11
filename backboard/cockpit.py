@@ -1,10 +1,13 @@
 """Cockpit."""
 
 import contextlib
+import glob
 import inspect
 import json
 import os
 from collections import defaultdict
+
+from PIL import Image
 
 from backboard import quantities
 from backboard.cockpit_plotter import CockpitPlotter
@@ -150,6 +153,33 @@ class Cockpit:
         with open(self.logpath + ".json", "w") as json_file:
             json.dump(self.output, json_file, indent=4, sort_keys=True)
         print("Cockpit-Log written...")
+
+    def build_animation(self, duration=200, loop=0):
+        """Build an animation from the stored images during training.
+
+        TODO Make this independant of stored images. Instead generate those images
+        in hindsight and ideally use fixed axis.
+
+        Args:
+            duration (int, optional): Time to display each frame, in milliseconds.
+                Defaults to 200.
+            loop (int, optional): Number of times the GIF should loop.
+                Defaults to 0 which means it will loop forever.
+        """
+        # Filepaths
+        fp_in = self.logpath + "__epoch__*.png"
+        fp_out = self.logpath + ".gif"
+
+        # Collect images and create Animation
+        img, *imgs = [Image.open(f) for f in sorted(glob.glob(fp_in))]
+        img.save(
+            fp=fp_out,
+            format="GIF",
+            append_images=imgs,
+            save_all=True,
+            duration=duration,
+            loop=loop,
+        )
 
     @staticmethod
     def _prepare_logpath(logpath):

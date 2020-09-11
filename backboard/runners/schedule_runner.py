@@ -119,6 +119,8 @@ class ScheduleCockpitRunner(PTRunner):
                     training_params["show_plots"],
                     training_params["save_final_plot"],
                 )
+                if training_params["save_animation"]:
+                    cockpit.build_animation()
                 break
 
             # Training #
@@ -169,7 +171,8 @@ class ScheduleCockpitRunner(PTRunner):
                 cockpit.plot(
                     training_params["show_plots"],
                     training_params["save_plots"],
-                    savename_append="__epoch__" + str(epoch_count),
+                    savename_append="__epoch__"
+                    + str(epoch_count).zfill(len(str(num_epochs))),
                 )
 
         if tb_log:
