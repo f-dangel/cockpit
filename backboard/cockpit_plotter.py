@@ -42,7 +42,7 @@ class CockpitPlotter:
                 blocking or not. Defaults to False.
         """
         if not hasattr(self, "fig"):
-            self.fig = plt.figure(constrained_layout=True)
+            self.fig = plt.figure(constrained_layout=False)
 
         # read in results
         self._read_tracking_results()
@@ -52,12 +52,13 @@ class CockpitPlotter:
 
         # Subplot grid: Currently looks like this.
         # +-----------------------+------------------------+--------------------+
-        # | TIC (tbd)             | Gradient Tests Gauge | Alpha Gauge          |
+        # | TIC                   | Gradient Tests Gauge | Alpha Gauge          |
         # | Max Ev                | Trace (layerwise)    | Distance (layerwise) |
+        # | 1D Histogram          | 2D Histogram         | Grad Norm            |
         # |                         Performance Gauge                           |
         # |                         Hyperparameter Gauge                        |
         # +-----------------------+------------------------+--------------------+
-        self.grid_spec = self.fig.add_gridspec(4, 3)
+        self.grid_spec = self.fig.add_gridspec(5, 3, wspace=0.15, hspace=0.5)
 
         # First (upper) Row #
         # TIC
@@ -77,13 +78,23 @@ class CockpitPlotter:
         instruments.distance_gauge(self, self.fig, self.grid_spec[1, 2])
 
         # Third Row #
-        instruments.performance_gauge(self, self.fig, self.grid_spec[2, :])
+        # 1D Histogram
+        instruments.histogram_1d_gauge(self, self.fig, self.grid_spec[2, 0])
+        # 2D Histogram
+        instruments.histogram_2d_gauge(self, self.fig, self.grid_spec[2, 1])
+        # Grad Norm
+        instruments.grad_norm_gauge(self, self.fig, self.grid_spec[2, 2])
 
-        # Fourth (bottom) Row #
-        instruments.hyperparameter_gauge(self, self.fig, self.grid_spec[3, :])
+        # Fourth Row #
+        instruments.performance_gauge(self, self.fig, self.grid_spec[3, :])
+
+        # Fifth (bottom) Row #
+        instruments.hyperparameter_gauge(self, self.fig, self.grid_spec[4, :])
 
         # Post Process Title, Legend etc.
         self._post_process_plot()
+
+        plt.tight_layout()
 
         # Show or Save plots
         if show_plot:
@@ -96,11 +107,11 @@ class CockpitPlotter:
         """Set the general plotting options, such as plot size, style, etc."""
         # Settings:
         plt.ion()  # turn on interactive mode, so programm continues while plotting.
-        plot_size_default = [20, 10]
+        plot_size_default = [30, 15]
         plot_scale = 1.0  # 0.7 works well for the MacBook
         sns.set_style("dark")
         sns.set_context("paper", font_scale=1.0)
-        self.save_format = ".svg"  # how the plots should be saved
+        self.save_format = ".png"  # how the plots should be saved
         self.cmap = plt.cm.viridis  # primary color map
         self.cmap2 = plt.cm.cool  # secondary color map
         self.cmap_backup = plt.cm.Wistia  # primary backup color map
