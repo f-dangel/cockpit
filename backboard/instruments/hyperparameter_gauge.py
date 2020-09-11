@@ -19,11 +19,13 @@ def hyperparameter_gauge(self, fig, gridspec):
     """
     ax = fig.add_subplot(gridspec)
 
+    clean_learning_rate = self.tracking_data[["iteration", "learning_rate"]].dropna()
+
     # Plot Settings
     plot_args = {
         "x": "iteration",
         "y": "learning_rate",
-        "data": self.tracking_data,
+        "data": clean_learning_rate,
     }
     ylabel = plot_args["y"].replace("_", " ").title()
     sns.lineplot(**plot_args, ax=ax, label=ylabel, linewidth=2)

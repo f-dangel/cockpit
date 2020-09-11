@@ -37,11 +37,15 @@ def performance_gauge(self, fig, gridspec):
     ax = fig.add_subplot(gridspec)
     create_basic_plot(**plot_args, ax=ax)
 
+    clean_accuracies = self.tracking_data[
+        ["iteration", "train_accuracy", "valid_accuracy"]
+    ].dropna()
+
     # Train Accuracy
     plot_args = {
         "x": "iteration",
         "y": "train_accuracy",
-        "data": self.tracking_data,
+        "data": clean_accuracies,
     }
     ax2 = ax.twinx()
     sns.lineplot(
@@ -52,7 +56,7 @@ def performance_gauge(self, fig, gridspec):
     plot_args = {
         "x": "iteration",
         "y": "valid_accuracy",
-        "data": self.tracking_data,
+        "data": clean_accuracies,
     }
     sns.lineplot(
         **plot_args, ax=ax2, label=plot_args["y"].title().replace("_", " "), linewidth=2
