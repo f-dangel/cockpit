@@ -1,5 +1,6 @@
 """Plotting Part of the Cockpit."""
 
+import glob
 import json
 import os
 
@@ -7,6 +8,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from PIL import Image
 
 from backboard import instruments
 from backboard.instruments import utils_plotting
@@ -102,6 +104,33 @@ class CockpitPlotter:
             plt.pause(0.001)
         if save_plot:
             self._save(savename_append)
+
+    def build_animation(self, duration=200, loop=0):
+        """Build an animation from the stored images during training.
+
+        TODO Make this independant of stored images. Instead generate those images
+        in hindsight and ideally use fixed axis.
+
+        Args:
+            duration (int, optional): Time to display each frame, in milliseconds.
+                Defaults to 200.
+            loop (int, optional): Number of times the GIF should loop.
+                Defaults to 0 which means it will loop forever.
+        """
+        # Filepaths
+        fp_in = self.logpath + "__epoch__*.png"
+        fp_out = self.logpath + ".gif"
+
+        # Collect images and create Animation
+        img, *imgs = [Image.open(f) for f in sorted(glob.glob(fp_in))]
+        img.save(
+            fp=fp_out,
+            format="GIF",
+            append_images=imgs,
+            save_all=True,
+            duration=duration,
+            loop=loop,
+        )
 
     def _set_plotting_params(self):
         """Set the general plotting options, such as plot size, style, etc."""
