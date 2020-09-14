@@ -32,9 +32,11 @@ class Cockpit:
                 implemented ones.
         """
         # Store all parameters as attributes
-        params = locals()
-        del params["self"]
-        self.__dict__ = params
+        self.tproblem = tproblem
+        self.logpath = logpath
+        self.track_interval = track_interval
+        self.quantities = quantities
+
         self.create_graph = False
         self.output = defaultdict(dict)
 
@@ -128,13 +130,18 @@ class Cockpit:
                 that the optimizer uses a single global learning rate, which is
                 used for all parameter groups.
         """
-        # Loop over inputs, w/o self & global_step, adding them to the output dict
-        params = locals()
-        del params["self"]
-        del params["global_step"]
+        # Store inputs
+        self.output[global_step]["epoch_count"] = epoch_count
 
-        for k, v in params.items():
-            self.output[global_step][k] = v
+        self.output[global_step]["train_loss"] = train_loss
+        self.output[global_step]["valid_loss"] = valid_loss
+        self.output[global_step]["test_loss"] = test_loss
+
+        self.output[global_step]["train_accuracy"] = train_accuracy
+        self.output[global_step]["valid_accuracy"] = valid_accuracy
+        self.output[global_step]["test_accuracy"] = test_accuracy
+
+        self.output[global_step]["learning_rate"] = learning_rate
 
     def plot(self, *args, **kwargs):
         """Plot the Cockpit with the current state of the log file."""
