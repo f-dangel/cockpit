@@ -21,18 +21,6 @@ def _split_logpath(logpath):
     return dicty
 
 
-def _root_sum_of_squares(list):
-    """Returns the root of the sum of squares of a given list.
-
-    Args:
-        list (list): A list of floats
-
-    Returns:
-        [float]: Root sum of squares
-    """
-    return sum((el ** 2 for el in list)) ** (0.5)
-
-
 def legend():
     """Creates the legend of the whole cockpit, combining the individual instruments."""
     pass

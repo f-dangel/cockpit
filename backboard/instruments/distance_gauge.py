@@ -1,7 +1,7 @@
 """Distance Gauge."""
 
 from backboard.instruments.utils_instruments import create_basic_plot
-from backboard.instruments.utils_plotting import _root_sum_of_squares
+from backboard.quantities.utils_quantities import _root_sum_of_squares
 
 
 def distance_gauge(self, fig, gridspec):
