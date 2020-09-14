@@ -62,7 +62,7 @@ For example to train any DeepOBS problem using SGD with CockpitTracking:
 """Run SGD on the Quadratic with multiple LRs."""
 
 from torch.optim import SGD
-from backboard.runners.schedule_runner import ScheduleCockpitRunner
+from backboard.runners.scheduled_runner import ScheduleCockpitRunner
 
 optimizer_class = SGD
 hyperparams = {"lr": {"type": float}}
