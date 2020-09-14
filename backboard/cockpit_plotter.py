@@ -118,8 +118,8 @@ class CockpitPlotter:
                 Defaults to 0 which means it will loop forever.
         """
         # Filepaths
-        fp_in = self.logpath + "__epoch__*.png"
-        fp_out = self.logpath + ".gif"
+        fp_in = os.path.splitext(self.logpath)[0] + "__epoch__*.png"
+        fp_out = os.path.splitext(self.logpath)[0] + ".gif"
 
         # Collect images and create Animation
         img, *imgs = [Image.open(f) for f in sorted(glob.glob(fp_in))]
