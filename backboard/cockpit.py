@@ -159,34 +159,31 @@ class Cockpit:
                 except AttributeError:
                     pass
 
-    def _free_backpack_io(self, verbose=False):
+    def _free_backpack_io(self):
         """Manually free module input/output used in BackPACK to save memory."""
-        if verbose:
-            print("Freeing BackPACK IO")
-
-        io_fields = ["input0", "output"]
-
-        def has_children(net):
-            return len(list(net.children())) > 0
-
-        def remove_module_io(module):
-            for field in io_fields:
-                try:
-                    delattr(module, field)
-                    if verbose:
-                        print(f"Deleting '{field}' from module {mod}")
-
-                except AttributeError:
-                    pass
 
         def remove_net_io(module):
-            if has_children(module):
+            if self._has_children(module):
                 for mod in module.children():
                     remove_net_io(mod)
             else:
-                remove_module_io(module)
+                self._remove_module_io(module)
 
         remove_net_io(self.tproblem.net)
+
+    @staticmethod
+    def _has_children(net):
+        return len(list(net.children())) > 0
+
+    @staticmethod
+    def _remove_module_io(module):
+        io_fields = ["input0", "output"]
+
+        for field in io_fields:
+            try:
+                delattr(module, field)
+            except AttributeError:
+                pass
 
     def log(
         self,
