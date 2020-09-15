@@ -70,7 +70,7 @@ class Cockpit:
         if isinstance(tproblem, TestProblem):
             if BUG:
                 print("Use backobs")
-                extend_with_access_unreduced_loss(tproblem)
+                extend_with_access_unreduced_loss(tproblem, detach=True)
             else:
                 print("Extend manually")
                 # Integrate BackPACK
