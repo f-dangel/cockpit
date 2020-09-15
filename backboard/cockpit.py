@@ -18,6 +18,24 @@ from deepobs.pytorch.testproblems.testproblem import TestProblem
 class Cockpit:
     """Cockpit class."""
 
+    default_quantities = [
+        # quantities.AlphaExpensive,
+        quantities.AlphaOptimized,
+        quantities.BatchGradHistogram1d,
+        quantities.BatchGradHistogram2d,
+        quantities.Distance,
+        quantities.GradNorm,
+        quantities.InnerProductTest,
+        quantities.Loss,
+        quantities.MaxEV,
+        quantities.MeanGSNR,
+        quantities.NormTest,
+        quantities.OrthogonalityTest,
+        quantities.TICDiag,
+        # quantities.TICTrace,
+        quantities.Trace,
+    ]
+
     def __init__(self, tproblem, logpath, track_interval=1, quantities=None):
         """Initialize the Cockpit.
 
@@ -168,8 +186,8 @@ class Cockpit:
         logdir, logfile = os.path.split(logpath)
         os.makedirs(logdir, exist_ok=True)
 
-    @staticmethod
-    def _collect_quantities(cockpit_quantities, track_interval):
+    @classmethod
+    def _collect_quantities(cls, cockpit_quantities, track_interval):
         """Collect all quantities that should be used for tracking.
 
         Args:
@@ -182,23 +200,7 @@ class Cockpit:
             list: List of quantities (classes) that should be used for tracking.
         """
         if cockpit_quantities is None:
-            cockpit_quantities = [
-                # quantities.AlphaExpensive,
-                quantities.AlphaOptimized,
-                quantities.BatchGradHistogram1d,
-                quantities.BatchGradHistogram2d,
-                quantities.Distance,
-                quantities.GradNorm,
-                quantities.InnerProductTest,
-                quantities.Loss,
-                quantities.MaxEV,
-                quantities.MeanGSNR,
-                quantities.NormTest,
-                quantities.OrthogonalityTest,
-                quantities.TICDiag,
-                # quantities.TICTrace,
-                quantities.Trace,
-            ]
+            cockpit_quantities = cls.default_quantities
 
         quants = []
         for q in cockpit_quantities:
