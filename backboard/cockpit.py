@@ -148,8 +148,38 @@ class Cockpit:
             batch_loss (torch.Tensor): The batch loss of the current iteration.
         """
         params = [p for p in self.tproblem.net.parameters() if p.requires_grad]
-        for q in self.quantities:
+
+        # for q in self.quantities:
+        # q.compute(global_step, params, batch_loss)
+
+        before_cleanup = [
+            q for q in self.quantities if not isinstance(q, quantities.MaxEV)
+        ]
+
+        for q in before_cleanup:
             q.compute(global_step, params, batch_loss)
+
+        self._free_backpack_buffers(global_step)
+
+        after_cleanup = [q for q in self.quantities if isinstance(q, quantities.MaxEV)]
+        for q in after_cleanup:
+            q.compute(global_step, params, batch_loss)
+
+    def _free_backpack_buffers(self, global_step, verbose=False):
+        """Manually free quantities computed by BackPACK to save memory."""
+        print("Freeing BackPACK buffers")
+        ext = self._get_extensions(global_step)
+
+        for param in self.tproblem.net.parameters():
+            for e in ext:
+                try:
+                    field = e.savefield
+                    delattr(param, field)
+
+                    if verbose:
+                        print(f"Deleting '{field}' from param of shape {param.shape}")
+                except AttributeError:
+                    pass
 
     def log(
         self,
