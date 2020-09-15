@@ -234,12 +234,13 @@ class Cockpit:
 
         return no_duplicate_ext
 
-    def _process_multiple_batch_grad_transforms(self, ext):
+    @classmethod
+    def _process_multiple_batch_grad_transforms(cls, ext):
         """Handle multiple occurrences of ``BatchGradTransforms`` by combining them."""
         transforms = [e for e in ext if isinstance(e, BatchGradTransforms)]
         no_transforms = [e for e in ext if not isinstance(e, BatchGradTransforms)]
 
-        batch_grad_transforms = self._merge_batch_grad_transforms(transforms)
+        batch_grad_transforms = cls._merge_batch_grad_transforms(transforms)
 
         return no_transforms + [batch_grad_transforms]
 
