@@ -85,7 +85,7 @@ class Cockpit:
 
         return ext
 
-    def __call__(self, global_step, debug=True):
+    def __call__(self, global_step, debug=False):
         """Returns the backpack extensions that should be used in this iteration.
 
         Args:
