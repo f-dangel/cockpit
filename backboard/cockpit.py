@@ -160,6 +160,7 @@ class Cockpit:
             q.compute(global_step, params, batch_loss)
 
         self._free_backpack_buffers(global_step)
+        self._free_backpack_io()
 
         after_cleanup = [q for q in self.quantities if isinstance(q, quantities.MaxEV)]
         for q in after_cleanup:
@@ -167,7 +168,9 @@ class Cockpit:
 
     def _free_backpack_buffers(self, global_step, verbose=False):
         """Manually free quantities computed by BackPACK to save memory."""
-        print("Freeing BackPACK buffers")
+        if verbose:
+            print("Freeing BackPACK buffers")
+
         ext = self._get_extensions(global_step)
 
         for param in self.tproblem.net.parameters():
@@ -180,6 +183,35 @@ class Cockpit:
                         print(f"Deleting '{field}' from param of shape {param.shape}")
                 except AttributeError:
                     pass
+
+    def _free_backpack_io(self, verbose=False):
+        """Manually free module input/output used in BackPACK to save memory."""
+        if verbose:
+            print("Freeing BackPACK IO")
+
+        io_fields = ["input0", "output"]
+
+        def has_children(net):
+            return len(list(net.children())) > 0
+
+        def remove_module_io(module):
+            for field in io_fields:
+                try:
+                    delattr(module, field)
+                    if verbose:
+                        print(f"Deleting '{field}' from module {mod}")
+
+                except AttributeError:
+                    pass
+
+        def remove_net_io(module):
+            if has_children(module):
+                for mod in module.children():
+                    remove_net_io(mod)
+            else:
+                remove_module_io(module)
+
+        remove_net_io(self.tproblem.net)
 
     def log(
         self,
