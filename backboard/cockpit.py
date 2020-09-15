@@ -72,10 +72,6 @@ class Cockpit:
             ext += q.extensions(global_step)
 
         ext = self._process_multiple_batch_grad_transforms(ext)
-
-        ext = list(set(ext))
-
-        ext = self._process_multiple_batch_grad_transforms(ext)
         ext = self._process_duplicate_extensions(ext)
 
         # Collect if create graph is needed and set switch
