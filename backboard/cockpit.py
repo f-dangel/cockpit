@@ -240,9 +240,11 @@ class Cockpit:
         transforms = [e for e in ext if isinstance(e, BatchGradTransforms)]
         no_transforms = [e for e in ext if not isinstance(e, BatchGradTransforms)]
 
-        batch_grad_transforms = cls._merge_batch_grad_transforms(transforms)
+        processed_transforms = no_transforms
+        if transforms:
+            processed_transforms.append(cls._merge_batch_grad_transforms(transforms))
 
-        return no_transforms + [batch_grad_transforms]
+        return processed_transforms
 
     @staticmethod
     def _merge_batch_grad_transforms(batch_grad_transforms):
