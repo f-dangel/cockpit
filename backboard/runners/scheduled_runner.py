@@ -1,6 +1,5 @@
 """Schedule Runner using a learning rate schedule."""
 
-import gc
 import os
 import warnings
 
@@ -166,20 +165,20 @@ class ScheduleCockpitRunner(PTRunner):
                     with cockpit(global_step):
                         batch_loss.backward(create_graph=cockpit.create_graph)
 
-                        cockpit.track(global_step, batch_loss)
+                    cockpit.track(global_step, batch_loss)
 
-                        mem = get_consumed_memory()
-                        print(f"After tracking: {mem:.3f} MB")
-                        MEMORY.append(mem)
-                        STEPS.append(global_step)
+                    mem = get_consumed_memory()
+                    print(f"After tracking: {mem:.3f} MB")
+                    MEMORY.append(mem)
+                    STEPS.append(global_step)
 
-                        if global_step % 5 == 0:
-                            import matplotlib.pyplot as plt
+                    if global_step % 5 == 0:
+                        import matplotlib.pyplot as plt
 
-                            plt.figure()
-                            plt.plot(STEPS, MEMORY)
-                            plt.savefig("copy.png")
-                            plt.close()
+                        plt.figure()
+                        plt.plot(STEPS, MEMORY)
+                        plt.savefig("memory.png")
+                        plt.close()
 
                     opt.step()
 
