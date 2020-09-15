@@ -224,6 +224,7 @@ class AlphaOptimized(_Alpha):
 
         def compute_start_projection_info(batch_grad):
             """Compute information to project individual gradients onto the gradient."""
+            batch_grad = batch_grad.detach()
             batch_size = batch_grad.size(0)
 
             # TODO this is currently only correctly implemented for SGD!
@@ -258,6 +259,7 @@ class AlphaOptimized(_Alpha):
 
         def compute_end_projection_info(batch_grad):
             """Compute information to project individual gradients onto the gradient."""
+            batch_grad = batch_grad.detach()
             batch_size = batch_grad.size(0)
 
             end_param = batch_grad._param_weakref()

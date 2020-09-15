@@ -91,12 +91,13 @@ class BatchGradHistogram1d(Quantity):
                 `p` is of shape `(*)`, the individual gradients have shape `(N, *)`,
                 where `N` denotes the batch size.
         """
+        batch_grad = batch_grad.detach()
         batch_size = batch_grad.size(0)
 
         # clip to interval, elements outside [xmin, xmax] would be ignored
         batch_grad_clamped = torch.clamp(
             batch_size * batch_grad, self._xmin, self._xmax
-        ).detach()
+        )
 
         return torch.histc(
             batch_grad_clamped, bins=self._bins, min=self._xmin, max=self._xmax
@@ -212,14 +213,13 @@ class BatchGradHistogram2d(Quantity):
             There is some activity to integrate such functionality into PyTorch here:
             https://github.com/pytorch/pytorch/issues/29209
         """
+        batch_grad = batch_grad.detach()
         batch_size = batch_grad.size(0)
 
         # clip to interval, elements outside [xmin, xmax] would be ignored
-        batch_grad_clamped = (
-            torch.clamp(batch_size * batch_grad, self._xmin, self._xmax)
-            .flatten()
-            .detach()
-        )
+        batch_grad_clamped = torch.clamp(
+            batch_size * batch_grad, self._xmin, self._xmax
+        ).flatten()
 
         param = batch_grad._param_weakref().data
         param_clamped = torch.clamp(param, self._ymin, self._ymax)
