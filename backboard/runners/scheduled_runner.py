@@ -3,27 +3,10 @@
 import os
 import warnings
 
-import psutil
 from torch.optim.lr_scheduler import LambdaLR
 
 from backboard import Cockpit
 from deepobs.pytorch.runners.runner import PTRunner
-
-
-def get_consumed_memory(verbose=False):
-    """Print and return total memory (in MB) consumed by Python process."""
-    process = psutil.Process()
-    mem_in_bytes = process.memory_info().rss
-    mem_in_mb = mem_in_bytes / 1024 ** 2
-
-    if verbose:
-        print(f"Memory consumed by Python process: {mem_in_mb:.2f} MB")
-
-    return mem_in_mb
-
-
-STEPS = []
-MEMORY = []
 
 
 class ScheduleCockpitRunner(PTRunner):
@@ -166,19 +149,6 @@ class ScheduleCockpitRunner(PTRunner):
                         batch_loss.backward(create_graph=cockpit.create_graph)
 
                     cockpit.track(global_step, batch_loss)
-
-                    mem = get_consumed_memory()
-                    print(f"After tracking: {mem:.3f} MB")
-                    MEMORY.append(mem)
-                    STEPS.append(global_step)
-
-                    if global_step % 5 == 0:
-                        import matplotlib.pyplot as plt
-
-                        plt.figure()
-                        plt.plot(STEPS, MEMORY)
-                        plt.savefig("memory.png")
-                        plt.close()
 
                     opt.step()
 
