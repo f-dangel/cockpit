@@ -98,7 +98,14 @@ class HVPLinearOperator(BaseLinearOperator):
 
         self.loss = loss
         self.params = params
-        self.grad_params = grad_params
+
+        if grad_params is None:
+            self.grad_params = torch.autograd.grad(
+                loss, params, create_graph=True, retain_graph=True
+            )
+        else:
+            self.grad_params = grad_params
+
         self.device = loss.device
 
     def _matvec(self, v_numpy):
