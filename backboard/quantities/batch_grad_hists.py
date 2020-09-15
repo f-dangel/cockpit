@@ -91,12 +91,11 @@ class BatchGradHistogram1d(Quantity):
                 `p` is of shape `(*)`, the individual gradients have shape `(N, *)`,
                 where `N` denotes the batch size.
         """
-        batch_grad = batch_grad.detach()
-        batch_size = batch_grad.size(0)
+        batch_size = batch_grad.shape[0]
 
         # clip to interval, elements outside [xmin, xmax] would be ignored
         batch_grad_clamped = torch.clamp(
-            batch_size * batch_grad, self._xmin, self._xmax
+            batch_size * batch_grad.data, self._xmin, self._xmax
         )
 
         return torch.histc(
@@ -128,6 +127,7 @@ class BatchGradHistogram2d(Quantity):
         ymin=-2,
         ymax=2,
         ybins=50,
+        save_memory=True,
         verbose=False,
         check=False,
     ):
@@ -141,6 +141,7 @@ class BatchGradHistogram2d(Quantity):
             ymin (float): Lower clipping bound for parameters in histogram.
             ymax (float): Upper clipping bound for parameters in histogram.
             ybins (int): Number of bins in y-direction
+            save_memory (bool): Sacrifice binning runtime for less memory.
             verbose (bool): Turns on verbose mode. Defaults to ``False``.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
@@ -153,6 +154,7 @@ class BatchGradHistogram2d(Quantity):
         self._ymin = ymin
         self._ymax = ymax
         self._ybins = ybins
+        self._save_memory = save_memory
         self._check = check
 
     def extensions(self, global_step):
@@ -212,33 +214,46 @@ class BatchGradHistogram2d(Quantity):
             Currently, we have to compute multi-dimensional histograms with numpy.
             There is some activity to integrate such functionality into PyTorch here:
             https://github.com/pytorch/pytorch/issues/29209
+
+        Todo:
+            Wait for PyTorch functionality and replace numpy
         """
-        batch_grad = batch_grad.detach()
-        batch_size = batch_grad.size(0)
+        batch_size = batch_grad.shape[0]
 
         # clip to interval, elements outside [xmin, xmax] would be ignored
         batch_grad_clamped = torch.clamp(
-            batch_size * batch_grad, self._xmin, self._xmax
-        ).flatten()
+            batch_size * batch_grad.data, self._xmin, self._xmax
+        )
 
         param = batch_grad._param_weakref().data
         param_clamped = torch.clamp(param, self._ymin, self._ymax)
-
-        # N-fold expansion to obtain same shapes (no memory overhead)
-        expand_arg = [batch_size] + len(param.shape) * [-1]
-        param_clamped = param_clamped.unsqueeze(0).expand(*expand_arg).flatten()
-
-        # TODO Wait for PyTorch functionality and replace numpy
-        batch_grad_clamped = batch_grad_clamped.cpu().numpy()
-        param_clamped = param_clamped.cpu().numpy()
 
         x_edges, y_edges = self._get_current_bin_edges()
         x_edges = x_edges.cpu().numpy()
         y_edges = y_edges.cpu().numpy()
 
-        hist, xedges, yedges = numpy.histogram2d(
-            batch_grad_clamped, param_clamped, bins=(x_edges, y_edges)
-        )
+        if self._save_memory:
+            batch_grad_clamped = batch_grad_clamped.flatten(start_dim=1).cpu().numpy()
+            param_clamped = param_clamped.flatten().cpu().numpy()
+
+            hist = numpy.zeros(shape=(len(x_edges) - 1, len(y_edges) - 1))
+
+            for n in range(batch_grad_clamped.shape[0]):
+                h, xedges, yedges = numpy.histogram2d(
+                    batch_grad_clamped[n], param_clamped, bins=(x_edges, y_edges)
+                )
+                hist += h
+
+        else:
+            expand_arg = [batch_size] + len(param.shape) * [-1]
+            param_clamped = param_clamped.unsqueeze(0).expand(*expand_arg).flatten()
+
+            batch_grad_clamped = batch_grad_clamped.cpu().numpy()
+            param_clamped = param_clamped.cpu().numpy()
+
+            hist, xedges, yedges = numpy.histogram2d(
+                batch_grad_clamped, param_clamped, bins=(x_edges, y_edges)
+            )
 
         if self._check:
             assert numpy.allclose(x_edges, xedges)

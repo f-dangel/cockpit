@@ -224,13 +224,12 @@ class AlphaOptimized(_Alpha):
 
         def compute_start_projection_info(batch_grad):
             """Compute information to project individual gradients onto the gradient."""
-            batch_grad = batch_grad.detach()
-            batch_size = batch_grad.size(0)
+            batch_size = batch_grad.shape[0]
 
             # TODO this is currently only correctly implemented for SGD!
             # TODO raise NotImplementedError when optimizer is not SGD with 0 momentum
-            search_dir_flat = -1 * (batch_grad.sum(0).flatten())
-            batch_grad_flat = batch_grad.flatten(start_dim=1)
+            search_dir_flat = -1 * (batch_grad.data.sum(0).flatten())
+            batch_grad_flat = batch_grad.data.flatten(start_dim=1)
 
             search_dir_l2_squared = (search_dir_flat ** 2).sum()
             dot_products = torch.einsum(
@@ -259,14 +258,13 @@ class AlphaOptimized(_Alpha):
 
         def compute_end_projection_info(batch_grad):
             """Compute information to project individual gradients onto the gradient."""
-            batch_grad = batch_grad.detach()
-            batch_size = batch_grad.size(0)
+            batch_size = batch_grad.shape[0]
 
             end_param = batch_grad._param_weakref()
             start_param = self._get_info("params", end=False)[0][id(end_param)]
 
             search_dir_flat = (end_param.data - start_param).flatten()
-            batch_grad_flat = batch_grad.flatten(start_dim=1)
+            batch_grad_flat = batch_grad.data.flatten(start_dim=1)
 
             search_dir_l2_squared = (search_dir_flat ** 2).sum()
             dot_products = torch.einsum(
