@@ -127,9 +127,6 @@ class Cockpit:
         """
         params = [p for p in self.tproblem.net.parameters() if p.requires_grad]
 
-        # for q in self.quantities:
-        # q.compute(global_step, params, batch_loss)
-
         before_cleanup = [
             q for q in self.quantities if not isinstance(q, quantities.MaxEV)
         ]
