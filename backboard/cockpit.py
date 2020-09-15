@@ -74,7 +74,7 @@ class Cockpit:
         # Create a Cockpit Plotter instance
         self.cockpit_plotter = CockpitPlotter(self.logpath)
 
-    def __call__(self, global_step):
+    def __call__(self, global_step, debug=True):
         """Returns the backpack extensions that should be used in this iteration.
 
         Args:
@@ -103,6 +103,13 @@ class Cockpit:
 
         else:
             context_manager = contextlib.nullcontext
+
+        if debug:
+            print(f"[DEBUG, step {global_step}]")
+            print(f" ↪Quantities  : {self.quantities}")
+            print(f" ↪Extensions  : {ext}")
+            print(f" ↪Create graph: {self.create_graph}")
+            print(f" ↪Context     : {context_manager}")
 
         return context_manager()
 
