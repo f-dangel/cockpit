@@ -96,6 +96,17 @@ class Cockpit:
         # Create a Cockpit Plotter instance
         self.cockpit_plotter = CockpitPlotter(self.logpath)
 
+    def _get_extensions(self, global_step):
+        """Collect BackPACK extensions required at current iteration."""
+        ext = []
+        for q in self.quantities:
+            ext += q.extensions(global_step)
+
+        ext = self._process_multiple_batch_grad_transforms(ext)
+        ext = self._process_duplicate_extensions(ext)
+
+        return ext
+
     def __call__(self, global_step, debug=True):
         """Returns the backpack extensions that should be used in this iteration.
 
@@ -106,13 +117,7 @@ class Cockpit:
             backpack.backpack: BackPACK with the appropriate extensions, or the
                 nullcontext
         """
-        # Collect needed extensions
-        ext = []
-        for q in self.quantities:
-            ext += q.extensions(global_step)
-
-        ext = self._process_multiple_batch_grad_transforms(ext)
-        ext = self._process_duplicate_extensions(ext)
+        ext = self._get_extensions(global_step)
 
         # Collect if create graph is needed and set switch
         self.create_graph = any(q.create_graph(global_step) for q in self.quantities)
