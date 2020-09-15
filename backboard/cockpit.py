@@ -1,6 +1,7 @@
 """Cockpit."""
 
 import contextlib
+import copy
 import inspect
 import json
 import os
@@ -10,7 +11,7 @@ from backboard import quantities
 from backboard.cockpit_plotter import CockpitPlotter
 from backboard.quantities.utils_quantities import _update_dicts
 from backobs import extend_with_access_unreduced_loss
-from backpack import backpack
+from backpack import backpack, extend
 from backpack.extensions import BatchGradTransforms
 from deepobs.pytorch.testproblems.testproblem import TestProblem
 
@@ -61,9 +62,30 @@ class Cockpit:
         # Collect quantities
         self.quantities = self._collect_quantities(quantities, track_interval)
 
+        # the plots were created by varying these parameters
+        BUG = False
+        NO_COPY = False
+
         # Extend testproblem
         if isinstance(tproblem, TestProblem):
-            extend_with_access_unreduced_loss(tproblem)
+            if BUG:
+                print("Use backobs")
+                extend_with_access_unreduced_loss(tproblem)
+            else:
+                print("Extend manually")
+                # Integrate BackPACK
+                extend(tproblem.net)
+                tproblem._old_loss = tproblem.loss_function
+
+                def hotfix_lossfunc(reduction="mean"):
+
+                    if NO_COPY:
+                        return extend(tproblem._old_loss(reduction=reduction))
+                    else:
+                        _old_loss_copy = copy.deepcopy(tproblem._old_loss)
+                        return extend(_old_loss_copy(reduction=reduction))
+
+                tproblem.loss_function = hotfix_lossfunc
         else:
             # TODO How do we handle general PyTorch nets?
             raise NotImplementedError

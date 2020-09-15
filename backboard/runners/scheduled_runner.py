@@ -1,12 +1,30 @@
 """Schedule Runner using a learning rate schedule."""
 
+import gc
 import os
 import warnings
 
+import psutil
 from torch.optim.lr_scheduler import LambdaLR
 
 from backboard import Cockpit
 from deepobs.pytorch.runners.runner import PTRunner
+
+
+def get_consumed_memory(verbose=False):
+    """Print and return total memory (in MB) consumed by Python process."""
+    process = psutil.Process()
+    mem_in_bytes = process.memory_info().rss
+    mem_in_mb = mem_in_bytes / 1024 ** 2
+
+    if verbose:
+        print(f"Memory consumed by Python process: {mem_in_mb:.2f} MB")
+
+    return mem_in_mb
+
+
+STEPS = []
+MEMORY = []
 
 
 class ScheduleCockpitRunner(PTRunner):
@@ -35,7 +53,7 @@ class ScheduleCockpitRunner(PTRunner):
         train_log_interval,
         tb_log,
         tb_log_dir,
-        **training_params
+        **training_params,
     ):
         """Training loop for this runner.
 
@@ -147,7 +165,21 @@ class ScheduleCockpitRunner(PTRunner):
                     # COCKPIT: Use necessary BackPACK extensions and track #
                     with cockpit(global_step):
                         batch_loss.backward(create_graph=cockpit.create_graph)
-                    cockpit.track(global_step, batch_loss)
+
+                        cockpit.track(global_step, batch_loss)
+
+                        mem = get_consumed_memory()
+                        print(f"After tracking: {mem:.3f} MB")
+                        MEMORY.append(mem)
+                        STEPS.append(global_step)
+
+                        if global_step % 5 == 0:
+                            import matplotlib.pyplot as plt
+
+                            plt.figure()
+                            plt.plot(STEPS, MEMORY)
+                            plt.savefig("copy.png")
+                            plt.close()
 
                     opt.step()
 
@@ -166,6 +198,34 @@ class ScheduleCockpitRunner(PTRunner):
 
                     batch_count += 1
                     global_step += 1
+
+                    # del batch_loss
+                    # for p in tproblem.net.parameters():
+                    #     del p.diag_h
+                    # for mod in tproblem.net.modules():
+                    #     try:
+                    #         del mod.input0
+                    #         print(f"Deleted input0: {mod}")
+                    #     except AttributeError:
+                    #         print(f"No input0: {mod}")
+                    #     try:
+                    #         del mod.output
+                    #         print(f"Deleted output: {mod}")
+                    #     except AttributeError:
+                    #         print(f"No output: {mod}")
+
+                    # try:
+                    #     del mod.input0
+                    #     print(f"Deleted input0: {mod}")
+                    # except AttributeError:
+                    #     print(f"No input0: {mod}")
+                    # try:
+                    #     del mod.output
+                    #     print(f"Deleted output: {mod}")
+                    # except AttributeError:
+                    #     print(f"No output: {mod}")
+
+                    # gc.collect()
 
                 except StopIteration:
                     break
@@ -218,7 +278,7 @@ class ScheduleCockpitRunner(PTRunner):
         random_seed,
         l2_reg,
         hyperparams,
-        **training_params
+        **training_params,
     ):
         """Remove the training_params from the output.
 
