@@ -242,7 +242,7 @@ class CockpitPlotter:
         self.secondary_color = (0.95, 0.50, 0.20, 1.0)  # orange #f28033
         self.tertiary_color = (0.30, 0.60, 0.40, 1.0)  # green #339966
         # Background colors for the plotting groups
-        alpha = 0.6
+        alpha = 0.75
         self.bg_color_one = self.primary_color[:-1] + (alpha,)
         self.bg_color_two = self.secondary_color[:-1] + (alpha,)
         self.bg_color_three = self.tertiary_color[:-1] + (alpha,)
