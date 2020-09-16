@@ -55,46 +55,40 @@ class CockpitPlotter:
 
         # Subplot grid: Currently looks like this.
         # +-----------------------+------------------------+--------------------+
-        # | TIC                   | Gradient Tests Gauge | Alpha Gauge          |
-        # | Max Ev                | Trace (layerwise)    | Distance (layerwise) |
-        # | 1D Histogram          | 2D Histogram         | Grad Norm            |
-        # |                         Performance Gauge                           |
-        # |                         Hyperparameter Gauge                        |
+        # | STEP SIZE:            | GRADIENTS:           | CURVATURE            |
+        # |                       |                      |                      |
+        # | Alpha Gauge           | Gradient Tests Gauge | MaxEV                |
+        # | Distance              | 1D Histogram         | Trace (layerwise)    |
+        # | Grad Norm             | 2D Histogram         | TIC                  |
+        # |                                                                     |
+        # | Hyperparameter Gauge  |  Performance Gauge                          |
         # +-----------------------+------------------------+--------------------+
-        self.grid_spec = self.fig.add_gridspec(5, 3, wspace=0.15, hspace=0.5)
 
-        # First (upper) Row #
-        # TIC
-        instruments.tic_gauge(self, self.fig, self.grid_spec[0, 0])
-
-        # Gradient Tests Gauge
-        instruments.gradient_tests_gauge(self, self.fig, self.grid_spec[0, 1])
-        # Alpha Gauge
-        instruments.alpha_gauge(self, self.fig, self.grid_spec[0, 2])
-
-        # Second Row #
-        # Max Ev
-        instruments.max_ev_gauge(self, self.fig, self.grid_spec[1, 0])
-        # Trace (layerwise)
-        instruments.trace_gauge(self, self.fig, self.grid_spec[1, 1])
-        # Distance (layerwise)
-        instruments.distance_gauge(self, self.fig, self.grid_spec[1, 2])
-
-        # Third Row #
-        # 1D Histogram
-        instruments.histogram_1d_gauge(self, self.fig, self.grid_spec[2, 0])
-        # 2D Histogram
-        instruments.histogram_2d_gauge(
-            self, self.fig, self.grid_spec[2, 1], transformation=np.sqrt
+        # Build the larger grid (for the three categories, and the two bottom plots)
+        outer_widths = [1, 1, 1]
+        outer_heights = [3, 1]
+        self.grid_spec = self.fig.add_gridspec(
+            ncols=3,
+            nrows=2,
+            width_ratios=outer_widths,
+            height_ratios=outer_heights,
+            wspace=0.1,
+            hspace=0.1,
         )
-        # Grad Norm
-        instruments.grad_norm_gauge(self, self.fig, self.grid_spec[2, 2])
 
-        # Fourth Row #
-        instruments.performance_gauge(self, self.fig, self.grid_spec[3, :])
+        # Individual parts are managed separetely but (for now) they use a shared
+        # layout
+        self.inner_num_rows = 5
+        self.inner_num_cols = 3
+        self.inner_width_ratios = [0.05, 1, 0.05]
+        self.inner_height_ratios = [0.0, 1, 1, 1, 0.00]
+        self.inner_hspace = 0.6
 
-        # Fifth (bottom) Row #
-        instruments.hyperparameter_gauge(self, self.fig, self.grid_spec[4, :])
+        self._plot_step(self.grid_spec[0, 0])
+        self._plot_gradients(self.grid_spec[0, 1])
+        self._plot_curvature(self.grid_spec[0, 2])
+        self._plot_hyperparams(self.grid_spec[1, 0])
+        self._plot_performance(self.grid_spec[1, 1:])
 
         # Post Process Title, Legend etc.
         self._post_process_plot()
@@ -107,6 +101,105 @@ class CockpitPlotter:
             plt.pause(0.001)
         if save_plot:
             self._save(savename_append)
+
+    def _plot_step(self, grid_spec):
+        """Plot all instruments having to do with step size in the given gridspec.
+
+        Args:
+            grid_spec (matplotlib.gridspec): GridSpec where the plot should be placed
+        """
+        # Use grid_spec with a "dummy plot" to set Group title and color
+        self.ax_step = self.fig.add_subplot(grid_spec)
+        self.ax_step.set_title("STEP SIZE", fontweight="bold", fontsize="x-large")
+        self.ax_step.set_facecolor(self.bg_color_one)
+        self.ax_step.set_xticklabels([])
+        self.ax_step.set_yticklabels([])
+
+        # Build inner structure of this plotting group
+        # We use additional "dummy" gridspecs to position the instruments
+        self.gs_step = grid_spec.subgridspec(
+            self.inner_num_rows,
+            self.inner_num_cols,
+            width_ratios=self.inner_width_ratios,
+            height_ratios=self.inner_height_ratios,
+            hspace=self.inner_hspace,
+        )
+
+        instruments.alpha_gauge(self, self.fig, self.gs_step[1, 1])
+        instruments.distance_gauge(self, self.fig, self.gs_step[2, 1])
+        instruments.grad_norm_gauge(self, self.fig, self.gs_step[3, 1])
+
+    def _plot_gradients(self, grid_spec):
+        """Plot all instruments having to do with the gradients in the given gridspec.
+
+        Args:
+            grid_spec (matplotlib.gridspec): GridSpec where the plot should be placed
+        """
+        # Use grid_spec with a "dummy plot" to set Group title and color
+        self.ax_gradients = self.fig.add_subplot(grid_spec)
+        self.ax_gradients.set_title("GRADIENTS", fontweight="bold", fontsize="x-large")
+        self.ax_gradients.set_facecolor(self.bg_color_two)
+        self.ax_gradients.set_xticklabels([])
+        self.ax_gradients.set_yticklabels([])
+
+        # Build inner structure of this plotting group
+        # We use additional "dummy" gridspecs to position the instruments
+        self.gs_gradients = grid_spec.subgridspec(
+            self.inner_num_rows,
+            self.inner_num_cols,
+            width_ratios=self.inner_width_ratios,
+            height_ratios=self.inner_height_ratios,
+            hspace=self.inner_hspace,
+        )
+
+        instruments.gradient_tests_gauge(self, self.fig, self.gs_gradients[1, 1])
+        instruments.histogram_1d_gauge(self, self.fig, self.gs_gradients[2, 1])
+        instruments.histogram_2d_gauge(
+            self, self.fig, self.gs_gradients[3, 1], transformation=np.sqrt
+        )
+
+    def _plot_curvature(self, grid_spec):
+        """Plot all instruments having to do with curvature in the given gridspec.
+
+        Args:
+            grid_spec (matplotlib.gridspec): GridSpec where the plot should be placed
+        """
+        # Use grid_spec with a "dummy plot" to set Group title and color
+        self.ax_curvature = self.fig.add_subplot(grid_spec)
+        self.ax_curvature.set_title("CURVATURE", fontweight="bold", fontsize="x-large")
+        self.ax_curvature.set_facecolor(self.bg_color_three)
+        self.ax_curvature.set_xticklabels([])
+        self.ax_curvature.set_yticklabels([])
+
+        # Build inner structure of this plotting group
+        # We use additional "dummy" gridspecs to position the instruments
+        self.gs_curvature = grid_spec.subgridspec(
+            self.inner_num_rows,
+            self.inner_num_cols,
+            width_ratios=self.inner_width_ratios,
+            height_ratios=self.inner_height_ratios,
+            hspace=self.inner_hspace,
+        )
+
+        instruments.max_ev_gauge(self, self.fig, self.gs_curvature[1, 1])
+        instruments.trace_gauge(self, self.fig, self.gs_curvature[2, 1])
+        instruments.tic_gauge(self, self.fig, self.gs_curvature[3, 1])
+
+    def _plot_hyperparams(self, grid_spec):
+        """Plot all instruments showing the hyperparameters.
+
+        Args:
+            grid_spec (matplotlib.gridspec): GridSpec where the plot should be placed
+        """
+        instruments.hyperparameter_gauge(self, self.fig, grid_spec)
+
+    def _plot_performance(self, grid_spec):
+        """Plot all instruments having to do with the networks performance.
+
+        Args:
+            grid_spec (matplotlib.gridspec): GridSpec where the plot should be placed
+        """
+        instruments.performance_gauge(self, self.fig, grid_spec)
 
     def build_animation(self, duration=200, loop=0):
         """Build an animation from the stored images during training.
@@ -144,9 +237,15 @@ class CockpitPlotter:
         sns.set_style("dark")
         sns.set_context("paper", font_scale=1.0)
         self.save_format = ".png"  # how the plots should be saved
-        # Colors
-        self.primary_color = (0.28, 0.47, 0.82, 1.0)  # blue
-        self.secondary_color = (0.99, 0.68, 0.20, 1.0)  # yellowish orange
+        # Colors #
+        self.primary_color = (0.29, 0.45, 0.68, 1.0)  # blue #4a73ad
+        self.secondary_color = (0.95, 0.50, 0.20, 1.0)  # orange #f28033
+        self.tertiary_color = (0.30, 0.60, 0.40, 1.0)  # green #339966
+        # Background colors for the plotting groups
+        alpha = 0.6
+        self.bg_color_one = self.primary_color[:-1] + (alpha,)
+        self.bg_color_two = self.secondary_color[:-1] + (alpha,)
+        self.bg_color_three = self.tertiary_color[:-1] + (alpha,)
         self.cmap = plt.cm.viridis  # primary color map
         self.cmap2 = plt.cm.cool  # secondary color map
         self.alpha_cmap = utils_plotting._alpha_cmap(self.primary_color)
