@@ -176,6 +176,8 @@ class BatchGradHistogram2d(Quantity):
         ymax=2,
         ybins=50,
         save_memory=True,
+        adapt_limits=True,
+        adapt_limits_interval=-1,
         verbose=False,
         check=False,
     ):
@@ -190,6 +192,10 @@ class BatchGradHistogram2d(Quantity):
             ymax (float): Upper clipping bound for parameters in histogram.
             ybins (int): Number of bins in y-direction
             save_memory (bool): Sacrifice binning runtime for less memory.
+            adapt_limits (bool): Adapt bin ranges.
+            adapt_limits_interval (int): Adaptation frequency. Only used if
+                ``update_limits`` is not ``None``. If ``None``, only adapt once.
+                If ``-1``, use same value as ``track_interval``.
             verbose (bool): Turns on verbose mode. Defaults to ``False``.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
@@ -203,6 +209,13 @@ class BatchGradHistogram2d(Quantity):
         self._ymax = ymax
         self._ybins = ybins
         self._save_memory = save_memory
+        self._adapt_limits = adapt_limits
+
+        if adapt_limits_interval == -1:
+            self._adapt_limits_interval = track_interval
+        else:
+            self._adapt_limits_interval = adapt_limits_interval
+
         self._check = check
 
     def extensions(self, global_step):
@@ -220,6 +233,16 @@ class BatchGradHistogram2d(Quantity):
             ext.append(
                 extensions.BatchGradTransforms(
                     transforms={"hist_2d": self._compute_histogram}
+                )
+            )
+
+        if self._should_update_limits(global_step):
+            ext.append(
+                extensions.BatchGradTransforms(
+                    transforms={
+                        "grad_batch_abs_max": transform_grad_batch_abs_max,
+                        "param_abs_max": transform_param_abs_max,
+                    }
                 )
             )
 
@@ -311,7 +334,49 @@ class BatchGradHistogram2d(Quantity):
 
     def _update_limits(self, global_step, params, batch_loss):
         """Update limits for next histogram computation."""
-        pass
+        if self._adapt_limits and self._should_update_limits(global_step):
+            self._update_x_limits(params)
+            self._update_y_limits(params)
+
+    def _update_x_limits(self, params):
+        """Update the histogram's x limits."""
+        padding_factor = 1.2
+        abs_max = padding_factor * max(
+            p.grad_batch_transforms["grad_batch_abs_max"] for p in params
+        )
+
+        if self._verbose:
+            print("Updating limits:")
+            print(f"Old: x_min={self._xmin:.5f}, x_max={self._xmax:.5f}")
+
+        self._xmin, self._xmax = -abs_max, abs_max
+
+        if self._verbose:
+            print(f"New: x_min={self._xmin:.5f}, x_max={self._xmax:.5f}")
+
+    def _update_y_limits(self, params):
+        """Update the histogram's y limits."""
+        padding_factor = 1.2
+        abs_max = padding_factor * max(
+            p.grad_batch_transforms["param_abs_max"] for p in params
+        )
+
+        if self._verbose:
+            print("Updating limits:")
+            print(f"Old: y_min={self._ymin:.5f}, y_max={self._ymax:.5f}")
+
+        self._ymin, self._ymax = -abs_max, abs_max
+
+        if self._verbose:
+            print(f"New: y_min={self._ymin:.5f}, y_max={self._ymax:.5f}")
+
+    def _should_update_limits(self, global_step):
+        """Return if current iteration should update the bin limits"""
+        if self._adapt_limits_interval is None:
+            is_first_update = global_step == 0
+            return is_first_update
+        else:
+            return global_step % self._adapt_limits_interval == 0
 
     def _get_current_bin_edges(self):
         """Return current edge values of bins."""
@@ -327,3 +392,11 @@ def transform_grad_batch_abs_max(batch_grad):
     """
     batch_size = batch_grad.shape[0]
     return batch_size * abs_max(batch_grad.data).item()
+
+
+def transform_param_abs_max(batch_grad):
+    """Compute maximum value of absolute individual gradients.
+
+    Transformation used by BackPACK's ``BatchGradTransforms``.
+    """
+    return abs_max(batch_grad._param_weakref().data)
