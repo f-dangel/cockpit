@@ -329,7 +329,7 @@ class Cockpit:
             for key, value in t.items():
                 key_function_pairs.append((key, value))
 
-        unique_keys = set(pair[0] for pair in key_function_pairs)
+        unique_keys = {pair[0] for pair in key_function_pairs}
         combined_transforms = {}
 
         for key in unique_keys:
