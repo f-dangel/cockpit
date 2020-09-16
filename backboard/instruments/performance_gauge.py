@@ -69,7 +69,7 @@ def performance_gauge(self, fig, gridspec):
         ax=ax2,
         label=plot_args["y"].title().replace("_", " "),
         linewidth=2,
-        color=self.primary_color
+        color=self.primary_color,
     )
 
     # Train Accuracy
@@ -83,7 +83,7 @@ def performance_gauge(self, fig, gridspec):
         ax=ax2,
         label=plot_args["y"].title().replace("_", " "),
         linewidth=2,
-        color=self.secondary_color
+        color=self.secondary_color,
     )
 
     # Customization
