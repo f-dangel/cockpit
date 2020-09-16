@@ -4,6 +4,7 @@ import numpy
 import torch
 
 from backboard.quantities.quantity import Quantity
+from backboard.quantities.utils_quantities import abs_max
 from backpack import extensions
 
 
@@ -65,7 +66,7 @@ class BatchGradHistogram1d(Quantity):
         if self._should_update_limits(global_step):
             ext.append(
                 extensions.BatchGradTransforms(
-                    transforms={"grad_batch_abs_max": self._compute_new_limits}
+                    transforms={"grad_batch_abs_max": transform_grad_batch_abs_max}
                 )
             )
 
@@ -125,7 +126,10 @@ class BatchGradHistogram1d(Quantity):
     def _update_limits(self, global_step, params, batch_loss):
         """Update limits for next histogram computation."""
         if self._adapt_limits and self._should_update_limits(global_step):
-            abs_max = max(p.grad_batch_transforms["grad_batch_abs_max"] for p in params)
+            padding_factor = 1.2
+            abs_max = padding_factor * max(
+                p.grad_batch_transforms["grad_batch_abs_max"] for p in params
+            )
 
             if self._verbose:
                 print("Updating limits:")
@@ -135,19 +139,6 @@ class BatchGradHistogram1d(Quantity):
 
             if self._verbose:
                 print(f"New: x_min={self._xmin:.5f}, x_max={self._xmax:.5f}")
-
-    def _compute_new_limits(self, batch_grad):
-        """Compute information to update limits.
-
-        Compute parameter-wise abs-max of individual gradients.
-        """
-        batch_size = batch_grad.shape[0]
-        min_val, max_val = batch_grad.data.min(), batch_grad.data.max()
-
-        abs_max = batch_size * max(min_val.abs(), max_val.abs()).item()
-        padding_factor = 1.1
-
-        return padding_factor * abs_max
 
     def _should_update_limits(self, global_step):
         """Return if current iteration should update the bin limits"""
@@ -321,3 +312,12 @@ class BatchGradHistogram2d(Quantity):
         x_edges = torch.linspace(self._xmin, self._xmax, steps=self._xbins + 1)
         y_edges = torch.linspace(self._ymin, self._ymax, steps=self._ybins + 1)
         return x_edges, y_edges
+
+
+def transform_grad_batch_abs_max(batch_grad):
+    """Compute maximum value of absolute individual gradients.
+
+    Transformation used by BackPACK's ``BatchGradTransforms``.
+    """
+    batch_size = batch_grad.shape[0]
+    return batch_size * abs_max(batch_grad.data).item()
