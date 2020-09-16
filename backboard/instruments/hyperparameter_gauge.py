@@ -28,7 +28,9 @@ def hyperparameter_gauge(self, fig, gridspec):
         "data": clean_learning_rate,
     }
     ylabel = plot_args["y"].replace("_", " ").title()
-    sns.lineplot(**plot_args, ax=ax, label=ylabel, linewidth=2)
+    sns.lineplot(
+        **plot_args, ax=ax, label=ylabel, linewidth=2, color=self.secondary_color
+    )
 
     _beautify_plot(
         ax=ax,
