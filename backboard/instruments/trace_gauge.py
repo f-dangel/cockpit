@@ -1,6 +1,8 @@
 """Trace Gauge."""
 
-from backboard.instruments.utils_instruments import create_basic_plot
+import warnings
+
+from backboard.instruments.utils_instruments import check_data, create_basic_plot
 
 
 def trace_gauge(self, fig, gridspec):
@@ -14,6 +16,16 @@ def trace_gauge(self, fig, gridspec):
     """
     # Plot Trace vs iteration
     title = "Trace"
+
+    # Check if the required data is available, else skip this instrument
+    requires = ["trace"]
+    plot_possible = check_data(self.tracking_data, requires)
+    if not plot_possible:
+        warnings.warn(
+            "Couldn't get the required data for the " + title + " instrument",
+            stacklevel=1,
+        )
+        return
 
     # Compute
     self.tracking_data["trace_all"] = self.tracking_data.trace.map(

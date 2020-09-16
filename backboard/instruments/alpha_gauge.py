@@ -1,10 +1,12 @@
 """Alpha Gauge."""
 
+import warnings
+
 import numpy as np
 import seaborn as sns
 from scipy import stats
 
-from backboard.instruments.utils_instruments import _beautify_plot
+from backboard.instruments.utils_instruments import _beautify_plot, check_data
 
 
 def alpha_gauge(self, fig, gridspec):
@@ -16,10 +18,23 @@ def alpha_gauge(self, fig, gridspec):
         gridspec (matplotlib.gridspec): GridSpec where the instrument should be
             placed.
     """
+    # Plot Alpha Distribution
+    title = "Alpha Distribution"
+
+    # Check if the required data is available, else skip this instrument
+    requires = ["alpha"]
+    plot_possible = check_data(self.tracking_data, requires)
+    if not plot_possible:
+        warnings.warn(
+            "Couldn't get the required data for the " + title + " instrument",
+            stacklevel=1,
+        )
+        return
+
     plot_args = {
         "xlabel": "Local Step Length",
         "ylabel": "Stand. Loss",
-        "title": "Alpha Distribution",
+        "title": title,
         "xlim": [-1.5, 1.5],
         "ylim": [0, 1.75],
         "fontweight": "bold",
@@ -28,8 +43,8 @@ def alpha_gauge(self, fig, gridspec):
         "center": [True, False],
     }
     color_all = "gray"
-    color_last = sns.color_palette("muted")[1]
-    color_parabola = sns.color_palette("muted")[0]
+    color_last = self.primary_color
+    color_parabola = self.secondary_color
 
     ax = fig.add_subplot(gridspec)
 
@@ -51,7 +66,7 @@ def alpha_gauge(self, fig, gridspec):
         kde=False,
         color=color_all,
         fit_kws={"color": color_all},
-        hist_kws={"linewidth": 0, "alpha": 0.25},
+        hist_kws={"linewidth": 0, "alpha": 0.5},
         label="all",
     )
     (mu_all, _) = stats.norm.fit(self.tracking_data["alpha"].dropna())
@@ -66,7 +81,7 @@ def alpha_gauge(self, fig, gridspec):
             kde=False,
             color=color_last,
             fit_kws={"color": color_last},
-            hist_kws={"linewidth": 0, "alpha": 0.65},
+            hist_kws={"linewidth": 0, "alpha": 0.85},
             label="last 10 %",
         )
         (mu_last, _) = stats.norm.fit(

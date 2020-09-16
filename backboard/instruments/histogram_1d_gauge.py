@@ -1,8 +1,10 @@
 """One-dimensional Histogram Gauge."""
 
+import warnings
+
 import numpy as np
 
-from backboard.instruments.utils_instruments import _beautify_plot
+from backboard.instruments.utils_instruments import _beautify_plot, check_data
 
 
 def histogram_1d_gauge(self, fig, gridspec):
@@ -16,6 +18,17 @@ def histogram_1d_gauge(self, fig, gridspec):
     """
     # Plot
     title = "Gradient Element Histogram"
+
+    # Check if the required data is available, else skip this instrument
+    requires = ["edges", "hist_1d"]
+    plot_possible = check_data(self.tracking_data, requires)
+    if not plot_possible:
+        warnings.warn(
+            "Couldn't get the required data for the " + title + " instrument",
+            stacklevel=1,
+        )
+        return
+
     ax = fig.add_subplot(gridspec)
 
     plot_args = {
@@ -28,7 +41,7 @@ def histogram_1d_gauge(self, fig, gridspec):
 
     vals, mid_points, width = _get_histogram_data(self.tracking_data)
 
-    ax.bar(mid_points, vals, width=width)
+    ax.bar(mid_points, vals, width=width, color=self.primary_color)
 
     _beautify_plot(ax=ax, **plot_args)
 
