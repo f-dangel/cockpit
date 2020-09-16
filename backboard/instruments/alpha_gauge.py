@@ -28,8 +28,8 @@ def alpha_gauge(self, fig, gridspec):
         "center": [True, False],
     }
     color_all = "gray"
-    color_last = sns.color_palette("muted")[1]
-    color_parabola = sns.color_palette("muted")[0]
+    color_last = self.primary_color
+    color_parabola = self.secondary_color
 
     ax = fig.add_subplot(gridspec)
 
@@ -51,7 +51,7 @@ def alpha_gauge(self, fig, gridspec):
         kde=False,
         color=color_all,
         fit_kws={"color": color_all},
-        hist_kws={"linewidth": 0, "alpha": 0.25},
+        hist_kws={"linewidth": 0, "alpha": 0.5},
         label="all",
     )
     (mu_all, _) = stats.norm.fit(self.tracking_data["alpha"].dropna())
@@ -66,7 +66,7 @@ def alpha_gauge(self, fig, gridspec):
             kde=False,
             color=color_last,
             fit_kws={"color": color_last},
-            hist_kws={"linewidth": 0, "alpha": 0.65},
+            hist_kws={"linewidth": 0, "alpha": 0.85},
             label="last 10 %",
         )
         (mu_last, _) = stats.norm.fit(

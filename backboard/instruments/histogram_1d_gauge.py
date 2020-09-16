@@ -28,7 +28,7 @@ def histogram_1d_gauge(self, fig, gridspec):
 
     vals, mid_points, width = _get_histogram_data(self.tracking_data)
 
-    ax.bar(mid_points, vals, width=width)
+    ax.bar(mid_points, vals, width=width, color=self.primary_color)
 
     _beautify_plot(ax=ax, **plot_args)
 

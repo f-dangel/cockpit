@@ -6,6 +6,7 @@ import os
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from PIL import Image
@@ -83,7 +84,9 @@ class CockpitPlotter:
         # 1D Histogram
         instruments.histogram_1d_gauge(self, self.fig, self.grid_spec[2, 0])
         # 2D Histogram
-        instruments.histogram_2d_gauge(self, self.fig, self.grid_spec[2, 1])
+        instruments.histogram_2d_gauge(
+            self, self.fig, self.grid_spec[2, 1], transformation=np.sqrt
+        )
         # Grad Norm
         instruments.grad_norm_gauge(self, self.fig, self.grid_spec[2, 2])
 
@@ -141,11 +144,14 @@ class CockpitPlotter:
         sns.set_style("dark")
         sns.set_context("paper", font_scale=1.0)
         self.save_format = ".png"  # how the plots should be saved
+        # Colors
+        self.primary_color = (0.28, 0.47, 0.82, 1.0)  # blue
+        self.secondary_color = (0.99, 0.68, 0.20, 1.0)  # yellowish orange
         self.cmap = plt.cm.viridis  # primary color map
         self.cmap2 = plt.cm.cool  # secondary color map
-        self.cmap_backup = plt.cm.Wistia  # primary backup color map
-        self.cmap2_backup = plt.cm.autumn  # secondary backup color map
+        self.alpha_cmap = utils_plotting._alpha_cmap(self.primary_color)
         self.color_summary_plots = "#ababba"  # highlight color of summary plots
+
         self.EMA_alpha = 0.2  # Decay factor of the exponential moving avg.
 
         # Apply the settings
