@@ -8,4 +8,5 @@ torch
 -e git://github.com/f-dangel/backpack.git@batch-grad-transform#egg=backpack
 # -e git://github.com/f-dangel/backpack.git@development#egg=backpack
 -e git://github.com/fsschneider/DeepOBS.git@develop#egg=deepobs
--e git://github.com/f-dangel/backobs.git@master#egg=backobs
+# -e git://github.com/f-dangel/backobs.git@master#egg=backobs
+-e git://github.com/f-dangel/backobs.git@development#egg=backobs
