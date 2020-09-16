@@ -24,13 +24,27 @@ def test_merge_batch_grad_transforms():
     assert id(bgt2.get_transforms()["w"]) == id(merged_bgt.get_transforms()["w"])
 
 
-def test_merge_batch_grad_transforms_same_key_fails():
-    """Test merging of multiple ``BatchGradTransforms`` with overlapping keys fails."""
+def test_merge_batch_grad_transforms_same_key_different_trafo():
+    """
+    Merging ``BatchGradTransforms`` with same key but different trafo should fail.
+    """
     bgt1 = BatchGradTransforms({"x": lambda t: t, "y": lambda t: t})
     bgt2 = BatchGradTransforms({"x": lambda t: t, "w": lambda t: t})
 
     with pytest.raises(ValueError):
         _ = Cockpit._merge_batch_grad_transforms([bgt1, bgt2])
+
+
+def test_merge_batch_grad_transforms_same_key_same_trafo():
+    """Test merging multiple ``BatchGradTransforms`` with same key and same trafo."""
+
+    def func(t):
+        return t
+
+    bgt1 = BatchGradTransforms({"x": func})
+    bgt2 = BatchGradTransforms({"x": func})
+
+    _ = Cockpit._merge_batch_grad_transforms([bgt1, bgt2])
 
 
 def test_process_multiple_batch_grad_transforms_empty():

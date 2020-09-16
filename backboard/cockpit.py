@@ -318,19 +318,29 @@ class Cockpit:
 
     @staticmethod
     def _merge_batch_grad_transforms(batch_grad_transforms):
-        """Merge multiple ``BatchGradTransform``s into a single one."""
+        """Merge multiple ``BatchGradTransform``s into a single one.
+
+        Non-uniqye transformations are identified via python's ``id`` function.
+        """
         transforms = [t.get_transforms() for t in batch_grad_transforms]
 
-        # Check for no duplicates. In principle this may be okay if same keys really
-        # computed the same quantity. For now, simply avoid that.
-        keys = []
+        key_function_pairs = []
         for t in transforms:
-            keys += list(t.keys())
-        if not len(keys) == len(set(keys)):
-            raise ValueError(f"Found non-unique transforms: {keys}")
+            for key, value in t.items():
+                key_function_pairs.append((key, value))
 
+        unique_keys = set(pair[0] for pair in key_function_pairs)
         combined_transforms = {}
-        for t in transforms:
-            combined_transforms.update(t)
+
+        for key in unique_keys:
+            functions = [pair[1] for pair in key_function_pairs if pair[0] == key]
+            ids = [id(f) for f in functions]
+
+            if len(set(ids)) != 1:
+                raise ValueError(
+                    f"Got non-unique transform functions with ids {ids} for key '{key}'"
+                )
+            else:
+                combined_transforms[key] = functions[0]
 
         return BatchGradTransforms(combined_transforms)
