@@ -1,6 +1,8 @@
 """Gradient Norm Gauge."""
 
-from backboard.instruments.utils_instruments import create_basic_plot
+import warnings
+
+from backboard.instruments.utils_instruments import check_data, create_basic_plot
 from backboard.quantities.utils_quantities import _root_sum_of_squares
 
 
@@ -15,6 +17,16 @@ def grad_norm_gauge(self, fig, gridspec):
     """
     # Plot Trace vs iteration
     title = "Gradient Norm"
+
+    # Check if the required data is available, else skip this instrument
+    requires = ["grad_norm"]
+    plot_possible = check_data(self.tracking_data, requires)
+    if not plot_possible:
+        warnings.warn(
+            "Couldn't get the required data for the " + title + " instrument",
+            stacklevel=1,
+        )
+        return
 
     # Compute
     self.tracking_data["grad_norm_all"] = self.tracking_data.grad_norm.map(

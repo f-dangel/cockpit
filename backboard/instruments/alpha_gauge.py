@@ -1,10 +1,12 @@
 """Alpha Gauge."""
 
+import warnings
+
 import numpy as np
 import seaborn as sns
 from scipy import stats
 
-from backboard.instruments.utils_instruments import _beautify_plot
+from backboard.instruments.utils_instruments import _beautify_plot, check_data
 
 
 def alpha_gauge(self, fig, gridspec):
@@ -16,10 +18,23 @@ def alpha_gauge(self, fig, gridspec):
         gridspec (matplotlib.gridspec): GridSpec where the instrument should be
             placed.
     """
+    # Plot Alpha Distribution
+    title = "Alpha Distribution"
+
+    # Check if the required data is available, else skip this instrument
+    requires = ["alpha"]
+    plot_possible = check_data(self.tracking_data, requires)
+    if not plot_possible:
+        warnings.warn(
+            "Couldn't get the required data for the " + title + " instrument",
+            stacklevel=1,
+        )
+        return
+
     plot_args = {
         "xlabel": "Local Step Length",
         "ylabel": "Stand. Loss",
-        "title": "Alpha Distribution",
+        "title": title,
         "xlim": [-1.5, 1.5],
         "ylim": [0, 1.75],
         "fontweight": "bold",

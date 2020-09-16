@@ -1,10 +1,13 @@
 """Hyperparameter Gauge."""
 
+import warnings
+
 import seaborn as sns
 
 from backboard.instruments.utils_instruments import (
     _add_last_value_to_legend,
     _beautify_plot,
+    check_data,
 )
 
 
@@ -17,6 +20,19 @@ def hyperparameter_gauge(self, fig, gridspec):
         gridspec (matplotlib.gridspec): GridSpec where the instrument should be
             placed
     """
+    # Plot Trace vs iteration
+    title = "Hyperparameters"
+
+    # Check if the required data is available, else skip this instrument
+    requires = ["iteration", "learning_rate"]
+    plot_possible = check_data(self.tracking_data, requires)
+    if not plot_possible:
+        warnings.warn(
+            "Couldn't get the required data for the " + title + " instrument",
+            stacklevel=1,
+        )
+        return
+
     ax = fig.add_subplot(gridspec)
 
     clean_learning_rate = self.tracking_data[["iteration", "learning_rate"]].dropna()
@@ -36,7 +52,7 @@ def hyperparameter_gauge(self, fig, gridspec):
         ax=ax,
         xlabel=plot_args["x"],
         ylabel=ylabel,
-        title="Hyperparameters",
+        title=title,
         xlim="tight",
         fontweight="bold",
         facecolor="summary",

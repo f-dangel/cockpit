@@ -1,7 +1,11 @@
 """Gradient Tests Gauge."""
 
+import warnings
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+
+from backboard.instruments.utils_instruments import check_data
 
 
 def gradient_tests_gauge(self, fig, gridspec):
@@ -15,6 +19,16 @@ def gradient_tests_gauge(self, fig, gridspec):
     """
     # Plot
     title = "Gradient Tests"
+
+    # Check if the required data is available, else skip this instrument
+    requires = ["iteration", "inner_product_test", "norm_test", "orthogonality_test"]
+    plot_possible = check_data(self.tracking_data, requires)
+    if not plot_possible:
+        warnings.warn(
+            "Couldn't get the required data for the " + title + " instrument",
+            stacklevel=1,
+        )
+        return
 
     ax = fig.add_subplot(gridspec)
     ax.set_title(title, fontweight="bold", fontsize="large")

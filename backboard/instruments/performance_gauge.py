@@ -1,9 +1,12 @@
 """Performance Gauge."""
 
+import warnings
+
 import seaborn as sns
 
 from backboard.instruments.utils_instruments import (
     _add_last_value_to_legend,
+    check_data,
     create_basic_plot,
 )
 
@@ -17,6 +20,19 @@ def performance_gauge(self, fig, gridspec):
         gridspec (matplotlib.gridspec): GridSpec where the instrument should be
             placed
     """
+    # Plot Trace vs iteration
+    title = "Performance Plot"
+
+    # Check if the required data is available, else skip this instrument
+    requires = ["iteration", "train_accuracy", "valid_accuracy", "mini_batch_loss"]
+    plot_possible = check_data(self.tracking_data, requires)
+    if not plot_possible:
+        warnings.warn(
+            "Couldn't get the required data for the " + title + " instrument",
+            stacklevel=1,
+        )
+        return
+
     # Mini-batch train loss
     plot_args = {
         "x": "iteration",
@@ -28,7 +44,7 @@ def performance_gauge(self, fig, gridspec):
         "x_scale": "linear",
         "y_scale": "linear",
         "cmap": self.cmap,
-        "title": "Performance Plot",
+        "title": title,
         "xlim": "tight",
         "ylim": None,
         "fontweight": "bold",

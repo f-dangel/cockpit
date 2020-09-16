@@ -246,3 +246,20 @@ def _add_last_value_to_legend(ax, percentage=False):
         plot_labels.append(formating.format(label, line.get_ydata()[-1]))
     ax.get_legend().remove()
     ax.legend(lines, plot_labels)
+
+
+def check_data(data, requires):
+    """Checks if all elements of requires are available in data.
+
+    Args:
+        data (pandas.DataFrame): A dataframe holding the data.
+        requires ([str]): A list of string that should be part of data.
+
+    Returns:
+        bool: Check whether all elements of requires exist in data
+    """
+    for r in requires:
+        if r not in data.columns:
+            return False
+
+    return True
