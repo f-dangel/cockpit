@@ -32,6 +32,7 @@ class BatchGradHistogram1d(Quantity):
             adapt_limits (bool): Adapt bin ranges.
             adapt_limits_interval (int): Adaptation frequency. Only used if
                 ``update_limits`` is not ``None``. If ``None``, only adapt once.
+                If ``-1``, use same value as ``track_interval``.
             verbose (bool): Turns on verbose mode. Defaults to ``False``.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
@@ -42,7 +43,12 @@ class BatchGradHistogram1d(Quantity):
         self._xmax = xmax
         self._bins = bins
         self._adapt_limits = adapt_limits
-        self._adapt_limits_interval = adapt_limits_interval
+
+        if adapt_limits_interval == -1:
+            self._adapt_limits_interval = track_interval
+        else:
+            self._adapt_limits_interval = adapt_limits_interval
+
         self._check = check
 
     def extensions(self, global_step):
