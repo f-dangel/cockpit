@@ -1,6 +1,5 @@
 """Cockpit."""
 
-import contextlib
 import inspect
 import json
 import os
@@ -10,7 +9,7 @@ from backboard import quantities
 from backboard.cockpit_plotter import CockpitPlotter
 from backboard.quantities.utils_quantities import _update_dicts
 from backobs import extend_with_access_unreduced_loss
-from backpack import backpack
+from backpack import backpack, backpack_deactivate_io
 from backpack.extensions import BatchGradTransforms
 from deepobs.pytorch.testproblems.testproblem import TestProblem
 
@@ -93,7 +92,7 @@ class Cockpit:
 
         Returns:
             backpack.backpack: BackPACK with the appropriate extensions, or the
-                nullcontext
+                backpack_disable_io context.
         """
         ext = self._get_extensions(global_step)
 
@@ -107,7 +106,7 @@ class Cockpit:
                 return backpack(*ext)
 
         else:
-            context_manager = contextlib.nullcontext
+            context_manager = backpack_deactivate_io
 
         if debug:
             print(f"[DEBUG, step {global_step}]")
@@ -138,8 +137,9 @@ class Cockpit:
         self._free_backpack_io()
 
         after_cleanup = [q for q in self.quantities if isinstance(q, quantities.MaxEV)]
-        for q in after_cleanup:
-            q.compute(global_step, params, batch_loss)
+        with backpack_deactivate_io():
+            for q in after_cleanup:
+                q.compute(global_step, params, batch_loss)
 
     def _free_backpack_buffers(self, global_step, verbose=False):
         """Manually free quantities computed by BackPACK to save memory."""
