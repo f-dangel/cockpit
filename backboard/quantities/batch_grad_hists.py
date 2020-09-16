@@ -7,8 +7,6 @@ from backboard.quantities.quantity import Quantity
 from backboard.quantities.utils_quantities import abs_max
 from backpack import extensions
 
-ELIMINATE_MAX = True
-
 
 class BatchGradHistogram1d(Quantity):
     """One-dimensional histogram of individual gradient elements."""
@@ -92,9 +90,6 @@ class BatchGradHistogram1d(Quantity):
         if global_step % self._track_interval == 0:
             edges = self._get_current_bin_edges()
             hist = sum(p.grad_batch_transforms["hist_1d"] for p in params)
-
-            if ELIMINATE_MAX:
-                hist = substitute_max_val(hist)
 
             if self._check:
                 batch_size = self._fetch_batch_size_hotfix(batch_loss)
@@ -320,10 +315,6 @@ class BatchGradHistogram2d(Quantity):
                 )
                 hist += h
 
-            if ELIMINATE_MAX:
-                hist = torch.from_numpy(hist)
-                hist = substitute_max_val(hist).numpy()
-
         else:
             expand_arg = [batch_size] + len(param.shape) * [-1]
             param_clamped = param_clamped.unsqueeze(0).expand(*expand_arg).flatten()
@@ -334,10 +325,6 @@ class BatchGradHistogram2d(Quantity):
             hist, xedges, yedges = numpy.histogram2d(
                 batch_grad_clamped, param_clamped, bins=(x_edges, y_edges)
             )
-
-            if ELIMINATE_MAX:
-                hist = torch.from_numpy(hist)
-                hist = substitute_max_val(hist).numpy()
 
         if self._check:
             assert numpy.allclose(x_edges, xedges)
@@ -413,15 +400,3 @@ def transform_param_abs_max(batch_grad):
     Transformation used by BackPACK's ``BatchGradTransforms``.
     """
     return abs_max(batch_grad._param_weakref().data)
-
-
-def substitute_max_val(tensor, new_val=0):
-    shape = tuple(tensor.shape)
-
-    tensor_flat = tensor.reshape(-1)
-    max_val = max(tensor_flat)
-    for idx, val in enumerate(tensor_flat):
-        if val == max_val:
-            tensor_flat[idx] = new_val
-
-    return tensor_flat.reshape(shape)
