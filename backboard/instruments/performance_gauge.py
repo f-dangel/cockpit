@@ -65,7 +65,11 @@ def performance_gauge(self, fig, gridspec):
     }
     ax2 = ax.twinx()
     sns.lineplot(
-        **plot_args, ax=ax2, label=plot_args["y"].title().replace("_", " "), linewidth=2
+        **plot_args,
+        ax=ax2,
+        label=plot_args["y"].title().replace("_", " "),
+        linewidth=2,
+        color=self.primary_color
     )
 
     # Train Accuracy
@@ -75,7 +79,11 @@ def performance_gauge(self, fig, gridspec):
         "data": clean_accuracies,
     }
     sns.lineplot(
-        **plot_args, ax=ax2, label=plot_args["y"].title().replace("_", " "), linewidth=2
+        **plot_args,
+        ax=ax2,
+        label=plot_args["y"].title().replace("_", " "),
+        linewidth=2,
+        color=self.secondary_color
     )
 
     # Customization
