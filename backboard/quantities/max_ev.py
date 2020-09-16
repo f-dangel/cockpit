@@ -13,6 +13,9 @@ from backpack.utils.convert_parameters import vector_to_parameter_list
 class MaxEV(Quantity):
     """Maximum Hessian Eigenvalue Quantitiy Class."""
 
+    def is_active(self, global_step):
+        return (global_step - self._track_offset) % self._track_interval == 0
+
     def create_graph(self, global_step):
         """Return whether access to the forward pass computation graph is needed.
 
@@ -23,7 +26,7 @@ class MaxEV(Quantity):
             bool: ``True`` if the computation graph shall not be deleted,
                 else ``False``.
         """
-        return True if global_step % self._track_interval == 0 else False
+        return self.is_active(global_step)
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -45,7 +48,7 @@ class MaxEV(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if global_step % self._track_interval == 0:
+        if self.is_active(global_step):
             max_ev = np.float64(self._compute_max_ev(global_step, params, batch_loss))
             self.output[global_step]["max_ev"] = max_ev
         else:
@@ -98,7 +101,14 @@ class HVPLinearOperator(BaseLinearOperator):
 
         self.loss = loss
         self.params = params
-        self.grad_params = grad_params
+
+        if grad_params is None:
+            self.grad_params = torch.autograd.grad(
+                loss, params, create_graph=True, retain_graph=True
+            )
+        else:
+            self.grad_params = grad_params
+
         self.device = loss.device
 
     def _matvec(self, v_numpy):

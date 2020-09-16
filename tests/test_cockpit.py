@@ -3,7 +3,7 @@
 import pytest
 
 from backboard.cockpit import Cockpit
-from backpack.extensions import BatchGradTransforms
+from backpack.extensions import BatchGrad, BatchGradTransforms, DiagGGNExact
 
 
 def test_merge_batch_grad_transforms():
@@ -31,3 +31,14 @@ def test_merge_batch_grad_transforms_same_key_fails():
 
     with pytest.raises(ValueError):
         _ = Cockpit._merge_batch_grad_transforms([bgt1, bgt2])
+
+
+def test_process_multiple_batch_grad_transforms_empty():
+    """Test processing if no ``BatchGradTransforms`` is used."""
+    ext1 = BatchGrad()
+    ext2 = DiagGGNExact()
+
+    extensions = [ext1, ext2]
+    processed = Cockpit._process_multiple_batch_grad_transforms(extensions)
+
+    assert processed == extensions
