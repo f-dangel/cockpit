@@ -11,7 +11,15 @@ class BatchGradHistogram1d(Quantity):
     """One-dimensional histogram of individual gradient elements."""
 
     def __init__(
-        self, track_interval, xmin=-2, xmax=2, bins=100, verbose=False, check=False
+        self,
+        track_interval,
+        xmin=-2,
+        xmax=2,
+        bins=100,
+        adapt_limits=True,
+        adapt_limits_interval=None,
+        verbose=False,
+        check=False,
     ):
         """Initialize the 1D Histogram of individual gradient elements.
 
@@ -20,6 +28,9 @@ class BatchGradHistogram1d(Quantity):
             xmin (float): Lower clipping bound for individual gradients in histogram.
             xmax (float): Upper clipping bound for individual gradients in histogram.
             bins (int): Number of bins
+            adapt_limits (bool): Adapt bin ranges.
+            adapt_limits_interval (int): Adaptation frequency. Only used if
+                ``update_limits`` is not ``None``. If ``None``, only adapt once.
             verbose (bool): Turns on verbose mode. Defaults to ``False``.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
@@ -29,6 +40,8 @@ class BatchGradHistogram1d(Quantity):
         self._xmin = xmin
         self._xmax = xmax
         self._bins = bins
+        self._adapt_limits = adapt_limits
+        self._adapt_limits_interval = adapt_limits_interval
         self._check = check
 
     def extensions(self, global_step):
@@ -46,6 +59,13 @@ class BatchGradHistogram1d(Quantity):
             ext.append(
                 extensions.BatchGradTransforms(
                     transforms={"hist_1d": self._compute_histogram}
+                )
+            )
+
+        if self._should_update_limits(global_step):
+            ext.append(
+                extensions.BatchGradTransforms(
+                    transforms={"grad_batch_abs_max": self._compute_new_limits}
                 )
             )
 
@@ -77,7 +97,7 @@ class BatchGradHistogram1d(Quantity):
                 print(f"Histogram bin edges 0,...,10: {edges[:10]}")
                 print(f"Histogram counts 0,...,10: {hist[:10]}")
 
-            self._update_limits(global_step, params, batch_loss)
+        self._update_limits(global_step, params, batch_loss)
 
     def _compute_histogram(self, batch_grad):
         """Transform individual gradients into histogram data.
@@ -104,7 +124,38 @@ class BatchGradHistogram1d(Quantity):
 
     def _update_limits(self, global_step, params, batch_loss):
         """Update limits for next histogram computation."""
-        pass
+        if self._adapt_limits and self._should_update_limits(global_step):
+            abs_max = max(p.grad_batch_transforms["grad_batch_abs_max"] for p in params)
+
+            if self._verbose:
+                print("Updating limits:")
+                print(f"Old: x_min={self._xmin:.5f}, x_max={self._xmax:.5f}")
+
+            self._xmin, self._xmax = -abs_max, abs_max
+
+            if self._verbose:
+                print(f"New: x_min={self._xmin:.5f}, x_max={self._xmax:.5f}")
+
+    def _compute_new_limits(self, batch_grad):
+        """Compute information to update limits.
+
+        Compute parameter-wise abs-max of individual gradients.
+        """
+        batch_size = batch_grad.shape[0]
+        min_val, max_val = batch_grad.data.min(), batch_grad.data.max()
+
+        abs_max = batch_size * max(min_val.abs(), max_val.abs()).item()
+        padding_factor = 1.1
+
+        return padding_factor * abs_max
+
+    def _should_update_limits(self, global_step):
+        """Return if current iteration should update the bin limits"""
+        if self._adapt_limits_interval is None:
+            is_first_update = global_step == 0
+            return is_first_update
+        else:
+            return global_step % self._adapt_limits_interval == 0
 
     def _get_current_bin_edges(self):
         """Return current edge values of bins."""
@@ -205,7 +256,7 @@ class BatchGradHistogram2d(Quantity):
                 print(f"Histogram bin y_edges 0,...,5: {y_edges[:5]}")
                 print(f"Histogram counts 0,...,5: {hist[:5,:5]}")
 
-            self._update_limits(global_step, params, batch_loss)
+        self._update_limits(global_step, params, batch_loss)
 
     def _compute_histogram(self, batch_grad):
         """Transform individual gradients and parameters into a 2d histogram.
