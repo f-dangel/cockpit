@@ -14,36 +14,14 @@ from backpack.extensions import BatchGradTransforms
 from deepobs.pytorch.testproblems.testproblem import TestProblem
 
 
-def configured_cockpit(tproblem, logpath, ticket, track_interval=1):
-    """Create cockpit with pre-selected quantities.
-
-    Configurations vary in the tracked information, and hence in run time.
-
-    Args:
-        tproblem (deepobs.pytorch.testproblem): A DeepOBS testproblem.
-            Alternatively, it ccould also be a general Pytorch Net.
-        logpath (str): Path to the log file.
-        ticket (str, ["economy", "business", "first"]): String specifying the
-            configuration type.
-        track_interval (int, optional): Tracking rate.
-            Defaults to 1 meaning every iteration is tracked.
-
-    Returns:
-        Cockpit: A cockpit that tracks quantities specified by the configuration.
-    """
-    quantities = get_quantities(ticket)
-    return Cockpit(
-        tproblem, logpath, track_interval=track_interval, quantities=quantities
-    )
-
-
-def get_quantities(ticket):
+def configured_quantities(label):
     """Return the quantities for a cockpit ticket.
 
     Args:
-        ticket (str): String specifying the configuration type.
+        label (str): String specifying the configuration type.
             Possible configurations are (from least to most expensive)
 
+            - ``'time'``: only track time.
             - ``'economy'``: no quantities that require 2nd-order information.
             - ``'business'``: all default quantities except maximum Hessian eigenvalue.
             - ``'first'``: all default quantities.
@@ -52,21 +30,23 @@ def get_quantities(ticket):
         [Quantity]: A list of quantity classes used in the specified configuration.
 
     Raises:
-        KeyError: If ``ticket`` is an unknown configuration.
+        KeyError: If ``label`` is an unknown configuration.
     """
     first = Cockpit.default_quantities
     business = [c for c in first if c is not quantities.MaxEV]
     economy = [
         c for c in business if c not in [quantities.TICDiag, quantities.TICTrace]
     ]
+    time = [c for c in first if c is quantities.Time]
 
     configs = {
         "first": first,
         "business": business,
         "economy": economy,
+        "time": time,
     }
 
-    return configs[ticket]
+    return configs[label]
 
 
 class Cockpit:
