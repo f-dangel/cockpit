@@ -266,3 +266,18 @@ class Quantity:
             diag_curvature = torch.cat([c.flatten() for c in diag_curvature])
 
         return diag_curvature
+
+
+class SingleStepQuantity(Quantity):
+    """Quantity that only accessed information at one point in time."""
+
+    def is_active(self, global_step):
+        """Return if quantity needs to perform actions at current iteration."""
+        return (global_step - self._track_offset) % self._track_interval == 0
+
+
+class ByproductQuantity(SingleStepQuantity):
+    """Quantity that is just tracked and does not require additional computation."""
+
+    def extensions(self, global_step):
+        return []

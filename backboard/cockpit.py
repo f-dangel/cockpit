@@ -33,6 +33,7 @@ class Cockpit:
         quantities.TICDiag,
         # quantities.TICTrace,
         quantities.Trace,
+        quantities.Time,
     ]
 
     def __init__(self, tproblem, logpath, track_interval=1, quantities=None):
