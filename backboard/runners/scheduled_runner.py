@@ -62,7 +62,7 @@ class ScheduleCockpitRunner(PTRunner):
         scheduler = LambdaLR(opt, lr_lambda=lr_sched)
 
         # COCKPIT: Initialize it #
-        logpath = os.path.join(self._run_directory, self._file_name + "__log")
+        logpath = self._get_cockpit_logpath()
         cockpit = Cockpit(
             tproblem,
             logpath,
@@ -263,3 +263,7 @@ class ScheduleCockpitRunner(PTRunner):
         }
 
         return output
+
+    def _get_cockpit_logpath(self):
+        """Return logpath for cockpit."""
+        return os.path.join(self._run_directory, self._file_name + "__log")
