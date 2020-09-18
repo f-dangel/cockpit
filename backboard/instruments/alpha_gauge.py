@@ -38,7 +38,7 @@ def alpha_gauge(self, fig, gridspec):
         "xlim": [-1.5, 1.5],
         "ylim": [0, 1.75],
         "fontweight": "bold",
-        "facecolor": "summary",
+        "facecolor": self.bg_color_instruments,
         "zero_lines": True,
         "center": [True, False],
     }
@@ -92,11 +92,11 @@ def alpha_gauge(self, fig, gridspec):
 
     # Manually beautify the plot:
     # Adding Zone Lines
-    ax.axvline(0, ls="-", color="white", linewidth=1.5, zorder=0)
-    ax.axvline(-1, ls="-", color="white", linewidth=1.5, zorder=0)
-    ax.axvline(1, ls="-", color="white", linewidth=1.5, zorder=0)
-    ax.axhline(0, ls="-", color="white", linewidth=1.5, zorder=0)
-    ax.axhline(1, ls="-", color="gray", linewidth=0.5, zorder=0)
+    ax.axvline(0, ls="-", color="#ababba", linewidth=1.5, zorder=0)
+    ax.axvline(-1, ls="-", color="#ababba", linewidth=1.5, zorder=0)
+    ax.axvline(1, ls="-", color="#ababba", linewidth=1.5, zorder=0)
+    ax.axhline(0, ls="-", color="#ababba", linewidth=1.5, zorder=0)
+    ax.axhline(1, ls="-", color="#ababba", linewidth=0.5, zorder=0)
     # Labels
     ax.set_xlabel(r"Local step length $\alpha$")
     ax2.set_ylabel(r"$\alpha$ density")

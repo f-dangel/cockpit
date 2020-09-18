@@ -40,7 +40,7 @@ def max_ev_gauge(self, fig, gridspec):
         "xlim": "tight",
         "ylim": None,
         "fontweight": "bold",
-        "facecolor": "summary",
+        "facecolor": self.bg_color_instruments,
     }
     # part that should be plotted
     ax = fig.add_subplot(gridspec)

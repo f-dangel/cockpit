@@ -29,7 +29,7 @@ def tic_gauge(self, fig, gridspec):
             "xlim": "tight",
             "ylim": None,
             "fontweight": "bold",
-            "facecolor": "summary",
+            "facecolor": self.bg_color_instruments,
         }
         ax = fig.add_subplot(gridspec)
         create_basic_plot(**plot_args, ax=ax)
@@ -52,6 +52,6 @@ def tic_gauge(self, fig, gridspec):
             "xlim": "tight",
             "ylim": None,
             "fontweight": "bold",
-            "facecolor": "summary",
+            "facecolor": self.bg_color_instruments,
         }
         create_basic_plot(**plot_args, ax=ax2)
