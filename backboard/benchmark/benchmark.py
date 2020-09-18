@@ -184,11 +184,13 @@ def benchmark(
                         }
                         data = data.append(run_data, ignore_index=True)
 
-    if savefile is not None:
-        with open(savefile, "w") as f:
-            if header is not None:
-                header_comment = "\n".join("# " + line for line in header.splitlines())
-                f.write(header_comment + "\n")
-            data.to_csv(f)
+                        if savefile is not None:
+                            with open(savefile, "w") as f:
+                                if header is not None:
+                                    header_comment = "\n".join(
+                                        "# " + line for line in header.splitlines()
+                                    )
+                                    f.write(header_comment + "\n")
+                                data.to_csv(f)
 
     return data
