@@ -319,7 +319,7 @@ class BatchGradHistogram2d(Quantity):
             expand_arg = [batch_size] + len(param.shape) * [-1]
             param_clamped = param_clamped.unsqueeze(0).expand(*expand_arg).flatten()
 
-            batch_grad_clamped = batch_grad_clamped.cpu().numpy()
+            batch_grad_clamped = batch_grad_clamped.flatten().cpu().numpy()
             param_clamped = param_clamped.cpu().numpy()
 
             hist, xedges, yedges = numpy.histogram2d(
