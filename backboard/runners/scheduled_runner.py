@@ -12,7 +12,9 @@ from deepobs.pytorch.runners.runner import PTRunner
 class ScheduleCockpitRunner(PTRunner):
     """Schedule Runner using a learning rate schedule."""
 
-    def __init__(self, optimizer_class, hyperparameter_names, quantities=None):
+    def __init__(
+        self, optimizer_class, hyperparameter_names, quantities=None, plot=True
+    ):
         """Initialize the runner.
 
         Args:
@@ -25,6 +27,7 @@ class ScheduleCockpitRunner(PTRunner):
             optimizer_class, hyperparameter_names
         )
         self._quantities = quantities
+        self._enable_plotting = plot
 
     def training(  # noqa: C901
         self,
@@ -68,6 +71,7 @@ class ScheduleCockpitRunner(PTRunner):
             logpath,
             training_params["track_interval"],
             quantities=self._quantities,
+            plot=self._enable_plotting,
         )
 
         # Lists to log train/test loss and accuracy.

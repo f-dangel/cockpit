@@ -83,7 +83,7 @@ class Cockpit:
         quantities.Time,
     ]
 
-    def __init__(self, tproblem, logpath, track_interval=1, quantities=None):
+    def __init__(self, tproblem, logpath, track_interval=1, quantities=None, plot=True):
         """Initialize the Cockpit.
 
         Args:
@@ -119,7 +119,9 @@ class Cockpit:
         self._prepare_logpath(logpath)
 
         # Create a Cockpit Plotter instance
-        self.cockpit_plotter = CockpitPlotter(self.logpath)
+        self._enable_plotting = plot
+        if self._enable_plotting:
+            self.cockpit_plotter = CockpitPlotter(self.logpath)
 
     def _get_extensions(self, global_step):
         """Collect BackPACK extensions required at current iteration."""
@@ -275,7 +277,8 @@ class Cockpit:
 
     def plot(self, *args, **kwargs):
         """Plot the Cockpit with the current state of the log file."""
-        self.cockpit_plotter.plot(*args, **kwargs)
+        if self._enable_plotting:
+            self.cockpit_plotter.plot(*args, **kwargs)
 
     def write(self):
         """Write the tracked Quantities of the Cockpit to file."""
