@@ -21,10 +21,9 @@ def configured_quantities(label):
         label (str): String specifying the configuration type.
             Possible configurations are (from least to most expensive)
 
-            - ``'time'``: only track time.
             - ``'economy'``: no quantities that require 2nd-order information.
             - ``'business'``: all default quantities except maximum Hessian eigenvalue.
-            - ``'first'``: all default quantities.
+            - ``'full'``: quantities required to fill all plots.
 
     Returns:
         [Quantity]: A list of quantity classes used in the specified configuration.
@@ -32,18 +31,31 @@ def configured_quantities(label):
     Raises:
         KeyError: If ``label`` is an unknown configuration.
     """
-    first = Cockpit.default_quantities
-    business = [c for c in first if c is not quantities.MaxEV]
     economy = [
-        c for c in business if c not in [quantities.TICDiag, quantities.TICTrace]
+        quantities.AlphaOptimized,
+        quantities.BatchGradHistogram1d,
+        quantities.Distance,
+        quantities.GradNorm,
+        quantities.InnerProductTest,
+        quantities.Loss,
+        quantities.MeanGSNR,
+        quantities.NormTest,
+        quantities.OrthogonalityTest,
+        quantities.Time,
     ]
-    time = [c for c in first if c is quantities.Time]
+    business = economy + [
+        quantities.TICDiag,
+        quantities.Trace,
+    ]
+    full = business + [
+        quantities.MaxEV,
+        quantities.BatchGradHistogram2d,
+    ]
 
     configs = {
-        "first": first,
+        "full": full,
         "business": business,
         "economy": economy,
-        "time": time,
     }
 
     return configs[label]

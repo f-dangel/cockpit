@@ -18,20 +18,28 @@ def set_up_cockpit_configuration(label):
     return Cockpit(tproblem, logpath, track_interval=1, quantities=quantities)
 
 
-@pytest.mark.parametrize("label", ["first", "business", "economy", "time"])
+@pytest.mark.parametrize("label", ["full", "business", "economy"])
 def test_cockpit_configuration(label):
     """Check cockpit quantities."""
     cockpit = set_up_cockpit_configuration(label)
 
-    all_quantity_cls = Cockpit.default_quantities
+    full_quantity_cls = configured_quantities("full")
     not_present = {
-        "first": (),
-        "business": (quantities.MaxEV,),
-        "economy": (quantities.MaxEV, quantities.TICDiag, quantities.TICTrace),
-        "time": tuple(cls for cls in all_quantity_cls if not cls == quantities.Time),
+        "full": (),
+        "business": (
+            quantities.MaxEV,
+            quantities.BatchGradHistogram2d,
+        ),
+        "economy": (
+            quantities.MaxEV,
+            quantities.TICDiag,
+            quantities.TICTrace,
+            quantities.Trace,
+            quantities.BatchGradHistogram2d,
+        ),
     }[label]
 
-    for q_cls in all_quantity_cls:
+    for q_cls in full_quantity_cls:
         if q_cls in not_present:
             assert not any(isinstance(q, q_cls) for q in cockpit.quantities)
         else:
