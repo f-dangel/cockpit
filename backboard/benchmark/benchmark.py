@@ -10,7 +10,7 @@ from backboard.runners.scheduled_runner import ScheduleCockpitRunner
 from deepobs.pytorch.config import set_default_device
 
 
-def _check_timer(quantities, max_steps):
+def _check_timer(quantities, steps):
     """Run checks to make sure the benchmark has access to time information."""
     timers = [q for q in quantities if isinstance(q, Time)]
     num_timers = len(timers)
@@ -19,7 +19,7 @@ def _check_timer(quantities, max_steps):
         raise ValueError(f"Got {num_timers} Time quantities. Expect 1.")
 
     timer = timers[0]
-    for step in [0, max_steps]:
+    for step in [0, steps]:
         if not timer.is_active(step):
             raise ValueError(f"Time quantity must track at step {step}")
 
@@ -50,13 +50,13 @@ def _make_runner(quantities):
     )
 
 
-def _get_num_epochs(runner, testproblem, max_steps):
+def _get_num_epochs(runner, testproblem, steps):
     """Convert maximum number of steps into number of epochs."""
     batch_size = runner._use_default(testproblem, "batch_size")
     train_size = get_train_size(testproblem)
     steps_per_epoch, _ = divmod(train_size, batch_size)
 
-    num_epochs, rest = divmod(max_steps, steps_per_epoch)
+    num_epochs, rest = divmod(steps, steps_per_epoch)
     if rest > 0:
         num_epochs += 1
 
@@ -78,21 +78,21 @@ def _read_tracking_data(runner):
     return plotter.tracking_data
 
 
-def run_benchmark(testproblem, quantities, max_steps, random_seed):
+def run_benchmark(testproblem, quantities, steps, random_seed):
     """Return average time per iteration.
 
     Args:
         testproblem (str): Label of a DeepOBS problem.
         quantities ([Quantity]): List of quantities used in the cockpit.
-        max_steps (int): Maximum number of iterations used for average
+        steps (int): Maximum number of iterations used for average
             time estimation.
         random_seed (int): Random seed used at initialization.
     """
-    _check_timer(quantities, max_steps)
+    _check_timer(quantities, steps)
     _check_quantities(quantities)
 
     runner = _make_runner(quantities)
-    num_epochs = _get_num_epochs(runner, testproblem, max_steps)
+    num_epochs = _get_num_epochs(runner, testproblem, steps)
 
     runner.run(
         testproblem=testproblem,
@@ -111,30 +111,36 @@ def run_benchmark(testproblem, quantities, max_steps, random_seed):
 
     data = _read_tracking_data(runner)
 
-    return extract_average_time(data, max_steps)
+    return extract_average_time(data, steps)
 
 
-def extract_average_time(data, max_steps):
+def extract_average_time(data, steps):
     """Extract average run time per iteration from tracked data."""
     data = data[["iteration", "time"]].dropna()
-    data = data.loc[data["iteration"].isin([0, max_steps])]
+    data = data.loc[data["iteration"].isin([0, steps])]
 
     iterations = data["iteration"].to_list()
     values = data["time"].to_list()
 
-    assert iterations == [0, max_steps]
+    assert iterations == [0, steps]
     assert len(values) == 2
 
     return (values[1] - values[0]) / (iterations[1] - iterations[0])
 
 
-def _check_max_steps(max_steps, track_interval, min_events=5):
-    """Check max_steps is large enough to allow at least ``min_events`` trackings."""
-    num_events = max_steps // track_interval
-    if num_events < min_events:
-        raise ValueError(
-            f"max_steps is too small! Want {num_events}>={min_events} track events."
-        )
+def _compute_steps(steps, track_events, track_interval):
+    """
+    Compute steps and check if large enough to allow at least ``track_events`` events.
+    """
+    if steps is None:
+        return track_events * track_interval
+    else:
+        num_events = steps // track_interval
+        if num_events < track_events:
+            raise ValueError(
+                f"steps is too small! Want {num_events}>={track_events} track events."
+            )
+        return steps
 
 
 def benchmark(
@@ -143,18 +149,21 @@ def benchmark(
     track_intervals,
     num_seeds,
     devices,
-    max_steps,
+    steps=None,
+    track_events=20,
     savefile=None,
     header=None,
 ):
-    """Benchmark the cockpit."""
-    _check_max_steps(max_steps, track_interval=max(track_intervals))
+    """Benchmark the cockpit.
 
+    Maximum number of steps can be specified by ``steps``. If ``None``, it will
+    be computed from from ``track_events`` and the current ``track_interval``.
+    """
     columns = [
         "testproblem",
         "quantities",
         "track_interval",
-        "max_steps",
+        "steps",
         "random_seed",
         "device",
         "time_per_step",
@@ -168,16 +177,19 @@ def benchmark(
             for name, config in configs.items():
                 for track_interval in track_intervals:
                     for random_seed in range(num_seeds):
+
+                        this_steps = _compute_steps(steps, track_events, track_interval)
+
                         quantities = [q(track_interval=track_interval) for q in config]
                         runtime = run_benchmark(
-                            testproblem, quantities, max_steps, random_seed
+                            testproblem, quantities, this_steps, random_seed
                         )
 
                         run_data = {
                             "testproblem": testproblem,
                             "quantities": name,
                             "track_interval": track_interval,
-                            "max_steps": max_steps,
+                            "steps": this_steps,
                             "random_seed": random_seed,
                             "device": device,
                             "time_per_step": runtime,
