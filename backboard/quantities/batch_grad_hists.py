@@ -1,5 +1,7 @@
 """Histograms of individual gradient transformations."""
 
+import warnings
+
 import numpy
 import torch
 
@@ -137,6 +139,13 @@ class BatchGradHistogram1d(Quantity):
             abs_max = padding_factor * max(
                 p.grad_batch_transforms["grad_batch_abs_max"] for p in params
             )
+
+            if abs_max == 0.0:
+                warnings.warn(
+                    "Adaptive x limits are identical, using a small range instead."
+                )
+                epsilon = 1e-6
+                abs_max += epsilon
 
             if self._verbose:
                 print("Updating limits:")
@@ -403,6 +412,13 @@ class BatchGradHistogram2d(Quantity):
             p.grad_batch_transforms["grad_batch_abs_max"] for p in params
         )
 
+        if abs_max == 0.0:
+            warnings.warn(
+                "Adaptive x limits are identical, using a small range instead."
+            )
+            epsilon = 1e-6
+            abs_max += epsilon
+
         if self._verbose:
             print("Updating limits:")
             print(f"Old: x_min={self._xmin:.5f}, x_max={self._xmax:.5f}")
@@ -418,6 +434,13 @@ class BatchGradHistogram2d(Quantity):
         abs_max = padding_factor * max(
             p.grad_batch_transforms["param_abs_max"] for p in params
         )
+
+        if abs_max == 0.0:
+            warnings.warn(
+                "Adaptive y limits are identical, using a small range instead."
+            )
+            epsilon = 1e-6
+            abs_max += epsilon
 
         if self._verbose:
             print("Updating limits:")
