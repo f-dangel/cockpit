@@ -300,14 +300,6 @@ class BatchGradHistogram2d(Quantity):
             xmin, xmax = xmin + xepsilon, xmax - xepsilon
             ymin, ymax = ymin + yepsilon, ymax - yepsilon
 
-            # print(f"2ε(x)={2*epsilon}, xₘₐₓ - xₘᵢₙ={self._xmax - self._xmin}")
-            # assert self._xmax - self._xmin > 2 * epsilon
-
-            # ybin_size = yedges[1] - yedges[0]
-            # epsilon = ybin_size / 2
-            # print(f"2ε(y)={2*epsilon}, yₘₐₓ - yₘᵢₙ={self._ymax - self._ymin}")
-            # assert self._ymax - self._ymin > 2 * epsilon
-
         batch_grad_clamped = torch.clamp(batch_size * batch_grad, xmin, xmax)
         param_clamped = torch.clamp(param, ymin, ymax)
 
@@ -341,16 +333,7 @@ class BatchGradHistogram2d(Quantity):
 
             else:
                 sample = torch.stack((batch_grad_clamped[n], param_clamped))
-                h, _ = histogramdd(
-                    sample,
-                    bins=(x_edges, y_edges)
-                    # bins=(self._xbins, self._ybins),
-                    # range=(
-                    # (self._xmin, self._xmax),
-                    # (self._ymin, self._ymax),
-                    # ),
-                    # remove_overflow=True,
-                )
+                h, _ = histogramdd(sample, bins=(x_edges, y_edges))
                 hist += h
 
         if self._use_numpy:
@@ -378,16 +361,7 @@ class BatchGradHistogram2d(Quantity):
 
         else:
             sample = torch.stack((batch_grad_clamped, param_clamped))
-            hist, _ = histogramdd(
-                sample,
-                bins=(x_edges, y_edges),
-                # bins=(self._xbins, self._ybins),
-                # range=(
-                # (self._xmin, self._xmax),
-                # (self._ymin, self._ymax),
-                # ),
-                # remove_overflow=True,
-            )
+            hist, _ = histogramdd(sample, bins=(x_edges, y_edges))
 
         if self._use_numpy:
             hist = torch.from_numpy(hist)
