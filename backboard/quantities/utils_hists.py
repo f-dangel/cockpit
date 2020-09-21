@@ -5,7 +5,9 @@ import torch
 _range = range
 
 
-def histogramdd(sample, bins=None, range=None, weights=None, remove_overflow=True):
+def histogramdd(  # noqa: C901
+    sample, bins=None, range=None, weights=None, remove_overflow=True
+):
     """Create N-dimensional histograms.
 
     Args:
@@ -26,7 +28,7 @@ def histogramdd(sample, bins=None, range=None, weights=None, remove_overflow=Tru
             * H              - Tensor - the histogram
             * axis           - list of Tensors - axis description
 
-        Example usage:
+    Example:
         >>> r = torch.randn(3,100)
         >>> H,axes = histogramdd(r,bins = (4,3,7))
         >>> H.shape
@@ -41,10 +43,10 @@ def histogramdd(sample, bins=None, range=None, weights=None, remove_overflow=Tru
     device = None
     custom_edges = False
     D, N = sample.shape
-    if device == None:
+    if device is None:
         device = sample.device
-    if bins == None:
-        if edges == None:
+    if bins is None:
+        if edges is None:
             bins = 10
             custom_edges = False
         else:
@@ -101,7 +103,7 @@ def histogramdd(sample, bins=None, range=None, weights=None, remove_overflow=Tru
         else:
             edges = torch.unbind(edges)
     else:
-        if range == None:  # range is not defined
+        if range is None:  # range is not defined
             range = torch.empty(2, D, device=device)
             if N == 0:  # Empty histogram
                 range[0, :] = 0
@@ -148,7 +150,7 @@ def histogramdd(sample, bins=None, range=None, weights=None, remove_overflow=Tru
     multiindex[1:] = torch.cumprod(torch.flip(bins[1:], [0]) + 2, -1).long()
     multiindex = torch.flip(multiindex, [0])
     k *= multiindex.reshape(-1, 1)
-    l = torch.sum(k, 0)
+    l = torch.sum(k, 0)  # noqa: E741
     hist = torch.bincount(l, minlength=(multiindex[0] * (bins[0] + 2)), weights=weights)
     hist = hist.reshape(tuple(bins + 2))
     if remove_overflow:
