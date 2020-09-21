@@ -480,4 +480,4 @@ def transform_param_abs_max(batch_grad):
 
     Transformation used by BackPACK's ``BatchGradTransforms``.
     """
-    return abs_max(batch_grad._param_weakref().data)
+    return abs_max(batch_grad._param_weakref().data).item()
