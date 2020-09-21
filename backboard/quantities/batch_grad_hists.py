@@ -315,9 +315,13 @@ class BatchGradHistogram2d(Quantity):
         return batch_grad_clamped, param_clamped
 
     def __hist_save_mem(self, batch_grad_clamped, param_clamped):
-        """Compute histogram and save memory."""
-        x_edges, y_edges = self._get_current_bin_edges()
+        """Compute histogram and save memory.
 
+        Note:
+            Don't hand in sequences of arrays for ``bins`` as this way the
+            histogram functions do not know that the bins are uniform. They
+            will then call a sort algorithm, which is expensive.
+        """
         batch_grad_clamped = batch_grad_clamped.flatten(start_dim=1)
         param_clamped = param_clamped.flatten()
         hist = torch.zeros(
@@ -328,22 +332,26 @@ class BatchGradHistogram2d(Quantity):
         batch_size = batch_grad_clamped.shape[0]
 
         if self._use_numpy:
-            x_edges, y_edges = x_edges.cpu().numpy(), y_edges.cpu().numpy()
             batch_grad_clamped = batch_grad_clamped.cpu().numpy()
             param_clamped = param_clamped.cpu().numpy()
             hist = hist.cpu().numpy()
 
+        hist_bins = (self._xbins, self._ybins)
+        hist_range = ((self._xmin, self._xmax), (self._ymin, self._ymax))
+
+        if self._use_numpy:
+            hist_func = numpy.histogram2d
+        else:
+            hist_func = histogramdd
+
         for n in range(batch_size):
             if self._use_numpy:
-                h, _, _ = numpy.histogram2d(
-                    batch_grad_clamped[n], param_clamped, bins=(x_edges, y_edges)
-                )
-                hist += h
-
+                args = (batch_grad_clamped[n], param_clamped)
             else:
-                sample = torch.stack((batch_grad_clamped[n], param_clamped))
-                h, _ = histogramdd(sample, bins=(x_edges, y_edges))
-                hist += h
+                args = (torch.stack((batch_grad_clamped[n], param_clamped)),)
+
+            h = hist_func(*args, bins=hist_bins, range=hist_range)[0]
+            hist += h
 
         if self._use_numpy:
             hist = torch.from_numpy(hist)
@@ -351,9 +359,13 @@ class BatchGradHistogram2d(Quantity):
         return hist
 
     def __hist_high_mem(self, batch_grad_clamped, param_clamped):
-        """Compute histogram with memory-intensive strategy."""
-        x_edges, y_edges = self._get_current_bin_edges()
+        """Compute histogram with memory-intensive strategy.
 
+        Note:
+            Don't hand in sequences of arrays for ``bins`` as this way the
+            histogram functions do not know that the bins are uniform. They
+            will then call a sort algorithm, which is expensive.
+        """
         batch_size = batch_grad_clamped.shape[0]
         expand_arg = [batch_size] + len(param_clamped.shape) * [-1]
         param_clamped = param_clamped.unsqueeze(0).expand(*expand_arg).flatten()
@@ -362,15 +374,18 @@ class BatchGradHistogram2d(Quantity):
         if self._use_numpy:
             batch_grad_clamped = batch_grad_clamped.cpu().numpy()
             param_clamped = param_clamped.cpu().numpy()
-            x_edges, y_edges = x_edges.cpu().numpy(), y_edges.cpu().numpy()
 
-            hist, _, _ = numpy.histogram2d(
-                batch_grad_clamped, param_clamped, bins=(x_edges, y_edges)
-            )
+        hist_bins = (self._xbins, self._ybins)
+        hist_range = ((self._xmin, self._xmax), (self._ymin, self._ymax))
 
+        if self._use_numpy:
+            args = (batch_grad_clamped, param_clamped)
+            hist_func = numpy.histogram2d
         else:
-            sample = torch.stack((batch_grad_clamped, param_clamped))
-            hist, _ = histogramdd(sample, bins=(x_edges, y_edges))
+            args = (torch.stack((batch_grad_clamped, param_clamped)),)
+            hist_func = histogramdd
+
+        hist = hist_func(*args, bins=hist_bins, range=hist_range)[0]
 
         if self._use_numpy:
             hist = torch.from_numpy(hist)
