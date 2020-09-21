@@ -1,5 +1,7 @@
 """Utility functions for individual gradient histograms."""
 
+import warnings
+
 import torch
 
 _range = range
@@ -96,6 +98,9 @@ def histogramdd(  # noqa: C901
                 tmp[i, :] = edges[i][-1]
                 tmp[i, :s] = edges[i][:]
             edges = tmp.to(device)
+        warnings.warn(
+            "Calling searchsorted is expensive and avoidable with uniform bins."
+        )
         k = torch.searchsorted(edges, sample)
         k = torch.min(k, (bins + 1).reshape(-1, 1))
         if use_old_edges:
