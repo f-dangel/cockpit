@@ -185,7 +185,7 @@ class BatchGradHistogram2d(Quantity):
         ymin=-2,
         ymax=2,
         ybins=50,
-        save_memory=False,
+        save_memory=True,
         use_numpy=False,
         adapt_limits=True,
         adapt_limits_interval=-1,
