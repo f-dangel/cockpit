@@ -1,12 +1,13 @@
 """Histograms of individual gradient transformations."""
 
+import time
 import warnings
 
 import numpy
 import torch
 
 from backboard.quantities.quantity import Quantity
-from backboard.quantities.utils_hists import histogramdd
+from backboard.quantities.utils_hists import histogram2d
 from backboard.quantities.utils_quantities import abs_max
 from backpack import extensions
 
@@ -185,7 +186,7 @@ class BatchGradHistogram2d(Quantity):
         ymin=-2,
         ymax=2,
         ybins=50,
-        save_memory=True,
+        save_memory=False,
         use_numpy=False,
         adapt_limits=True,
         adapt_limits_interval=-1,
@@ -342,7 +343,7 @@ class BatchGradHistogram2d(Quantity):
         if self._use_numpy:
             hist_func = numpy.histogram2d
         else:
-            hist_func = histogramdd
+            hist_func = histogram2d
 
         for n in range(batch_size):
             if self._use_numpy:
@@ -383,7 +384,7 @@ class BatchGradHistogram2d(Quantity):
             hist_func = numpy.histogram2d
         else:
             args = (torch.stack((batch_grad_clamped, param_clamped)),)
-            hist_func = histogramdd
+            hist_func = histogram2d
 
         hist = hist_func(*args, bins=hist_bins, range=hist_range)[0]
 
