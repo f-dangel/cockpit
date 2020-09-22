@@ -1,6 +1,5 @@
 """Histograms of individual gradient transformations."""
 
-import time
 import warnings
 
 import numpy
