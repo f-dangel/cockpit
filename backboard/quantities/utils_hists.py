@@ -42,15 +42,6 @@ def histogramdd(  # noqa: C901
         - https://github.com/miranov25/RootInteractive/blob/master/RootInteractive/
         Tools/Histograms/histogramdd_pytorch.py
     """
-
-    TIME = False  # sample.numel() > 50000
-    if TIME:
-        import time
-
-    if TIME:
-        torch.cuda.synchronize()
-        blocks = [("start", time.time())]
-
     edges = None
     device = None
     custom_edges = False
@@ -156,21 +147,10 @@ def histogramdd(  # noqa: C901
         k = torch.addcmul(
             tranges[0, :].reshape(-1, 1), sample, tranges[1, :].reshape(-1, 1)
         ).long()  # Get the right index
-
-        if TIME:
-            torch.cuda.synchronize()
-            blocks.append(("addcmul", time.time()))
-        if TIME:
-            print(k.shape)
-
         k = torch.max(
             k, torch.zeros([], device=device, dtype=torch.long)
         )  # Underflow bin
         k = torch.min(k, (bins + 1).reshape(-1, 1))
-
-        if TIME:
-            torch.cuda.synchronize()
-            blocks.append(("minmax", time.time()))
 
     multiindex = torch.ones_like(bins)
     multiindex[1:] = torch.cumprod(torch.flip(bins[1:], [0]) + 2, -1).long()
@@ -178,95 +158,46 @@ def histogramdd(  # noqa: C901
     k *= multiindex.reshape(-1, 1)
     l = torch.sum(k, 0)  # noqa: E741
 
-    if TIME:
-        torch.cuda.synchronize()
-        blocks.append(("sum", time.time()))
-
     assert weights is None, "weights has to be None"
 
     hist = torch.bincount(l, minlength=(multiindex[0] * (bins[0] + 2)), weights=weights)
-
-    if TIME:
-        torch.cuda.synchronize()
-        blocks.append(("bincount", time.time()))
-
-    into = tuple(bins + 2)
-
-    if TIME:
-        torch.cuda.synchronize()
-        blocks.append(("into", time.time()))
-
-    # print(hist.dtype)
-    # print(hist.device)
-    # print(hist.shape)
-    # print(hist.requires_grad)
-
-    # hist = hist.float()
-    # hist = hist.flatten().view(into)
-    # hist = hist.contiguous().reshape(into)
-
-    # print(hist.dtype)
-    # print(hist.device)
-    # print(hist.shape)
-    # print(hist.requires_grad)
     hist = hist.reshape(tuple(bins + 2))
-
-    if TIME:
-        torch.cuda.synchronize()
-        blocks.append(("reshape", time.time()))
 
     if remove_overflow:
         core = D * (slice(1, -1),)
         hist = hist[core]
 
-    if TIME:
-        torch.cuda.synchronize()
-        blocks.append(("end", time.time()))
-        print(f"2d histogram ({sample.numel()} elements)")
-        print_runtimes(blocks)
-
     return hist, edges
 
 
-def print_runtimes(blocks):
-    old = blocks[0]
-
-    for new in blocks[1:]:
-        print(f"{old[0]} → {new[0]}: {new[1]-old[1]:.5f} s")
-        old = new
-
-
-def histogram2d(sample, bins, range):
+def histogram2d(sample, bins, range, check_input=False):
     """Compute a two-dimensional histogram."""
-    assert sample.shape[0] == 2
-    assert len(sample.shape) == 2
-
     xbins, ybins = bins
     (xmin, xmax), (ymin, ymax) = range
 
-    assert sample[0].min() > xmin
-    assert sample[0].max() < xmax
+    if check_input:
+        assert sample.shape[0] == 2
+        assert len(sample.shape) == 2
 
-    assert sample[1].min() > ymin
-    assert sample[1].max() < ymax
+        assert sample[0].min() > xmin
+        assert sample[0].max() < xmax
+
+        assert sample[1].min() > ymin
+        assert sample[1].max() < ymax
 
     xbin_width = (xmax - xmin) / xbins
-    idx = ybins * ((sample[0] - xmin) / xbin_width).long()
-
     ybin_width = (ymax - ymin) / ybins
+
+    idx = ybins * ((sample[0] - xmin) / xbin_width).long()
     idx += ((sample[1] - ymin) / ybin_width).long()
 
     ones = torch.ones(sample.shape[1], dtype=int, device=sample.device)
-
     hist = torch.zeros(xbins * ybins, dtype=int, device=sample.device)
-
     hist.put_(idx, ones, accumulate=True)
-
-    hist = hist.reshape(xbins, ybins)
 
     axes = (
         torch.linspace(xmin, xmax, steps=xbins + 1, device=sample.device),
         torch.linspace(ymin, ymax, steps=ybins + 1, device=sample.device),
     )
 
-    return hist, axes
+    return hist.reshape(xbins, ybins), axes
