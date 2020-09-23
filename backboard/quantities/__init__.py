@@ -13,6 +13,7 @@ from backboard.quantities.max_ev import MaxEV
 from backboard.quantities.mean_gsnr import MeanGSNR
 from backboard.quantities.norm_test import NormTest
 from backboard.quantities.orthogonality_test import OrthogonalityTest
+from backboard.quantities.parameters import Parameters
 from backboard.quantities.quantity import Quantity
 from backboard.quantities.tic import TICDiag, TICTrace
 from backboard.quantities.time import Time
@@ -29,6 +30,7 @@ __all__ = [
     "MeanGSNR",
     "NormTest",
     "OrthogonalityTest",
+    "Parameters",
     "Quantity",
     "TICDiag",
     "TICTrace",

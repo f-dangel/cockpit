@@ -17,8 +17,8 @@ def _split_logpath(logpath):
         "logpath": logpath + ".json",
         "optimizer": logpath.split("/")[-3],
         "testproblem": logpath.split("/")[-4],
-        "dataset": logpath.split("/")[-4].split("_")[0],
-        "model": logpath.split("/")[-4].split("_")[1],
+        "dataset": logpath.split("/")[-4].split("_", 1)[0],
+        "model": logpath.split("/")[-4].split("_", 1)[1],
     }
 
     return dicty
