@@ -39,7 +39,7 @@ def histogram_2d_gauge(self, fig, gridspec, transformation=None):
     plot_args = {
         "title": title,
         "fontweight": "bold",
-        "facecolor": "summary",
+        "facecolor": self.bg_color_instruments,
         "xlabel": "parameter element value",
         "ylabel": "gradient element value",
     }
@@ -54,8 +54,8 @@ def histogram_2d_gauge(self, fig, gridspec, transformation=None):
 
     # "Zero lines
     # TODO This assumes that the bins are symmetrical!
-    ax.axvline(df.shape[1] / 2, ls="-", color="white", linewidth=1.5, zorder=0)
-    ax.axhline(df.shape[0] / 2, ls="-", color="white", linewidth=1.5, zorder=0)
+    ax.axvline(df.shape[1] / 2, ls="-", color="#ababba", linewidth=1.5, zorder=0)
+    ax.axhline(df.shape[0] / 2, ls="-", color="#ababba", linewidth=1.5, zorder=0)
 
     ax.set_title(title, fontweight="bold", fontsize="large")
 

@@ -34,7 +34,7 @@ def histogram_1d_gauge(self, fig, gridspec):
     plot_args = {
         "title": title,
         "fontweight": "bold",
-        "facecolor": "summary",
+        "facecolor": self.bg_color_instruments,
         "xlabel": "gradient element value",
         "ylabel": "frequency",
     }

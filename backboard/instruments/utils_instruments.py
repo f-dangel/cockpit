@@ -66,9 +66,8 @@ def create_basic_plot(
             limit. If it is given as a list, the first value is used as the lower
             bound and the second one as an upper bound. Defaults to None.
         fontweight (str, optional): Fontweight of the title. Defaults to "normal".
-        facecolor (str, optional): Facecolor of the plot. "summary" would use the
-            default facecolor defined for those plots in the cockpit_plotter.
-            Defaults to None, which does not apply any color.
+        facecolor (tuple, optional): Facecolor of the plot. Defaults to None,
+            which does not apply any color.
         zero_lines (bool, optional): Whether to highligh the x and y = 0.
             Defaults to False.
         center (bool, optional): Whether to center the limits of the plot.
@@ -140,9 +139,6 @@ def _beautify_plot(
     zero_lines=False,
     center=False,
 ):
-    # Settings
-    color_summary_plots = "#ababba"
-
     ax.set_title(title, fontweight=fontweight, fontsize="large")
     if ax.get_legend() is not None:
         ax.get_legend().remove()
@@ -161,13 +157,13 @@ def _beautify_plot(
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
 
-    if facecolor == "summary":
-        ax.set_facecolor(color_summary_plots)
+    if facecolor is not None:
+        ax.set_facecolor(facecolor)
 
     # Zero lines
     if zero_lines:
-        ax.axvline(0, ls="-", color="white", linewidth=1.5, zorder=0)
-        ax.axhline(0, ls="-", color="white", linewidth=1.5, zorder=0)
+        ax.axvline(0, ls="-", color="#ababba", linewidth=1.5, zorder=0)
+        ax.axhline(0, ls="-", color="#ababba", linewidth=1.5, zorder=0)
 
 
 def _compute_plot_limits(ax, xlim, ylim, center=False):

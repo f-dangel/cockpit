@@ -249,7 +249,8 @@ class CockpitPlotter:
         self.cmap = plt.cm.viridis  # primary color map
         self.cmap2 = plt.cm.cool  # secondary color map
         self.alpha_cmap = utils_plotting._alpha_cmap(self.primary_color)
-        self.color_summary_plots = "#ababba"  # highlight color of summary plots
+        self.bg_color_instruments = (1.0, 1.0, 1.0)
+        self.bg_color_instruments2 = "#ababba"  # highlight color of summary plots
 
         self.EMA_alpha = 0.2  # Decay factor of the exponential moving avg.
 

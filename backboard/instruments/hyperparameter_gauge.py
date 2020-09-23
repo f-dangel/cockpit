@@ -55,7 +55,7 @@ def hyperparameter_gauge(self, fig, gridspec):
         title=title,
         xlim="tight",
         fontweight="bold",
-        facecolor="summary",
+        facecolor=self.bg_color_instruments2,
     )
 
     ax.legend()
