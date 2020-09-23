@@ -181,14 +181,17 @@ class BatchGradHistogram2d(Quantity):
         track_interval,
         xmin=-1,
         xmax=1,
+        min_xrange=1e-6,
         xbins=100,
         ymin=-2,
         ymax=2,
+        min_yrange=1e-6,
         ybins=50,
         save_memory=True,
         use_numpy=False,
         adapt_limits=True,
         adapt_limits_interval=-1,
+        adapt_limits_policy="abs_max",
         verbose=False,
         check=False,
     ):
@@ -198,9 +201,11 @@ class BatchGradHistogram2d(Quantity):
             track_interval (int): Tracking rate.
             xmin (float): Lower clipping bound for individual gradients in histogram.
             xmax (float): Upper clipping bound for individual gradients in histogram.
+            min_xrange (float): Lower bound for limit difference along x axis.
             xbins (int): Number of bins in x-direction
             ymin (float): Lower clipping bound for parameters in histogram.
             ymax (float): Upper clipping bound for parameters in histogram.
+            min_yrange (float): Lower bound for limit difference along y axis.
             ybins (int): Number of bins in y-direction
             save_memory (bool): Sacrifice binning runtime for less memory.
             use_numpy (bool): Whether to use the ``numpy`` implementation for histo-
@@ -209,6 +214,12 @@ class BatchGradHistogram2d(Quantity):
             adapt_limits_interval (int): Adaptation frequency. Only used if
                 ``update_limits`` is not ``None``. If ``None``, only adapt once.
                 If ``-1``, use same value as ``track_interval``.
+            adapt_limits_policy (str): Strategy to adapt the histogram limits.
+                Options are:
+                - "abs_max": Sets interval to range between negative and positive
+                  maximum absolute value (+ padding).
+                - "min_max": Sets interval range between minimum and maximum value
+                  (+ padding).
             verbose (bool): Turns on verbose mode. Defaults to ``False``.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
@@ -217,9 +228,11 @@ class BatchGradHistogram2d(Quantity):
         super().__init__(track_interval, verbose=verbose)
         self._xmin = xmin
         self._xmax = xmax
+        self._min_xrange = min_xrange
         self._xbins = xbins
         self._ymin = ymin
         self._ymax = ymax
+        self._min_yrange = min_yrange
         self._ybins = ybins
         self._save_memory = save_memory
         self._use_numpy = use_numpy
@@ -229,6 +242,12 @@ class BatchGradHistogram2d(Quantity):
             self._adapt_limits_interval = track_interval
         else:
             self._adapt_limits_interval = adapt_limits_interval
+
+        assert adapt_limits_policy in [
+            "abs_max",
+            "min_max",
+        ], "Invalid adaptation policy"
+        self._adapt_limits_policy = adapt_limits_policy
 
         self._check = check
 
@@ -251,14 +270,26 @@ class BatchGradHistogram2d(Quantity):
             )
 
         if self._should_update_limits(global_step):
-            ext.append(
-                extensions.BatchGradTransforms(
-                    transforms={
-                        "grad_batch_abs_max": transform_grad_batch_abs_max,
-                        "param_abs_max": transform_param_abs_max,
-                    }
+            if self._adapt_limits_policy == "abs_max":
+                ext.append(
+                    extensions.BatchGradTransforms(
+                        transforms={
+                            "grad_batch_abs_max": transform_grad_batch_abs_max,
+                            "param_abs_max": transform_param_abs_max,
+                        }
+                    )
                 )
-            )
+            elif self._adapt_limits_policy == "min_max":
+                ext.append(
+                    extensions.BatchGradTransforms(
+                        transforms={
+                            "grad_batch_min_max": transform_grad_batch_min_max,
+                            "param_min_max": transform_param_min_max,
+                        }
+                    )
+                )
+            else:
+                raise ValueError("Invalid adaptation policy")
 
         return ext
 
@@ -422,46 +453,79 @@ class BatchGradHistogram2d(Quantity):
 
     def _update_x_limits(self, params):
         """Update the histogram's x limits."""
-        padding_factor = 1.2
-        abs_max = padding_factor * max(
-            p.grad_batch_transforms["grad_batch_abs_max"] for p in params
-        )
-
-        if abs_max == 0.0:
-            warnings.warn(
-                "Adaptive x limits are identical, using a small range instead."
-            )
-            epsilon = 1e-6
-            abs_max += epsilon
-
         if self._verbose:
             print("Updating limits:")
             print(f"Old: x_min={self._xmin:.5f}, x_max={self._xmax:.5f}")
 
-        self._xmin, self._xmax = -abs_max, abs_max
+        padding = 0.2
+
+        if self._adapt_limits_policy == "abs_max":
+            padding_factor = 1 + padding
+            abs_max = max(p.grad_batch_transforms["grad_batch_abs_max"] for p in params)
+            xmin, xmax = -padding_factor * abs_max, padding_factor * abs_max
+
+        elif self._adapt_limits_policy == "min_max":
+            min_val = min(
+                p.grad_batch_transforms["grad_batch_min_max"][0] for p in params
+            )
+            max_val = max(
+                p.grad_batch_transforms["grad_batch_min_max"][1] for p in params
+            )
+            span = max_val - min_val
+
+            xmin = min_val - padding * span
+            xmax = max_val + padding * span
+
+        else:
+            raise ValueError("Invalid adaptation policy")
+
+        if xmax - xmin < self._min_xrange:
+            warnings.warn(
+                "Adaptive x limits are almost identical, using a small range instead."
+            )
+            center = (xmax + xmin) / 2
+            xmin = center - self._min_xrange / 2
+            xmax = center + self._min_xrange / 2
+
+        self._xmin, self._xmax = xmin, xmax
 
         if self._verbose:
             print(f"New: x_min={self._xmin:.5f}, x_max={self._xmax:.5f}")
 
     def _update_y_limits(self, params):
         """Update the histogram's y limits."""
-        padding_factor = 1.2
-        abs_max = padding_factor * max(
-            p.grad_batch_transforms["param_abs_max"] for p in params
-        )
-
-        if abs_max == 0.0:
-            warnings.warn(
-                "Adaptive y limits are identical, using a small range instead."
-            )
-            epsilon = 1e-6
-            abs_max += epsilon
-
         if self._verbose:
             print("Updating limits:")
             print(f"Old: y_min={self._ymin:.5f}, y_max={self._ymax:.5f}")
 
-        self._ymin, self._ymax = -abs_max, abs_max
+        padding = 0.2
+
+        if self._adapt_limits_policy == "abs_max":
+            padding_factor = 1 + padding
+            abs_max = max(p.grad_batch_transforms["param_abs_max"] for p in params)
+
+            ymin, ymax = -padding_factor * abs_max, padding_factor * abs_max
+
+        elif self._adapt_limits_policy == "min_max":
+            min_val = min(p.grad_batch_transforms["param_min_max"][0] for p in params)
+            max_val = max(p.grad_batch_transforms["param_min_max"][1] for p in params)
+            span = max_val - min_val
+
+            ymin = min_val - padding * span
+            ymax = max_val + padding * span
+
+        else:
+            raise ValueError("Invalid adaptation policy")
+
+        if ymax - ymin < self._min_yrange:
+            warnings.warn(
+                "Adaptive y limits are almost identical, using a small range instead."
+            )
+            center = (ymax + ymin) / 2
+            ymin = center - self._min_yrange / 2
+            ymax = center + self._min_yrange / 2
+
+        self._ymin, self._ymax = ymin, ymax
 
         if self._verbose:
             print(f"New: y_min={self._ymin:.5f}, y_max={self._ymax:.5f}")
@@ -496,3 +560,26 @@ def transform_param_abs_max(batch_grad):
     Transformation used by BackPACK's ``BatchGradTransforms``.
     """
     return abs_max(batch_grad._param_weakref().data).item()
+
+
+def transform_grad_batch_min_max(batch_grad):
+    """Compute minimum and maximum value of absolute individual gradients.
+
+    Transformation used by BackPACK's ``BatchGradTransforms``.
+    """
+    batch_size = batch_grad.shape[0]
+    return [
+        batch_size * batch_grad.data.min().item(),
+        batch_size * batch_grad.data.max().item(),
+    ]
+
+
+def transform_param_min_max(batch_grad):
+    """Compute minimum and maximum value of absolute individual gradients.
+
+    Transformation used by BackPACK's ``BatchGradTransforms``.
+    """
+    return [
+        batch_grad._param_weakref().data.min().item(),
+        batch_grad._param_weakref().data.max().item(),
+    ]
