@@ -28,7 +28,7 @@ class MeanGSNR(Quantity):
     """
 
     def __init__(
-        self, track_interval, epsilon=0.0, use_double=False, verbose=False, check=False
+        self, track_interval, epsilon=1e-5, use_double=False, verbose=False, check=False
     ):
         """Initialize.
 
