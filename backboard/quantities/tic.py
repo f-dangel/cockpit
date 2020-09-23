@@ -33,7 +33,7 @@ class TIC(Quantity):
         self,
         track_interval,
         curvature="diag_h",
-        epsilon=0.0,
+        epsilon=1e-7,
         use_double=False,
         verbose=False,
         check=False,

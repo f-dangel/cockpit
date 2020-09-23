@@ -1,20 +1,33 @@
 """Class for tracking the Maximum Hessian Eigenvalue."""
 
+import warnings
+
 import numpy as np
 import torch
 from scipy.sparse.linalg import LinearOperator, eigsh
 from torch.nn.utils import parameters_to_vector
 
-from backboard.quantities.quantity import Quantity
+from backboard.quantities.quantity import SingleStepQuantity
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
 
 
-class MaxEV(Quantity):
+class MaxEV(SingleStepQuantity):
     """Maximum Hessian Eigenvalue Quantitiy Class."""
 
-    def is_active(self, global_step):
-        return (global_step - self._track_offset) % self._track_interval == 0
+    def __init__(self, track_interval=1, track_offset=0, verbose=False, use_power=True):
+        """Initialize maximum eigenvalue computation
+
+        Args:
+            use_power (bool): If ``True``, uses a power iteration that works on GPUs.
+                If ``True``, use ``scipy.sparse.linalg.eigsh`` for eigenvalue computa-
+                tion (requires transfers from GPU to CPU and ``torch`` to ``numpy``.)
+        """
+        super().__init__(
+            track_interval=track_interval, track_offset=track_offset, verbose=verbose
+        )
+        self._last = None
+        self._use_power = use_power
 
     def create_graph(self, global_step):
         """Return whether access to the forward pass computation graph is needed.
@@ -51,8 +64,6 @@ class MaxEV(Quantity):
         if self.is_active(global_step):
             max_ev = np.float64(self._compute_max_ev(global_step, params, batch_loss))
             self.output[global_step]["max_ev"] = max_ev
-        else:
-            pass
 
     def _compute_max_ev(self, global_step, params, batch_loss):
         """Helper Function to Compute the larges Hessian eigenvalue.
@@ -67,7 +78,10 @@ class MaxEV(Quantity):
             batch_loss, params, grad_params=self._fetch_grad(params)
         )
 
-        max_ev = eigsh(HVP, k=1, which="LA", return_eigenvectors=False)[0]
+        if self._use_power:
+            max_ev = HVP.power_iteration().item()
+        else:
+            max_ev = eigsh(HVP, k=1, which="LA", return_eigenvectors=False)[0]
 
         if self._verbose:
             print(f"Largest Hessian eigenvalue: λₘₐₓ={max_ev:.4f}")
@@ -122,3 +136,49 @@ class HVPLinearOperator(BaseLinearOperator):
         return hessian_vector_product(
             self.loss, self.params, v_torch, grad_params=self.grad_params
         )
+
+    def power_iteration(self, maxiter=100, rtol=1e-3, atol=1e-6):
+        """Compute the largest eigenvalue by power iteration.
+
+        Args:
+            maxiter (int): Maximum number of iterations.
+            rtol (float): Relative tolerance to determine convergence from
+                consecutive eigenvalues.
+            atol (float): Absolute tolerance to determine convergence from
+                consecutive eigenvalues.
+
+        Returns
+            (torch.Tensor): Maximum eigenvalue. Warns if maximum number of iterations
+                was reached and returns the potentially unconverged estimate.
+        """
+
+        def converged(old, new):
+            return torch.allclose(old, new, rtol=rtol, atol=atol)
+
+        def normalize(vecs):
+            norm = sum((v ** 2).sum() for v in vecs).sqrt()
+            for v in vecs:
+                v /= norm
+
+        def iteration(vecs):
+            new_vecs = self.hessian_vector_product(vecs)
+            new_eigval = sum((v * new_v).sum() for v, new_v in zip(vecs, new_vecs))
+
+            normalize(new_vecs)
+
+            return new_vecs, new_eigval
+
+        vecs = [torch.rand_like(p) for p in self.params]
+        normalize(vecs)
+        eigval = torch.Tensor([float("inf")]).to(vecs[0].device)
+
+        for _ in range(maxiter):
+            vecs, new_eigval = iteration(vecs)
+
+            if converged(eigval, new_eigval):
+                return new_eigval
+
+            eigval = new_eigval
+
+        warnings.warn(f"Exceeded maximum number of {maxiter} iterations")
+        return eigval

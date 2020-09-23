@@ -1,9 +1,12 @@
 """Histograms of individual gradient transformations."""
 
+import warnings
+
 import numpy
 import torch
 
 from backboard.quantities.quantity import Quantity
+from backboard.quantities.utils_hists import histogram2d
 from backboard.quantities.utils_quantities import abs_max
 from backpack import extensions
 
@@ -137,6 +140,13 @@ class BatchGradHistogram1d(Quantity):
                 p.grad_batch_transforms["grad_batch_abs_max"] for p in params
             )
 
+            if abs_max == 0.0:
+                warnings.warn(
+                    "Adaptive x limits are identical, using a small range instead."
+                )
+                epsilon = 1e-6
+                abs_max += epsilon
+
             if self._verbose:
                 print("Updating limits:")
                 print(f"Old: x_min={self._xmin:.5f}, x_max={self._xmax:.5f}")
@@ -176,6 +186,7 @@ class BatchGradHistogram2d(Quantity):
         ymax=2,
         ybins=50,
         save_memory=True,
+        use_numpy=False,
         adapt_limits=True,
         adapt_limits_interval=-1,
         verbose=False,
@@ -192,6 +203,8 @@ class BatchGradHistogram2d(Quantity):
             ymax (float): Upper clipping bound for parameters in histogram.
             ybins (int): Number of bins in y-direction
             save_memory (bool): Sacrifice binning runtime for less memory.
+            use_numpy (bool): Whether to use the ``numpy`` implementation for histo-
+                grams. Alternatively, use a ``torch`` implementation.
             adapt_limits (bool): Adapt bin ranges.
             adapt_limits_interval (int): Adaptation frequency. Only used if
                 ``update_limits`` is not ``None``. If ``None``, only adapt once.
@@ -209,6 +222,7 @@ class BatchGradHistogram2d(Quantity):
         self._ymax = ymax
         self._ybins = ybins
         self._save_memory = save_memory
+        self._use_numpy = use_numpy
         self._adapt_limits = adapt_limits
 
         if adapt_limits_interval == -1:
@@ -278,6 +292,106 @@ class BatchGradHistogram2d(Quantity):
 
         self._update_limits(global_step, params, batch_loss)
 
+    def __preprocess(self, batch_grad, param):
+        """Scale and clamp the data used for histograms."""
+        # clip to interval, elements outside [xmin, xmax] would be ignored
+        batch_size = batch_grad.shape[0]
+
+        xmin, xmax = self._xmin, self._xmax
+        ymin, ymax = self._ymin, self._ymax
+
+        # PyTorch implementation has different comparison conventions
+        if not self._use_numpy:
+            xedges, yedges = self._get_current_bin_edges()
+            xbin_size, ybin_size = xedges[1] - xedges[0], yedges[1] - yedges[0]
+            xepsilon, yepsilon = xbin_size / 2, ybin_size / 2
+
+            xmin, xmax = xmin + xepsilon, xmax - xepsilon
+            ymin, ymax = ymin + yepsilon, ymax - yepsilon
+
+        batch_grad_clamped = torch.clamp(batch_size * batch_grad, xmin, xmax)
+        param_clamped = torch.clamp(param, ymin, ymax)
+
+        return batch_grad_clamped, param_clamped
+
+    def __hist_save_mem(self, batch_grad_clamped, param_clamped):
+        """Compute histogram and save memory.
+
+        Note:
+            Don't hand in sequences of arrays for ``bins`` as this way the
+            histogram functions do not know that the bins are uniform. They
+            will then call a sort algorithm, which is expensive.
+        """
+        batch_grad_clamped = batch_grad_clamped.flatten(start_dim=1)
+        param_clamped = param_clamped.flatten()
+        hist = torch.zeros(
+            size=(self._xbins, self._ybins),
+            device=param_clamped.device,
+        )
+
+        batch_size = batch_grad_clamped.shape[0]
+
+        if self._use_numpy:
+            batch_grad_clamped = batch_grad_clamped.cpu().numpy()
+            param_clamped = param_clamped.cpu().numpy()
+            hist = hist.cpu().numpy()
+
+        hist_bins = (self._xbins, self._ybins)
+        hist_range = ((self._xmin, self._xmax), (self._ymin, self._ymax))
+
+        if self._use_numpy:
+            hist_func = numpy.histogram2d
+        else:
+            hist_func = histogram2d
+
+        for n in range(batch_size):
+            if self._use_numpy:
+                args = (batch_grad_clamped[n], param_clamped)
+            else:
+                args = (torch.stack((batch_grad_clamped[n], param_clamped)),)
+
+            h = hist_func(*args, bins=hist_bins, range=hist_range)[0]
+            hist += h
+
+        if self._use_numpy:
+            hist = torch.from_numpy(hist)
+
+        return hist
+
+    def __hist_high_mem(self, batch_grad_clamped, param_clamped):
+        """Compute histogram with memory-intensive strategy.
+
+        Note:
+            Don't hand in sequences of arrays for ``bins`` as this way the
+            histogram functions do not know that the bins are uniform. They
+            will then call a sort algorithm, which is expensive.
+        """
+        batch_size = batch_grad_clamped.shape[0]
+        expand_arg = [batch_size] + len(param_clamped.shape) * [-1]
+        param_clamped = param_clamped.unsqueeze(0).expand(*expand_arg).flatten()
+        batch_grad_clamped = batch_grad_clamped.flatten()
+
+        if self._use_numpy:
+            batch_grad_clamped = batch_grad_clamped.cpu().numpy()
+            param_clamped = param_clamped.cpu().numpy()
+
+        hist_bins = (self._xbins, self._ybins)
+        hist_range = ((self._xmin, self._xmax), (self._ymin, self._ymax))
+
+        if self._use_numpy:
+            args = (batch_grad_clamped, param_clamped)
+            hist_func = numpy.histogram2d
+        else:
+            args = (torch.stack((batch_grad_clamped, param_clamped)),)
+            hist_func = histogram2d
+
+        hist = hist_func(*args, bins=hist_bins, range=hist_range)[0]
+
+        if self._use_numpy:
+            hist = torch.from_numpy(hist)
+
+        return hist
+
     def _compute_histogram(self, batch_grad):
         """Transform individual gradients and parameters into a 2d histogram.
 
@@ -289,48 +403,16 @@ class BatchGradHistogram2d(Quantity):
         Todo:
             Wait for PyTorch functionality and replace numpy
         """
-        batch_size = batch_grad.shape[0]
-
-        # clip to interval, elements outside [xmin, xmax] would be ignored
-        batch_grad_clamped = torch.clamp(
-            batch_size * batch_grad.data, self._xmin, self._xmax
+        batch_grad_clamped, param_clamped = self.__preprocess(
+            batch_grad.data, batch_grad._param_weakref().data
         )
 
-        param = batch_grad._param_weakref().data
-        param_clamped = torch.clamp(param, self._ymin, self._ymax)
-
-        x_edges, y_edges = self._get_current_bin_edges()
-        x_edges = x_edges.cpu().numpy()
-        y_edges = y_edges.cpu().numpy()
-
         if self._save_memory:
-            batch_grad_clamped = batch_grad_clamped.flatten(start_dim=1).cpu().numpy()
-            param_clamped = param_clamped.flatten().cpu().numpy()
-
-            hist = numpy.zeros(shape=(len(x_edges) - 1, len(y_edges) - 1))
-
-            for n in range(batch_grad_clamped.shape[0]):
-                h, xedges, yedges = numpy.histogram2d(
-                    batch_grad_clamped[n], param_clamped, bins=(x_edges, y_edges)
-                )
-                hist += h
-
+            hist = self.__hist_save_mem(batch_grad_clamped, param_clamped)
         else:
-            expand_arg = [batch_size] + len(param.shape) * [-1]
-            param_clamped = param_clamped.unsqueeze(0).expand(*expand_arg).flatten()
+            hist = self.__hist_high_mem(batch_grad_clamped, param_clamped)
 
-            batch_grad_clamped = batch_grad_clamped.cpu().numpy()
-            param_clamped = param_clamped.cpu().numpy()
-
-            hist, xedges, yedges = numpy.histogram2d(
-                batch_grad_clamped, param_clamped, bins=(x_edges, y_edges)
-            )
-
-        if self._check:
-            assert numpy.allclose(x_edges, xedges)
-            assert numpy.allclose(y_edges, yedges)
-
-        return torch.from_numpy(hist)
+        return hist
 
     def _update_limits(self, global_step, params, batch_loss):
         """Update limits for next histogram computation."""
@@ -344,6 +426,13 @@ class BatchGradHistogram2d(Quantity):
         abs_max = padding_factor * max(
             p.grad_batch_transforms["grad_batch_abs_max"] for p in params
         )
+
+        if abs_max == 0.0:
+            warnings.warn(
+                "Adaptive x limits are identical, using a small range instead."
+            )
+            epsilon = 1e-6
+            abs_max += epsilon
 
         if self._verbose:
             print("Updating limits:")
@@ -360,6 +449,13 @@ class BatchGradHistogram2d(Quantity):
         abs_max = padding_factor * max(
             p.grad_batch_transforms["param_abs_max"] for p in params
         )
+
+        if abs_max == 0.0:
+            warnings.warn(
+                "Adaptive y limits are identical, using a small range instead."
+            )
+            epsilon = 1e-6
+            abs_max += epsilon
 
         if self._verbose:
             print("Updating limits:")
@@ -399,4 +495,4 @@ def transform_param_abs_max(batch_grad):
 
     Transformation used by BackPACK's ``BatchGradTransforms``.
     """
-    return abs_max(batch_grad._param_weakref().data)
+    return abs_max(batch_grad._param_weakref().data).item()
