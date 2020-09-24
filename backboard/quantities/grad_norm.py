@@ -1,22 +1,11 @@
 """Class for tracking the Gradient Norm."""
 
-from backboard.quantities.quantity import Quantity
+from backboard.quantities.quantity import ByproductQuantity
 from backboard.quantities.utils_quantities import _root_sum_of_squares
 
 
-class GradNorm(Quantity):
+class GradNorm(ByproductQuantity):
     """Gradient Norm Quantitiy Class."""
-
-    def extensions(self, global_step):
-        """Return list of BackPACK extensions required for the computation.
-
-        Args:
-            global_step (int): The current iteration number.
-
-        Returns:
-            list: (Potentially empty) list with required BackPACK quantities.
-        """
-        return []
 
     def compute(self, global_step, params, batch_loss):
         """Evaluate the gradient norm at the current point.
@@ -30,11 +19,12 @@ class GradNorm(Quantity):
         Returns:
             torch.Tensor: The quantity's value.
         """
-        if global_step % self._track_interval == 0:
+        if self.is_active(global_step):
             grad_norm = [p.grad.data.norm(2).item() for p in params]
             self.output[global_step]["grad_norm"] = grad_norm
 
             if self._verbose:
-                print(f"Grad norm: {_root_sum_of_squares(grad_norm):.4f}")
-        else:
-            pass
+                print(
+                    f"[Step {global_step}] GradNorm:"
+                    + " {_root_sum_of_squares(grad_norm):.4f}"
+                )
