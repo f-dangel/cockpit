@@ -1,21 +1,10 @@
 """Class for tracking the Individual Parameters."""
 
-from backboard.quantities.quantity import Quantity
+from backboard.quantities.quantity import ByproductQuantity
 
 
-class Parameters(Quantity):
+class Parameters(ByproductQuantity):
     """Parameter Quantitiy Class."""
-
-    def extensions(self, global_step):
-        """Return list of BackPACK extensions required for the computation.
-
-        Args:
-            global_step (int): The current iteration number.
-
-        Returns:
-            list: (Potentially empty) list with required BackPACK quantities.
-        """
-        return []
 
     def compute(self, global_step, params, batch_loss):
         """Store the current parameter.
@@ -26,5 +15,9 @@ class Parameters(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if global_step % self._track_interval == 0:
-            self.output[global_step]["params"] = [p.data.tolist() for p in params]
+        if self.is_active(global_step):
+            parameters = [p.data.tolist() for p in params]
+            self.output[global_step]["params"] = parameters
+
+            if self._verbose:
+                print(f"[Step {global_step}] Parameters: {parameters}")
