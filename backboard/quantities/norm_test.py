@@ -2,7 +2,6 @@
 
 import torch
 
-import backboard
 from backboard.quantities.quantity import SingleStepQuantity
 from backpack import extensions
 

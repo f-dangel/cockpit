@@ -5,7 +5,7 @@ import warnings
 import numpy
 import torch
 
-from backboard.quantities.quantity import Quantity, SingleStepQuantity
+from backboard.quantities.quantity import SingleStepQuantity
 from backboard.quantities.utils_hists import histogram2d
 from backboard.quantities.utils_quantities import abs_max
 from backpack import extensions
