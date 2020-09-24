@@ -5,25 +5,26 @@ import warnings
 import numpy
 import torch
 
-from backboard.quantities.quantity import Quantity
+from backboard.quantities.quantity import Quantity, SingleStepQuantity
 from backboard.quantities.utils_hists import histogram2d
 from backboard.quantities.utils_quantities import abs_max
 from backpack import extensions
 
 
-class BatchGradHistogram1d(Quantity):
+class BatchGradHistogram1d(SingleStepQuantity):
     """One-dimensional histogram of individual gradient elements."""
 
     def __init__(
         self,
-        track_interval,
+        track_interval=1,
+        track_offset=0,
         xmin=-2,
         xmax=2,
         bins=100,
-        adapt_limits=True,
-        adapt_limits_interval=None,
+        adapt_schedule=None,
         verbose=False,
         check=False,
+        track_schedule=None,
     ):
         """Initialize the 1D Histogram of individual gradient elements.
 
@@ -32,25 +33,33 @@ class BatchGradHistogram1d(Quantity):
             xmin (float): Lower clipping bound for individual gradients in histogram.
             xmax (float): Upper clipping bound for individual gradients in histogram.
             bins (int): Number of bins
-            adapt_limits (bool): Adapt bin ranges.
-            adapt_limits_interval (int): Adaptation frequency. Only used if
-                ``update_limits`` is not ``None``. If ``None``, only adapt once.
-                If ``-1``, use same value as ``track_interval``.
+            adapt_schedule (callable): Function that maps ``global_step`` to a boolean
+                that indicates if the limits should be updated. If ``None``, adapt
+                only at step 0.
             verbose (bool): Turns on verbose mode. Defaults to ``False``.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
 
         """
-        super().__init__(track_interval, verbose=verbose)
+        super().__init__(
+            track_interval=track_interval,
+            track_offset=track_offset,
+            verbose=verbose,
+            track_schedule=track_schedule,
+        )
         self._xmin = xmin
         self._xmax = xmax
         self._bins = bins
-        self._adapt_limits = adapt_limits
 
-        if adapt_limits_interval == -1:
-            self._adapt_limits_interval = track_interval
+        if adapt_schedule is None:
+
+            def default_adapt_schedule(global_step):
+                """Adapt at the very first step."""
+                return global_step == 0
+
+            self._adapt_schedule = default_adapt_schedule
         else:
-            self._adapt_limits_interval = adapt_limits_interval
+            self._adapt_schedule = adapt_schedule
 
         self._check = check
 
@@ -65,14 +74,14 @@ class BatchGradHistogram1d(Quantity):
         """
         ext = []
 
-        if global_step % self._track_interval == 0:
+        if self.is_active(global_step):
             ext.append(
                 extensions.BatchGradTransforms(
                     transforms={"hist_1d": self._compute_histogram}
                 )
             )
 
-        if self._should_update_limits(global_step):
+        if self._adapt_schedule(global_step):
             ext.append(
                 extensions.BatchGradTransforms(
                     transforms={"grad_batch_abs_max": transform_grad_batch_abs_max}
@@ -90,7 +99,7 @@ class BatchGradHistogram1d(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if global_step % self._track_interval == 0:
+        if self.is_active(global_step):
             edges = self._get_current_bin_edges()
             hist = sum(p.grad_batch_transforms["hist_1d"] for p in params)
 
@@ -104,8 +113,14 @@ class BatchGradHistogram1d(Quantity):
             self.output[global_step]["edges"] = edges.cpu().numpy().tolist()
 
             if self._verbose:
-                print(f"Histogram bin edges 0,...,10: {edges[:10]}")
-                print(f"Histogram counts 0,...,10: {hist[:10]}")
+                print(
+                    f"[Step {global_step}] BatchGradHistogram1d"
+                    + f" edges 0,...,4: {edges[:5]}"
+                )
+                print(
+                    f"[Step {global_step}] BatchGradHistogram1d"
+                    + f" counts 0,...,4: {hist[:5]}"
+                )
 
         self._update_limits(global_step, params, batch_loss)
 
@@ -134,7 +149,7 @@ class BatchGradHistogram1d(Quantity):
 
     def _update_limits(self, global_step, params, batch_loss):
         """Update limits for next histogram computation."""
-        if self._adapt_limits and self._should_update_limits(global_step):
+        if self._adapt_schedule(global_step):
             padding_factor = 1.2
             abs_max = padding_factor * max(
                 p.grad_batch_transforms["grad_batch_abs_max"] for p in params
@@ -147,22 +162,13 @@ class BatchGradHistogram1d(Quantity):
                 epsilon = 1e-6
                 abs_max += epsilon
 
-            if self._verbose:
-                print("Updating limits:")
-                print(f"Old: x_min={self._xmin:.5f}, x_max={self._xmax:.5f}")
-
             self._xmin, self._xmax = -abs_max, abs_max
 
             if self._verbose:
-                print(f"New: x_min={self._xmin:.5f}, x_max={self._xmax:.5f}")
-
-    def _should_update_limits(self, global_step):
-        """Return if current iteration should update the bin limits"""
-        if self._adapt_limits_interval is None:
-            is_first_update = global_step == 0
-            return is_first_update
-        else:
-            return global_step % self._adapt_limits_interval == 0
+                print(
+                    f"[Step {global_step}] BatchGradHistogram1d"
+                    + f" new limits: ({self._xmin:.4f}, {self._xmax:.4f})",
+                )
 
     def _get_current_bin_edges(self):
         """Return current edge values of bins."""
