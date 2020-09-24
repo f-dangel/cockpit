@@ -26,5 +26,5 @@ class GradNorm(ByproductQuantity):
             if self._verbose:
                 print(
                     f"[Step {global_step}] GradNorm:"
-                    + " {_root_sum_of_squares(grad_norm):.4f}"
+                    + f" {_root_sum_of_squares(grad_norm):.4f}"
                 )
