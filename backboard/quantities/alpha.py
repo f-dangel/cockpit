@@ -57,7 +57,7 @@ class _Alpha(Quantity):
             if self._verbose:
                 print(f"[Step {global_step}] Alpha: {alpha:.4f}")
 
-            self.output[global_step - 1]["alpha"] = alpha
+            self.output[global_step - self._start_end_difference]["alpha"] = alpha
             self.clear_info()
 
         if self._is_position(global_step, pos="start"):
