@@ -1,10 +1,10 @@
 """Class for tracking the Trace of the Hessian."""
 
-from backboard.quantities.quantity import Quantity
+from backboard.quantities.quantity import SingleStepQuantity
 from backpack import extensions
 
 
-class Trace(Quantity):
+class Trace(SingleStepQuantity):
     """Trace Quantitiy Class."""
 
     def extensions(self, global_step):
@@ -16,11 +16,12 @@ class Trace(Quantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
-        return (
-            [extensions.DiagHessian()]
-            if global_step % self._track_interval == 0
-            else []
-        )
+        if self.is_active(global_step):
+            ext = [extensions.DiagHessian()]
+        else:
+            ext = []
+
+        return ext
 
     def compute(self, global_step, params, batch_loss):
         """Evaluate the trace of the Hessian at the current point.
@@ -31,12 +32,10 @@ class Trace(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if global_step % self._track_interval == 0:
+        if self.is_active(global_step):
             trace = [p.diag_h.sum().item() for p in params]
-            self.output[global_step]["trace"] = trace
 
             if self._verbose:
-                print(f"Trace: {sum(trace):.4f}")
+                print(f"[Step {global_step}] Trace: {sum(trace):.4f}")
 
-        else:
-            pass
+            self.output[global_step]["trace"] = trace
