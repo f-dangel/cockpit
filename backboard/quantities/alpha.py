@@ -19,9 +19,17 @@ class _Alpha(Quantity):
     """Base class for α computation."""
 
     _positions = ["start", "end"]
+    _start_end_difference = 1
 
-    def __init__(self, track_interval=1, verbose=False):
-        super().__init__(track_interval=track_interval, verbose=verbose)
+    def __init__(
+        self, track_interval=1, track_offset=0, verbose=False, track_schedule=None
+    ):
+        super().__init__(
+            track_interval=track_interval,
+            track_offset=track_offset,
+            verbose=verbose,
+            track_schedule=track_schedule,
+        )
         self.clear_info()
 
     def clear_info(self):
@@ -43,7 +51,13 @@ class _Alpha(Quantity):
         """
         if self._is_position(global_step, pos="end"):
             self._end_info = self._fetch_values(params, batch_loss, pos="end")
-            self.output[global_step - 1]["alpha"] = self._compute_alpha()
+
+            alpha = self._compute_alpha()
+
+            if self._verbose:
+                print(f"[Step {global_step}] Alpha: {alpha:.4f}")
+
+            self.output[global_step - 1]["alpha"] = alpha
             self.clear_info()
 
         if self._is_position(global_step, pos="start"):
@@ -67,9 +81,6 @@ class _Alpha(Quantity):
         # Compute alpha
         mu = _fit_quadratic(t, fs, dfs, var_fs, var_dfs)
         alpha = _get_alpha(mu, t)
-
-        if self._verbose:
-            print(f"α: {alpha:.4f}")
 
         return alpha
 
@@ -105,15 +116,13 @@ class _Alpha(Quantity):
     def _is_position(self, global_step, pos):
         """Return whether current iteration is the start/end of a quadratic fit."""
         if pos == "start":
-            return global_step % self._track_interval == 0
+            step = global_step
         elif pos == "end":
-            if self._track_interval == 1:
-                first_step = 0
-                return global_step != first_step
-            else:
-                return global_step % self._track_interval == 1
+            step = global_step - self._start_end_difference
         else:
             raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
+
+        return self._track_schedule(step)
 
 
 class AlphaExpensive(_Alpha):
