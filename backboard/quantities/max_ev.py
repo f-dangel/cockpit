@@ -15,7 +15,14 @@ from backpack.utils.convert_parameters import vector_to_parameter_list
 class MaxEV(SingleStepQuantity):
     """Maximum Hessian Eigenvalue Quantitiy Class."""
 
-    def __init__(self, track_interval=1, track_offset=0, verbose=False, use_power=True):
+    def __init__(
+        self,
+        track_interval=1,
+        track_offset=0,
+        verbose=False,
+        use_power=True,
+        track_schedule=None,
+    ):
         """Initialize maximum eigenvalue computation
 
         Args:
@@ -24,9 +31,11 @@ class MaxEV(SingleStepQuantity):
                 tion (requires transfers from GPU to CPU and ``torch`` to ``numpy``.)
         """
         super().__init__(
-            track_interval=track_interval, track_offset=track_offset, verbose=verbose
+            track_interval=track_interval,
+            track_offset=track_offset,
+            verbose=verbose,
+            track_schedule=track_schedule,
         )
-        self._last = None
         self._use_power = use_power
 
     def create_graph(self, global_step):
@@ -84,7 +93,7 @@ class MaxEV(SingleStepQuantity):
             max_ev = eigsh(HVP, k=1, which="LA", return_eigenvectors=False)[0]
 
         if self._verbose:
-            print(f"Largest Hessian eigenvalue: λₘₐₓ={max_ev:.4f}")
+            print(f"[Step {global_step}] MaxEV: {max_ev:.4f}")
 
         return max_ev
 

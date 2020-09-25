@@ -26,7 +26,7 @@ def histogram_2d_gauge(self, fig, gridspec, transformation=None):
 
     # Check if the required data is available, else skip this instrument
     requires = ["x_edges", "y_edges", "hist_2d"]
-    plot_possible = check_data(self.tracking_data, requires)
+    plot_possible = check_data(self.tracking_data, requires, min_elements=1)
     if not plot_possible:
         warnings.warn(
             "Couldn't get the required data for the " + title + " instrument",

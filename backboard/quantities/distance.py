@@ -7,6 +7,9 @@ from backboard.quantities.utils_quantities import _root_sum_of_squares
 class Distance(Quantity):
     """Parameter Distance Quantitiy Class."""
 
+    _positions = ["start", "end"]
+    _start_end_difference = 1
+
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
 
@@ -46,7 +49,7 @@ class Distance(Quantity):
         if global_step == 0:
             self.parameter_init = [p.data.clone().detach() for p in params]
 
-        if global_step % self._track_interval == 0:
+        if self._track_schedule(global_step):
             d2init = [
                 (init - p).norm(2).item()
                 for init, p in zip(self.parameter_init, params)
@@ -55,9 +58,9 @@ class Distance(Quantity):
             self.output[global_step]["d2init"] = d2init
 
             if self._verbose:
-                print(f"Distance to initialization: {_root_sum_of_squares(d2init):.4f}")
-        else:
-            pass
+                print(
+                    f"[Step {global_step}] D2Init: {_root_sum_of_squares(d2init):.4f}"
+                )
 
     def _compute_update_size(self, global_step, params, batch_loss):
         """Evaluate the size of the last parameter update.
@@ -68,32 +71,31 @@ class Distance(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if self._track_interval == 1:
-            # Special case if we want to track every iteration, since then the two
-            # computation steps of the quantity overlap.
-            if hasattr(self, "old_params"):
-                # compute update size of last (!) step
-                update_size = [
-                    (old_p - p).norm(2).item()
-                    for old_p, p in zip(self.old_params, params)
-                ]
-                self.output[global_step - 1]["update_size"] = update_size
+        if self._is_position(global_step, "end"):
+            update_size = [
+                (old_p - p).norm(2).item() for old_p, p in zip(self.old_params, params)
+            ]
+            self.output[global_step - self._start_end_difference][
+                "update_size"
+            ] = update_size
 
-                if self._verbose:
-                    print(f"Update size: {_root_sum_of_squares(update_size):.4f}")
-            # store current parameters
+            if self._verbose:
+                print(
+                    f"[Step {global_step}] Update size:"
+                    + f" {_root_sum_of_squares(update_size):.4f}"
+                )
+            del self.old_params
+
+        if self._is_position(global_step, "start"):
             self.old_params = [p.data.clone().detach() for p in params]
-        else:
-            if global_step % self._track_interval == 0:
-                # store current parameters
-                self.old_params = [p.data.clone().detach() for p in params]
-            elif global_step % self._track_interval == 1:
-                # Compute update size
-                update_size = [
-                    (old_p - p).norm(2).item()
-                    for old_p, p in zip(self.old_params, params)
-                ]
-                self.output[global_step - 1]["update_size"] = update_size
 
-                if self._verbose:
-                    print(f"Update size: {_root_sum_of_squares(update_size):.4f}")
+    def _is_position(self, global_step, pos):
+        """Return whether current iteration is start/end of update size computation."""
+        if pos == "start":
+            step = global_step
+        elif pos == "end":
+            step = global_step - self._start_end_difference
+        else:
+            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
+
+        return self._track_schedule(step)

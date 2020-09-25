@@ -1,6 +1,6 @@
 """TIC Gauge."""
 
-from backboard.instruments.utils_instruments import create_basic_plot
+from backboard.instruments.utils_instruments import check_data, create_basic_plot
 
 
 def tic_gauge(self, fig, gridspec):
@@ -15,7 +15,7 @@ def tic_gauge(self, fig, gridspec):
     # Plot Trace vs iteration
     title = "TIC"
 
-    if "tic_diag" in self.tracking_data:
+    if check_data(self.tracking_data, ["tic_diag"]):
         plot_args = {
             "x": "iteration",
             "y": "tic_diag",
@@ -34,7 +34,7 @@ def tic_gauge(self, fig, gridspec):
         ax = fig.add_subplot(gridspec)
         create_basic_plot(**plot_args, ax=ax)
 
-    if "tic_trace" in self.tracking_data:
+    if check_data(self.tracking_data, ["tic_trace"]):
         if "ax" in locals():
             ax2 = ax.twinx()
         else:
