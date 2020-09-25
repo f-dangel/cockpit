@@ -244,18 +244,26 @@ def _add_last_value_to_legend(ax, percentage=False):
     ax.legend(lines, plot_labels)
 
 
-def check_data(data, requires):
+def check_data(data, requires, min_elements=2):
     """Checks if all elements of requires are available in data.
 
     Args:
         data (pandas.DataFrame): A dataframe holding the data.
         requires ([str]): A list of string that should be part of data.
+        min_elements (int, optional): Minimal number of elements required for plotting.
+            Defaults to 2. This is in general necessary, so that seaborn can apply
+            its colormap.
 
     Returns:
         bool: Check whether all elements of requires exist in data
     """
     for r in requires:
+        # Check fails if element does not exists in the data frame
         if r not in data.columns:
             return False
+        # Or if it exists but has not enough elements
+        else:
+            if len(data[r]) < min_elements:
+                return False
 
     return True
