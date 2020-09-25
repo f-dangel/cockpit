@@ -7,7 +7,7 @@ import numpy as np
 from backboard.instruments.utils_instruments import _beautify_plot, check_data
 
 
-def histogram_1d_gauge(self, fig, gridspec):
+def histogram_1d_gauge(self, fig, gridspec, y_scale="log"):
     """One-dimensional histogram of the individual gradient elements.
 
     Args:
@@ -15,6 +15,7 @@ def histogram_1d_gauge(self, fig, gridspec):
         fig (matplotlib.figure): Figure of the Cockpit.
         gridspec (matplotlib.gridspec): GridSpec where the instrument should be
             placed
+        y_scale (str, optional): Scale of the y-axis. Defaults to "log".
     """
     # Plot
     title = "Gradient Element Histogram"
@@ -37,6 +38,7 @@ def histogram_1d_gauge(self, fig, gridspec):
         "facecolor": self.bg_color_instruments,
         "xlabel": "gradient element value",
         "ylabel": "frequency",
+        "y_scale": y_scale,
     }
 
     vals, mid_points, width = _get_histogram_data(self.tracking_data)
