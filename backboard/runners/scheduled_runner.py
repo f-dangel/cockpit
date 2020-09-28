@@ -166,7 +166,6 @@ class ScheduleCockpitRunner(PTRunner):
                         batch_loss.backward(create_graph=cockpit.create_graph)
 
                     cockpit.track(global_step, batch_loss)
-                    print(global_step)
                     cockpit.maybe_write_and_plot(
                         global_step,
                         training_params["show_plots"],
