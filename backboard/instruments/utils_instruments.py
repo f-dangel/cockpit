@@ -263,7 +263,7 @@ def check_data(data, requires, min_elements=2):
             return False
         # Or if it exists but has not enough elements
         else:
-            if len(data[r]) < min_elements:
+            if len(data[r].dropna()) < min_elements:
                 return False
 
     return True
