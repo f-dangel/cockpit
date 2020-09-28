@@ -289,16 +289,21 @@ class CockpitPlotter:
     def _post_process_plot(self):
         """Process the plotting figure, by adding a title, legend, etc."""
         # Set Title
-        tp = (
-            config.get_data_set_naming()[self.dataset]
-            + " "
-            + config.get_tp_naming()[self.model]
-        )
-        self.fig.suptitle(
-            "Cockpit for " + self.optimizer + " on " + tp,
-            fontsize="xx-large",
-            fontweight="bold",
-        )
+        try:
+            tp = (
+                config.get_data_set_naming()[self.dataset]
+                + " "
+                + config.get_tp_naming()[self.model]
+            )
+            self.fig.suptitle(
+                "Cockpit for " + self.optimizer + " on " + tp,
+                fontsize="xx-large",
+                fontweight="bold",
+            )
+        except KeyError:
+            self.fig.suptitle(
+                "Cockpit for " + self.optimizer, fontsize="xx-large", fontweight="bold"
+            )
 
         # # Set Legend
         # ax = self.fig.add_subplot(self.grid_spec[0, 0])

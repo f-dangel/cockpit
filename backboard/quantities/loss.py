@@ -16,7 +16,8 @@ class Loss(ByproductQuantity):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if self.is_active(global_step):
-            self.output[global_step]["mini_batch_loss"] = batch_loss.item()
+            loss = batch_loss.item()
+            self.output[global_step]["mini_batch_loss"] = loss
 
             if self._verbose:
-                print(f"Loss: {batch_loss.item():.4f}")
+                print(f"[Step {global_step}] Loss: {loss:.4f}")

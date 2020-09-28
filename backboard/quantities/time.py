@@ -8,9 +8,14 @@ from backboard.quantities.quantity import ByproductQuantity
 class Time(ByproductQuantity):
     """Time Quantity Class."""
 
-    def __init__(self, track_interval=1, track_offset=0, verbose=False):
+    def __init__(
+        self, track_interval=1, track_offset=0, verbose=False, track_schedule=None
+    ):
         super().__init__(
-            track_interval=track_interval, track_offset=track_offset, verbose=verbose
+            track_interval=track_interval,
+            track_offset=track_offset,
+            verbose=verbose,
+            track_schedule=track_schedule,
         )
         self._last = None
 
@@ -29,6 +34,8 @@ class Time(ByproductQuantity):
 
             if self._verbose and self._last is not None:
                 elapsed = current - self._last
-                print(f"Time: {current:.3f}s, elapsed since last: {elapsed:.3f}s")
+                print(
+                    f"[Step {global_step}] Time: {current:.3f}s, Last: {elapsed:.3f}s"
+                )
 
             self._last = current

@@ -2,11 +2,11 @@
 
 import torch
 
-from backboard.quantities.quantity import Quantity
+from backboard.quantities.quantity import SingleStepQuantity
 from backpack import extensions
 
 
-class NormTest(Quantity):
+class NormTest(SingleStepQuantity):
     """Norm Test Quantitiy Class.
 
     Norm test proposed in byrd2012adaptive.
@@ -15,7 +15,15 @@ class NormTest(Quantity):
         - https://link.springer.com/content/pdf/10.1007/s10107-012-0572-5.pdf
     """
 
-    def __init__(self, track_interval, use_double=False, verbose=False, check=False):
+    def __init__(
+        self,
+        track_interval=1,
+        track_offset=0,
+        use_double=False,
+        verbose=False,
+        check=False,
+        track_schedule=None,
+    ):
         """Initialize.
 
         Args:
@@ -26,9 +34,13 @@ class NormTest(Quantity):
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
         """
-        super().__init__(track_interval)
+        super().__init__(
+            track_interval=track_interval,
+            track_offset=track_offset,
+            verbose=verbose,
+            track_schedule=track_schedule,
+        )
         self._use_double = use_double
-        self._verbose = verbose
         self._check = check
 
     def extensions(self, global_step):
@@ -40,7 +52,7 @@ class NormTest(Quantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
-        if global_step % self._track_interval == 0:
+        if self.is_active(global_step):
             ext = [extensions.BatchL2Grad()]
 
             if self._check:
@@ -48,6 +60,7 @@ class NormTest(Quantity):
 
         else:
             ext = []
+
         return ext
 
     def compute(self, global_step, params, batch_loss):
@@ -59,9 +72,13 @@ class NormTest(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if global_step % self._track_interval == 0:
-            norm_test = self._compute(params, batch_loss)
-            self.output[global_step]["norm_test"] = norm_test.item()
+        if self.is_active(global_step):
+            norm_test = self._compute(params, batch_loss).item()
+
+            if self._verbose:
+                print(f"[Step {global_step}] NormTest: {norm_test:.4f}")
+
+            self.output[global_step]["norm_test"] = norm_test
 
             if self._check:
                 self.__run_check(params, batch_loss)
@@ -99,12 +116,7 @@ class NormTest(Quantity):
         Returns:
             [type]: [description]
         """
-        theta_max = (var_l1 / batch_size / grad_l2_squared).sqrt()
-
-        if self._verbose:
-            print(f"Maximum value passing norm test: θₘₐₓ={theta_max:.4f}")
-
-        return theta_max
+        return (var_l1 / batch_size / grad_l2_squared).sqrt()
 
     def _compute_variance_l1(self, batch_size, batch_l2_squared, grad_l2_squared):
         """Compute the sample variance ℓ₁ norm.

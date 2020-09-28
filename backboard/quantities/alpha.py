@@ -19,9 +19,17 @@ class _Alpha(Quantity):
     """Base class for α computation."""
 
     _positions = ["start", "end"]
+    _start_end_difference = 1
 
-    def __init__(self, track_interval=1, verbose=False):
-        super().__init__(track_interval=track_interval, verbose=verbose)
+    def __init__(
+        self, track_interval=1, track_offset=0, verbose=False, track_schedule=None
+    ):
+        super().__init__(
+            track_interval=track_interval,
+            track_offset=track_offset,
+            verbose=verbose,
+            track_schedule=track_schedule,
+        )
         self.clear_info()
 
     def clear_info(self):
@@ -43,7 +51,13 @@ class _Alpha(Quantity):
         """
         if self._is_position(global_step, pos="end"):
             self._end_info = self._fetch_values(params, batch_loss, pos="end")
-            self.output[global_step - 1]["alpha"] = self._compute_alpha()
+
+            alpha = self._compute_alpha()
+
+            if self._verbose:
+                print(f"[Step {global_step}] Alpha: {alpha:.4f}")
+
+            self.output[global_step - self._start_end_difference]["alpha"] = alpha
             self.clear_info()
 
         if self._is_position(global_step, pos="start"):
@@ -67,9 +81,6 @@ class _Alpha(Quantity):
         # Compute alpha
         mu = _fit_quadratic(t, fs, dfs, var_fs, var_dfs)
         alpha = _get_alpha(mu, t)
-
-        if self._verbose:
-            print(f"α: {alpha:.4f}")
 
         return alpha
 
@@ -105,15 +116,13 @@ class _Alpha(Quantity):
     def _is_position(self, global_step, pos):
         """Return whether current iteration is the start/end of a quadratic fit."""
         if pos == "start":
-            return global_step % self._track_interval == 0
+            step = global_step
         elif pos == "end":
-            if self._track_interval == 1:
-                first_step = 0
-                return global_step != first_step
-            else:
-                return global_step % self._track_interval == 1
+            step = global_step - self._start_end_difference
         else:
             raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
+
+        return self._track_schedule(step)
 
 
 class AlphaExpensive(_Alpha):
@@ -144,30 +153,42 @@ class AlphaExpensive(_Alpha):
         """
         info = {}
 
-        if pos == "start":
-            # TODO this is currently only correctly implemented for SGD!
-            # TODO raise NotImplementedError if optimizer is not SGD with 0 momentum
-            search_dir = [-g for g in self._fetch_grad(params)]
-            info["search_dir"] = search_dir
-        elif pos == "end":
-            search_dir, _ = self._get_info("search_dir", end=False)
+        if pos in ["start", "end"]:
+            # 0ᵗʰ order info
+            info["f"] = batch_loss.item()
+            info["var_f"] = _unreduced_loss_hotfix(batch_loss).var().item()
+
+            # temporary information required to compute quantities used in fit
+            info["params"] = {id(p): p.data.clone().detach() for p in params}
+            info["grad"] = {id(p): p.grad.data.clone().detach() for p in params}
+            # L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's computes ¹/ₙ ∇ℓᵢ, we have to rescale
+            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+            info["batch_grad"] = {
+                id(p): batch_size * p.grad_batch.data.clone().detach() for p in params
+            }
+
         else:
             raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
 
-        info["params"] = {id(p): p.data.clone().detach() for p in params}
+        # compute all quantities used in fit
+        # TODO Restructure base class and move to other function
+        if pos == "end":
+            start_params, _ = self._get_info("params", end=False)
+            end_params = info["params"]
 
-        # 0ᵗʰ order info
-        info["f"] = batch_loss.item()
-        info["var_f"] = _unreduced_loss_hotfix(batch_loss).var().item()
+            search_dir = [
+                end_params[key] - start_params[key] for key in start_params.keys()
+            ]
 
-        # 1ˢᵗ order info
-        info["df"] = _projected_gradient(self._fetch_grad(params), search_dir)
+            for info_dict in [self._start_info, info]:
+                grad = [info_dict["grad"][key] for key in start_params.keys()]
+                batch_grad = [
+                    info_dict["batch_grad"][key] for key in start_params.keys()
+                ]
 
-        # If L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's BatchGrad computes ¹/ₙ ∇ℓᵢ and we have to rescale
-        batch_grads = self._fetch_batch_grad(params)
-        batch_size = self._fetch_batch_size_hotfix(batch_loss)
-        batch_grads = [batch_size * g for g in batch_grads]
-        info["var_df"] = _exact_variance(batch_grads, search_dir)
+                # 1ˢᵗ order info
+                info_dict["df"] = _projected_gradient(grad, search_dir)
+                info_dict["var_df"] = _exact_variance(batch_grad, search_dir)
 
         return info
 
@@ -226,8 +247,10 @@ class AlphaOptimized(_Alpha):
             """Compute information to project individual gradients onto the gradient."""
             batch_size = batch_grad.shape[0]
 
-            # TODO this is currently only correctly implemented for SGD!
-            # TODO raise NotImplementedError when optimizer is not SGD with 0 momentum
+            # TODO Currently only correctly implemented for SGD! Make more general
+            warnings.warn(
+                "Alpha will only be correct if optimizer is SGD with momentum 0"
+            )
             search_dir_flat = -1 * (batch_grad.data.sum(0).flatten())
             batch_grad_flat = batch_grad.data.flatten(start_dim=1)
 

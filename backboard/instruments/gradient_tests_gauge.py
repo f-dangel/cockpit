@@ -22,7 +22,7 @@ def gradient_tests_gauge(self, fig, gridspec):
 
     # Check if the required data is available, else skip this instrument
     requires = ["iteration", "inner_product_test", "norm_test", "orthogonality_test"]
-    plot_possible = check_data(self.tracking_data, requires)
+    plot_possible = check_data(self.tracking_data, requires, min_elements=1)
     if not plot_possible:
         warnings.warn(
             "Couldn't get the required data for the " + title + " instrument",
