@@ -33,17 +33,25 @@ def get_train_size(testproblem):
 
 def _get_train_size(tproblem_cls):
     """Return number of samples in training set."""
-    tproblem = tproblem_cls(batch_size=1)
+    batch_size = 1
+
+    tproblem = tproblem_cls(batch_size=batch_size)
     tproblem.set_up()
+
+    return _get_train_steps_per_epoch(tproblem) * batch_size
+
+
+def _get_train_steps_per_epoch(tproblem):
+    """Return number of mini-batches in the train set."""
     tproblem.train_init_op()
 
-    train_size = 0
+    steps = 0
 
     try:
         while True:
-            (x, _) = tproblem._get_next_batch()
-            train_size += x.shape[0]
+            tproblem._get_next_batch()
+            steps += 1
     except StopIteration:
-        pass
-
-    return train_size
+        return steps
+    except Exception as e:
+        raise RuntimeError(f"Failed to detect steps per epoch: {e}")
