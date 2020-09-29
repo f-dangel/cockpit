@@ -268,7 +268,7 @@ def _add_last_value_to_legend(ax, percentage=False):
     ax.legend(lines, plot_labels)
 
 
-def check_data(data, requires, min_elements=2):
+def check_data(data, requires, min_elements=1):
     """Checks if all elements of requires are available in data.
 
     Args:
