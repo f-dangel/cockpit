@@ -74,17 +74,29 @@ def create_basic_plot(
             Can also be given as a list, where the first element is applied to
             the x-axis and the second to the y-axis. Defaults to False.
     """
-    sns.scatterplot(
-        x=x,
-        y=y,
-        hue="iteration",
-        palette=cmap,
-        edgecolor=None,
-        marker=marker,
-        s=10,
-        data=data,
-        ax=ax,
-    )
+    try:
+        sns.scatterplot(
+            x=x,
+            y=y,
+            hue="iteration",
+            palette=cmap,
+            edgecolor=None,
+            marker=marker,
+            s=10,
+            data=data,
+            ax=ax,
+        )
+    except TypeError:
+        sns.scatterplot(
+            x=x,
+            y=y,
+            palette=cmap,
+            edgecolor=None,
+            marker=marker,
+            s=10,
+            data=data,
+            ax=ax,
+        )
 
     # Save what is being ploted as labels, if not otherwise given
     xlabel = x if xlabel is None else xlabel
@@ -97,17 +109,29 @@ def create_basic_plot(
         data["EMA_" + x] = data[x].ewm(alpha=EMA_alpha, adjust=False).mean()
         x = "EMA_" + x
     if EMA != "":
-        sns.scatterplot(
-            x=x,
-            y=y,
-            hue="iteration",
-            palette=EMA_cmap,
-            edgecolor=None,
-            marker=EMA_marker,
-            s=1,
-            data=data,
-            ax=ax,
-        )
+        try:
+            sns.scatterplot(
+                x=x,
+                y=y,
+                hue="iteration",
+                palette=EMA_cmap,
+                edgecolor=None,
+                marker=EMA_marker,
+                s=1,
+                data=data,
+                ax=ax,
+            )
+        except TypeError:
+            sns.scatterplot(
+                x=x,
+                y=y,
+                palette=EMA_cmap,
+                edgecolor=None,
+                marker=EMA_marker,
+                s=1,
+                data=data,
+                ax=ax,
+            )
 
     _beautify_plot(
         ax=ax,
