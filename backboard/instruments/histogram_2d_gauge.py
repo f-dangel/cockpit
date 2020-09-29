@@ -76,8 +76,14 @@ def _get_2d_histogram_data(tracking_data, transformation):
     vals = np.array(data.hist_2d.to_numpy()[0])
 
     # apply transformation
-    if transformation is not None:
-        vals = transformation(vals)
+    def trafo(array):
+        return np.log10(array + 1)
+
+    vals = trafo(vals)
+
+    warnings.warn("Ignoring argument 'transformation', use np.log10(x + 1)")
+    # if transformation is not None:
+    # vals = transformation(vals)
 
     x_bins = np.array(data.x_edges.to_numpy()[0])
     y_bins = np.array(data.y_edges.to_numpy()[0])
