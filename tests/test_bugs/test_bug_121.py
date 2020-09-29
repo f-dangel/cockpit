@@ -1,6 +1,5 @@
 """Test for plotting bug (https://github.com/f-dangel/backboard/issues/121)."""
 
-import pytest
 from torch.optim import SGD
 
 from backboard.cockpit import configured_quantities
