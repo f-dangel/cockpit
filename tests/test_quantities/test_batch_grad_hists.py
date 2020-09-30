@@ -3,7 +3,7 @@
 import pytest
 
 from backboard.quantities import BatchGradHistogram1d, BatchGradHistogram2d
-from deepobs.config import set_data_dir
+
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -29,7 +29,9 @@ def test_integration_batch_grad_histogram_1d(
     Note: This test only verifies that the computation passes.
     """
     set_deepobs_seed(0)
-    set_data_dir("~/tmp/data_deepobs")
+    from backboard.utils import fix_deepobs_data_dir
+
+    fix_deepobs_data_dir()
     hotfix_deepobs_argparse()
 
     quantities = [
@@ -55,7 +57,9 @@ def test_integration_batch_grad_histogram_2d(
     Note: This test only verifies that the computation passes.
     """
     set_deepobs_seed(0)
-    set_data_dir("~/tmp/data_deepobs")
+    from backboard.utils import fix_deepobs_data_dir
+
+    fix_deepobs_data_dir()
     hotfix_deepobs_argparse()
 
     quantities = [
