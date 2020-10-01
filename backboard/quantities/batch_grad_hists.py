@@ -22,6 +22,7 @@ class BatchGradHistogram1d(SingleStepQuantity):
         xmax=2,
         bins=100,
         adapt_schedule=None,
+        pad=0.2,
         verbose=False,
         check=False,
         track_schedule=None,
@@ -36,6 +37,7 @@ class BatchGradHistogram1d(SingleStepQuantity):
             adapt_schedule (callable): Function that maps ``global_step`` to a boolean
                 that indicates if the limits should be updated. If ``None``, adapt
                 only at step 0.
+            pad (float): Relative padding added to the limits
             verbose (bool): Turns on verbose mode. Defaults to ``False``.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
@@ -50,6 +52,7 @@ class BatchGradHistogram1d(SingleStepQuantity):
         self._xmin = xmin
         self._xmax = xmax
         self._bins = bins
+        self._pad = pad
 
         if adapt_schedule is None:
 
@@ -150,8 +153,8 @@ class BatchGradHistogram1d(SingleStepQuantity):
     def _update_limits(self, global_step, params, batch_loss):
         """Update limits for next histogram computation."""
         if self._adapt_schedule(global_step):
-            padding_factor = 1.2
-            abs_max = padding_factor * max(
+            pad_factor = 1.0 + self._pad
+            abs_max = pad_factor * max(
                 p.grad_batch_transforms["grad_batch_abs_max"] for p in params
             )
 
@@ -199,6 +202,8 @@ class BatchGradHistogram2d(SingleStepQuantity):
         adapt_schedule=None,
         adapt_policy="abs_max",
         verbose=False,
+        xpad=0.2,
+        ypad=0.2,
         check=False,
         track_schedule=None,
     ):
@@ -227,9 +232,10 @@ class BatchGradHistogram2d(SingleStepQuantity):
                 - "min_max": Sets interval range between minimum and maximum value
                   (+ padding).
             verbose (bool): Turns on verbose mode. Defaults to ``False``.
+            xpad (float): Relative padding added to the x limits.
+            ypad (float): Relative padding added to the y limits.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
-
         """
         super().__init__(
             track_interval=track_interval,
@@ -247,6 +253,8 @@ class BatchGradHistogram2d(SingleStepQuantity):
         self._ybins = ybins
         self._save_memory = save_memory
         self._use_numpy = use_numpy
+        self._xpad = xpad
+        self._ypad = ypad
 
         if adapt_schedule is None:
             self._adapt_schedule = self._track_schedule
@@ -482,12 +490,11 @@ class BatchGradHistogram2d(SingleStepQuantity):
 
     def _update_x_limits(self, params):
         """Update the histogram's x limits."""
-        padding = 0.2
 
         if self._adapt_policy == "abs_max":
-            padding_factor = 1 + padding
+            pad_factor = 1 + self._xpad
             abs_max = max(p.grad_batch_transforms["grad_batch_abs_max"] for p in params)
-            xmin, xmax = -padding_factor * abs_max, padding_factor * abs_max
+            xmin, xmax = -pad_factor * abs_max, pad_factor * abs_max
 
         elif self._adapt_policy == "min_max":
             min_val = min(
@@ -498,8 +505,8 @@ class BatchGradHistogram2d(SingleStepQuantity):
             )
             span = max_val - min_val
 
-            xmin = min_val - padding * span
-            xmax = max_val + padding * span
+            xmin = min_val - self._xpad * span
+            xmax = max_val + self._xpad * span
 
         else:
             raise ValueError("Invalid adaptation policy")
@@ -516,21 +523,20 @@ class BatchGradHistogram2d(SingleStepQuantity):
 
     def _update_y_limits(self, params):
         """Update the histogram's y limits."""
-        padding = 0.2
 
         if self._adapt_policy == "abs_max":
-            padding_factor = 1 + padding
+            pad_factor = 1 + self._ypad
             abs_max = max(p.grad_batch_transforms["param_abs_max"] for p in params)
 
-            ymin, ymax = -padding_factor * abs_max, padding_factor * abs_max
+            ymin, ymax = -pad_factor * abs_max, pad_factor * abs_max
 
         elif self._adapt_policy == "min_max":
             min_val = min(p.grad_batch_transforms["param_min_max"][0] for p in params)
             max_val = max(p.grad_batch_transforms["param_min_max"][1] for p in params)
             span = max_val - min_val
 
-            ymin = min_val - padding * span
-            ymax = max_val + padding * span
+            ymin = min_val - self._ypad * span
+            ymax = max_val + self._ypad * span
 
         else:
             raise ValueError("Invalid adaptation policy")
