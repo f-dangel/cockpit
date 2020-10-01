@@ -36,6 +36,7 @@ def trace_gauge(self, fig, gridspec):
         "x": "iteration",
         "y": "trace_all",
         "data": self.tracking_data,
+        "x_scale": "symlog" if self.show_log_iter else "linear",
         "y_scale": "linear",
         "cmap": self.cmap,
         "EMA": "y",
