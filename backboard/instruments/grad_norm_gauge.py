@@ -37,6 +37,7 @@ def grad_norm_gauge(self, fig, gridspec):
         "x": "iteration",
         "y": "grad_norm_all",
         "data": self.tracking_data,
+        "x_scale": "symlog" if self.show_log_iter else "linear",
         "y_scale": "linear",
         "cmap": self.cmap,
         "EMA": "y",

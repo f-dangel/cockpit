@@ -38,6 +38,7 @@ def distance_gauge(self, fig, gridspec):
         "y": "d2init_all",
         "data": self.tracking_data,
         "y_scale": "linear",
+        "x_scale": "symlog" if self.show_log_iter else "linear",
         "cmap": self.cmap,
         "EMA": "y",
         "EMA_alpha": self.EMA_alpha,
