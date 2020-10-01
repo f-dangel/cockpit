@@ -23,7 +23,7 @@ def alpha_gauge(self, fig, gridspec):
 
     # Check if the required data is available, else skip this instrument
     requires = ["alpha"]
-    plot_possible = check_data(self.tracking_data, requires)
+    plot_possible = check_data(self.tracking_data, requires, min_elements=2)
     if not plot_possible:
         warnings.warn(
             "Couldn't get the required data for the " + title + " instrument",

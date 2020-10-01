@@ -83,7 +83,15 @@ class Cockpit:
         quantities.Time,
     ]
 
-    def __init__(self, tproblem, logpath, track_interval=1, quantities=None, plot=True):
+    def __init__(
+        self,
+        tproblem,
+        logpath,
+        track_interval=1,
+        quantities=None,
+        plot=True,
+        plot_schedule=None,
+    ):
         """Initialize the Cockpit.
 
         Args:
@@ -95,6 +103,10 @@ class Cockpit:
             quantities (list, optional): List of quantities (classes or instances)
                 that should be tracked. Defaults to None, which would use all
                 implemented ones.
+            plot (bool, optional): Whether results should be plotted.
+            plot_schedule (callable): Function that maps an iteration to a boolean
+                which determines if a plot should be created and tracked data output
+                should be written.
         """
         # Store all parameters as attributes
         self.tproblem = tproblem
@@ -119,6 +131,7 @@ class Cockpit:
         self._prepare_logpath(logpath)
 
         # Create a Cockpit Plotter instance
+        self._plot_schedule = plot_schedule
         self._enable_plotting = plot
         if self._enable_plotting:
             self.cockpit_plotter = CockpitPlotter(self.logpath)
@@ -274,6 +287,15 @@ class Cockpit:
         self.output[global_step]["test_accuracy"] = test_accuracy
 
         self.output[global_step]["learning_rate"] = learning_rate
+
+    def maybe_write_and_plot(self, global_step, *args, **kwargs):
+        """Write and plot data if necessary.
+
+        The callable `plot_schedule` triggers plotting/writing.
+        """
+        if self._plot_schedule(global_step):
+            self.write()
+            self.plot(*args, **kwargs)
 
     def plot(self, *args, **kwargs):
         """Plot the Cockpit with the current state of the log file."""
