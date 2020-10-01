@@ -41,7 +41,7 @@ def performance_gauge(self, fig, gridspec):
         "EMA": "y",
         "EMA_alpha": self.EMA_alpha,
         "EMA_cmap": self.cmap2,
-        "x_scale": "linear",
+        "x_scale": "symlog" if self.show_log_iter else "linear",
         "y_scale": "linear",
         "cmap": self.cmap,
         "title": title,

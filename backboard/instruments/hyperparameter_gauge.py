@@ -52,6 +52,7 @@ def hyperparameter_gauge(self, fig, gridspec):
         ax=ax,
         xlabel=plot_args["x"],
         ylabel=ylabel,
+        x_scale="symlog" if self.show_log_iter else "linear",
         title=title,
         xlim="tight",
         fontweight="bold",
