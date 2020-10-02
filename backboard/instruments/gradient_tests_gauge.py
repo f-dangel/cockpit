@@ -58,19 +58,13 @@ def _format(self, ax_all, ax_norm, ax_inner, ax_ortho):
     ax_all.set_facecolor(self.bg_color_instruments)
 
     ax_norm.set_ylabel("norm")
-    # ax_norm.set_ylim([0, 1])
-
     ax_norm.set_yscale("log")
-    ax_norm.set_ylim([5e-2, 2e0])
 
     ax_norm.xaxis.tick_top()
     ax_norm.set_facecolor(self.bg_color_instruments)
 
     ax_inner.set_ylabel("inner")
-    # ax_inner.set_ylim([0, 1])
-
     ax_inner.set_yscale("log")
-    ax_inner.set_ylim([5e-2, 2e0])
 
     ax_inner.invert_yaxis()
     ax_inner.set_facecolor(self.bg_color_instruments)
@@ -78,10 +72,7 @@ def _format(self, ax_all, ax_norm, ax_inner, ax_ortho):
     ax_ortho.set_title("ortho")
     ax_ortho.xaxis.tick_top()
     ax_ortho.yaxis.tick_right()
-    # ax_ortho.set_xlim([0, 1])
-
     ax_ortho.set_xscale("log")
-    ax_ortho.set_xlim([5e-2, 2e0])
 
     ax_ortho.invert_yaxis()
     ax_ortho.set_facecolor(self.bg_color_instruments)
