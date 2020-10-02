@@ -31,6 +31,7 @@ def max_ev_gauge(self, fig, gridspec):
         "x": "iteration",
         "y": "max_ev",
         "data": self.tracking_data,
+        "x_scale": "symlog" if self.show_log_iter else "linear",
         "y_scale": "log",
         "cmap": self.cmap,
         "EMA": "y",

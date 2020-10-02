@@ -28,10 +28,28 @@ class CockpitPlotter:
         # Split (and store) logpath up to indentify testproblem, data set, etc.
         self.__dict__ = utils_plotting._split_logpath(logpath)
 
+        self._mpl_default_backend = plt.get_backend()
+        self._mpl_no_show_backend = "Agg"
+
         # Set plotting parameters
         self._set_plotting_params()
 
-    def plot(self, show_plot=True, save_plot=False, savename_append=None, block=False):
+    def _set_backend(self, show_plot):
+        """Use a backend that does (not) show plots."""
+        current = plt.get_backend()
+        new = self._mpl_default_backend if show_plot else self._mpl_no_show_backend
+
+        if current != new:
+            mpl.use(new)
+
+    def plot(
+        self,
+        show_plot=True,
+        save_plot=False,
+        savename_append=None,
+        block=False,
+        show_log_iter=False,
+    ):
         """Plot the cockpit for the current state of the log file.
 
         Args:
@@ -43,7 +61,13 @@ class CockpitPlotter:
                 name. Defaults to None.
             block (bool, optional): Whether the halt the computation after
                 blocking or not. Defaults to False.
+            show_log_iter (bool, optional): Whether the instruments should use
+                a log scale for the iterations. Defaults to False.
         """
+        self._set_backend(show_plot)
+
+        self.show_log_iter = show_log_iter
+
         if not hasattr(self, "fig"):
             self.fig = plt.figure(constrained_layout=False)
 
