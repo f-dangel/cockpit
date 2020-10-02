@@ -3,7 +3,7 @@
 import pytest
 
 from backboard.quantities.time import Time
-from deepobs.config import set_data_dir
+
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -31,7 +31,9 @@ def test_integration_time(
     Note: This test only verifies that the computation passes.
     """
     set_deepobs_seed(0)
-    set_data_dir("~/tmp/data_deepobs")
+    from backboard.utils import fix_deepobs_data_dir
+
+    fix_deepobs_data_dir()
     hotfix_deepobs_argparse()
 
     quantities = [

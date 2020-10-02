@@ -15,7 +15,6 @@ Note:
 import pytest
 
 from backboard.quantities.norm_test import NormTest
-from deepobs.config import set_data_dir
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -43,7 +42,9 @@ def test_norm_test_math(testproblem, num_epochs=1, batch_size=3, lr=0.01, moment
     Note: This test does not check if the value itself makes sense/is correct.
     """
     set_deepobs_seed(0)
-    set_data_dir("~/tmp/data_deepobs")
+    from backboard.utils import fix_deepobs_data_dir
+
+    fix_deepobs_data_dir()
     hotfix_deepobs_argparse()
 
     quantities = [NormTest(TRACK_INTERVAL, use_double=False, verbose=True, check=True)]

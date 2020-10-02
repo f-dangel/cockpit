@@ -179,11 +179,19 @@ def histogram2d(sample, bins, range, check_input=False):
         assert sample.shape[0] == 2
         assert len(sample.shape) == 2
 
-        assert sample[0].min() > xmin
-        assert sample[0].max() < xmax
+        assert (
+            sample[0].min() > xmin
+        ), f"sample[0] min too small: {sample[0].min()} > {xmin}"
+        assert (
+            sample[0].max() < xmax
+        ), f"sample[0] max too big: {sample[0].max()} > {xmax}"
 
-        assert sample[1].min() > ymin
-        assert sample[1].max() < ymax
+        assert (
+            sample[1].min() > ymin
+        ), f"sample[1] min too small: {sample[1].min()} > {ymin}"
+        assert (
+            sample[1].max() < ymax
+        ), f"sample[1] max too big: {sample[1].max()} > {ymax}"
 
     xbin_width = (xmax - xmin) / xbins
     ybin_width = (ymax - ymin) / ybins

@@ -4,6 +4,7 @@ from torch.optim import SGD
 
 from backboard.cockpit import configured_quantities
 from backboard.runners.scheduled_runner import ScheduleCockpitRunner
+from backboard.utils import fix_deepobs_data_dir
 from tests.utils import hotfix_deepobs_argparse
 
 optimizer_class = SGD
@@ -29,6 +30,7 @@ def plot_schedule(global_step):
 
 def test_bug_121():
     hotfix_deepobs_argparse()
+    fix_deepobs_data_dir()
 
     quants = [
         q(track_schedule=track_schedule, verbose=True)

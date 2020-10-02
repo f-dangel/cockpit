@@ -3,6 +3,7 @@
 import inspect
 import json
 import os
+import warnings
 from collections import defaultdict
 
 from backboard import quantities
@@ -187,6 +188,8 @@ class Cockpit:
             global_step (int): Current number of iteration.
             batch_loss (torch.Tensor): The batch loss of the current iteration.
         """
+        self.__warn_invalid_loss(batch_loss, global_step)
+
         params = [p for p in self.tproblem.net.parameters() if p.requires_grad]
 
         before_cleanup = [
@@ -417,3 +420,12 @@ class Cockpit:
                 combined_transforms[key] = functions[0]
 
         return BatchGradTransforms(combined_transforms)
+
+    @staticmethod
+    def __warn_invalid_loss(batch_loss, global_step):
+        """Warn if the mini-batch loss has values that may break the computation."""
+        if batch_loss.isnan().any():
+            warnings.warn(
+                f"[Step {global_step}] Mini-batch loss is {batch_loss}."
+                + "This may break computation of quantities."
+            )

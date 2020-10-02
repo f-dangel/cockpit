@@ -3,7 +3,7 @@
 import pytest
 
 from backboard.benchmark.utils import get_train_size
-from deepobs.config import set_data_dir
+from backboard.utils import fix_deepobs_data_dir
 
 train_sizes = {
     "quadratic_deep": 1000,
@@ -21,6 +21,6 @@ train_sizes = {
 @pytest.mark.parametrize("tproblem_cls", list(train_sizes.keys()))
 def test_get_train_size(tproblem_cls):
     """Test function to determine number of samples in train set."""
-    set_data_dir("~/tmp/data_deepobs")
+    fix_deepobs_data_dir()
 
     assert get_train_size(tproblem_cls) == train_sizes[tproblem_cls]
