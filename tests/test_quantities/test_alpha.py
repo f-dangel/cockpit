@@ -9,7 +9,7 @@ from backboard.quantities.alpha import (
     _fit_quadratic,
     _get_alpha,
 )
-from deepobs.config import set_data_dir
+
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -196,7 +196,9 @@ def test_integration_alpha_expensive(
     Note: This test only verifies that the computation passes.
     """
     set_deepobs_seed(0)
-    set_data_dir("~/tmp/data_deepobs")
+    from backboard.utils import fix_deepobs_data_dir
+
+    fix_deepobs_data_dir()
     hotfix_deepobs_argparse()
 
     quantities = [AlphaExpensive(TRACK_INTERVAL, verbose=True)]
@@ -224,7 +226,9 @@ def test_integration_alpha_optimized(
     Note: This test only verifies that the computation passes.
     """
     set_deepobs_seed(0)
-    set_data_dir("~/tmp/data_deepobs")
+    from backboard.utils import fix_deepobs_data_dir
+
+    fix_deepobs_data_dir()
     hotfix_deepobs_argparse()
 
     quantities = [AlphaOptimized(TRACK_INTERVAL, verbose=True)]
@@ -293,7 +297,9 @@ def test_expensive_matches_optimized_alpha_joint_run(
     Note: This test only verifies that the computation passes.
     """
     set_deepobs_seed(0)
-    set_data_dir("~/tmp/data_deepobs")
+    from backboard.utils import fix_deepobs_data_dir
+
+    fix_deepobs_data_dir()
     hotfix_deepobs_argparse()
 
     quantities = [

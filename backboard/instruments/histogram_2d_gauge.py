@@ -60,7 +60,12 @@ def histogram_2d_gauge(self, fig, gridspec, transformation=None):
     ax.set_title(title, fontweight="bold", fontsize="large")
 
 
-def _get_2d_histogram_data(tracking_data, transformation):
+def _default_trafo(array):
+    """Default transformation applied to bin counts."""
+    return np.log10(array + 1)
+
+
+def _get_2d_histogram_data(tracking_data, transformation=None):
     """Returns the histogram data for the plot.
 
     Currently we return the bins and values of the last iteration tracked before
@@ -69,15 +74,17 @@ def _get_2d_histogram_data(tracking_data, transformation):
     Args:
         tracking_data (pandas.DataFrame): DataFrame holding the tracking data.
         transformation (method): Some map applied to the bin values as a
-            transformation for the plot.
+            transformation for the plot. Use logarithmic transformation per default.
     """
     data = tracking_data[["x_edges", "y_edges", "hist_2d"]].dropna().tail(1)
 
     vals = np.array(data.hist_2d.to_numpy()[0])
 
     # apply transformation
-    if transformation is not None:
-        vals = transformation(vals)
+    if transformation is None:
+        transformation = _default_trafo
+
+    vals = transformation(vals)
 
     x_bins = np.array(data.x_edges.to_numpy()[0])
     y_bins = np.array(data.y_edges.to_numpy()[0])
