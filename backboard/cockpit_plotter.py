@@ -6,7 +6,6 @@ import os
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from PIL import Image
@@ -178,9 +177,7 @@ class CockpitPlotter:
 
         instruments.gradient_tests_gauge(self, self.fig, self.gs_gradients[1, 1])
         instruments.histogram_1d_gauge(self, self.fig, self.gs_gradients[2, 1])
-        instruments.histogram_2d_gauge(
-            self, self.fig, self.gs_gradients[3, 1], transformation=np.sqrt
-        )
+        instruments.histogram_2d_gauge(self, self.fig, self.gs_gradients[3, 1])
 
     def _plot_curvature(self, grid_spec):
         """Plot all instruments having to do with curvature in the given gridspec.
