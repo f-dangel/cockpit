@@ -2,7 +2,7 @@
 
 import torch
 
-from backboard.quantities.quantity import Quantity
+from backboard.quantities.quantity import SingleStepQuantity
 from backboard.quantities.utils_quantities import (
     has_nans,
     has_negative,
@@ -15,7 +15,7 @@ ATOL = 1e-5
 RTOL = 5e-4
 
 
-class MeanGSNR(Quantity):
+class MeanGSNR(SingleStepQuantity):
     """Mean GSNR Quantitiy Class.
 
     Mean gradient signal-to-noise ratio.
@@ -28,7 +28,14 @@ class MeanGSNR(Quantity):
     """
 
     def __init__(
-        self, track_interval, epsilon=0.0, use_double=False, verbose=False, check=False
+        self,
+        track_interval=1,
+        track_offset=0,
+        epsilon=1e-5,
+        use_double=False,
+        verbose=False,
+        check=False,
+        track_schedule=None,
     ):
         """Initialize.
 
@@ -41,10 +48,14 @@ class MeanGSNR(Quantity):
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
         """
-        super().__init__(track_interval)
+        super().__init__(
+            track_interval=track_interval,
+            track_offset=track_offset,
+            verbose=verbose,
+            track_schedule=track_schedule,
+        )
         self._epsilon = epsilon
         self._use_double = use_double
-        self._verbose = verbose
         self._check = check
 
     def extensions(self, global_step):
@@ -56,7 +67,7 @@ class MeanGSNR(Quantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
-        if global_step % self._track_interval == 0:
+        if self.is_active(global_step):
             ext = [extensions.SumGradSquared()]
 
             if self._check:
@@ -64,6 +75,7 @@ class MeanGSNR(Quantity):
 
         else:
             ext = []
+
         return ext
 
     def compute(self, global_step, params, batch_loss):
@@ -75,14 +87,16 @@ class MeanGSNR(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if global_step % self._track_interval == 0:
-            mean_gsnr = self._compute(params, batch_loss)
-            self.output[global_step]["mean_gsnr"] = mean_gsnr.item()
+        if self.is_active(global_step):
+            mean_gsnr = self._compute(params, batch_loss).item()
+
+            if self._verbose:
+                print(f"[Step {global_step}] MeanGSNR: {mean_gsnr:.4f}")
+
+            self.output[global_step]["mean_gsnr"] = mean_gsnr
 
             if self._check:
                 self.__run_check(params, batch_loss)
-        else:
-            pass
 
     def _compute(self, params, batch_loss):
         """Return maximum θ for which the norm test would pass.
@@ -94,12 +108,7 @@ class MeanGSNR(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        mean_gsnr = self._compute_gsnr(params, batch_loss).mean()
-
-        if self._verbose:
-            print(f"Mean GSNR={mean_gsnr:.4f}")
-
-        return mean_gsnr
+        return self._compute_gsnr(params, batch_loss).mean()
 
     def _compute_gsnr(self, params, batch_loss):
         """Compute gradient signal-to-noise ratio.

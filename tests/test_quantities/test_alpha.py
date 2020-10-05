@@ -253,11 +253,13 @@ def test_expensive_matches_optimized_joint_runs(
     testproblem, num_epochs=1, batch_size=4, lr=0.01, momentum=0.0, seed=0
 ):
     """Compare results of expensive and optimized alpha."""
-    quantity1 = AlphaOptimized(TRACK_INTERVAL, verbose=True)
-    quantity2 = AlphaExpensive(TRACK_INTERVAL, verbose=True)
+    quantities = [
+        AlphaOptimized(TRACK_INTERVAL, verbose=True),
+        AlphaExpensive(TRACK_INTERVAL, verbose=True),
+    ]
 
     compare_quantities(
-        [quantity1, quantity2],
+        quantities,
         testproblem,
         separate_runs=False,
         num_epochs=num_epochs,

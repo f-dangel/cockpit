@@ -2,7 +2,7 @@
 
 import torch
 
-from backboard.quantities.quantity import Quantity
+from backboard.quantities.quantity import SingleStepQuantity
 from backboard.quantities.utils_quantities import (
     has_negative,
     has_zeros,
@@ -14,7 +14,7 @@ ATOL = 1e-5
 RTOL = 5e-4
 
 
-class TIC(Quantity):
+class TIC(SingleStepQuantity):
     """Base class for different Takeuchi Information Criterion approximations.
 
     Takeuchi Information criterion (TIC) rediscovered by thomas2019interplay.
@@ -31,12 +31,14 @@ class TIC(Quantity):
 
     def __init__(
         self,
-        track_interval,
+        track_interval=1,
+        track_offset=0,
         curvature="diag_h",
-        epsilon=0.0,
+        epsilon=1e-7,
         use_double=False,
         verbose=False,
         check=False,
+        track_schedule=None,
     ):
         """Initialize TIC quantity.
 
@@ -57,11 +59,15 @@ class TIC(Quantity):
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
         """
-        super().__init__(track_interval)
+        super().__init__(
+            track_interval=track_interval,
+            track_offset=track_offset,
+            verbose=verbose,
+            track_schedule=track_schedule,
+        )
         self._curvature = curvature
         self._epsilon = epsilon
         self._use_double = use_double
-        self._verbose = verbose
         self._check = check
 
     def extensions(self, global_step):
@@ -73,7 +79,7 @@ class TIC(Quantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
-        if global_step % self._track_interval == 0:
+        if self.is_active(global_step):
             try:
                 ext = [self.extensions_from_str[self._curvature]()]
             except KeyError as e:
@@ -104,32 +110,18 @@ class TICDiag(TIC):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
 
         """
-        if global_step % self._track_interval == 0:
-            tic = self._compute(params, batch_loss)
-            self.output[global_step]["tic_diag"] = tic.item()
+        if self.is_active(global_step):
+            tic = self._compute(params, batch_loss).item()
+
+            if self._verbose:
+                print(f"[Step {global_step}] TICDiag: {tic:.4f}")
+
+            self.output[global_step]["tic_diag"] = tic
 
             if self._check:
                 self.__run_check(params, batch_loss)
 
-        else:
-            pass
-
     def _compute(self, params, batch_loss):
-        """Return TICDiag value.
-
-        Args:
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-        """
-        tic = self._compute_tic(params, batch_loss)
-
-        if self._verbose:
-            print(f"Takeuchi Information Criterion TICDiag={tic:.4f}")
-
-        return tic
-
-    def _compute_tic(self, params, batch_loss):
         """Compute the TICDiag using a diagonal curvature approximation.
 
         Args:
@@ -194,32 +186,18 @@ class TICTrace(TIC):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
 
         """
-        if global_step % self._track_interval == 0:
-            tic = self._compute(params, batch_loss)
-            self.output[global_step]["tic_trace"] = tic.item()
+        if self.is_active(global_step):
+            tic = self._compute(params, batch_loss).item()
+
+            if self._verbose:
+                print(f"[Step {global_step}] TICTrace: {tic:.4f}")
+
+            self.output[global_step]["tic_trace"] = tic
 
             if self._check:
                 self.__run_check(params, batch_loss)
 
-        else:
-            pass
-
     def _compute(self, params, batch_loss):
-        """Return TICTrace value.
-
-        Args:
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-        """
-        tic = self._compute_tic(params, batch_loss)
-
-        if self._verbose:
-            print(f"Takeuchi Information Criterion TICTrace={tic:.4f}")
-
-        return tic
-
-    def _compute_tic(self, params, batch_loss):
         """Compute the TICTrace using a trace approximation.
 
         Args:

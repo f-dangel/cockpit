@@ -1,6 +1,8 @@
 """Max EV Gauge."""
 
-from backboard.instruments.utils_instruments import create_basic_plot
+import warnings
+
+from backboard.instruments.utils_instruments import check_data, create_basic_plot
 
 
 def max_ev_gauge(self, fig, gridspec):
@@ -14,10 +16,22 @@ def max_ev_gauge(self, fig, gridspec):
     """
     # Plot Trace vs iteration
     title = "Max Eigenvalue"
+
+    # Check if the required data is available, else skip this instrument
+    requires = ["max_ev"]
+    plot_possible = check_data(self.tracking_data, requires)
+    if not plot_possible:
+        warnings.warn(
+            "Couldn't get the required data for the " + title + " instrument",
+            stacklevel=1,
+        )
+        return
+
     plot_args = {
         "x": "iteration",
         "y": "max_ev",
         "data": self.tracking_data,
+        "x_scale": "symlog" if self.show_log_iter else "linear",
         "y_scale": "log",
         "cmap": self.cmap,
         "EMA": "y",
@@ -27,7 +41,7 @@ def max_ev_gauge(self, fig, gridspec):
         "xlim": "tight",
         "ylim": None,
         "fontweight": "bold",
-        "facecolor": "summary",
+        "facecolor": self.bg_color_instruments,
     }
     # part that should be plotted
     ax = fig.add_subplot(gridspec)

@@ -289,6 +289,8 @@ TSWLatexianTemp*
 
 ########################
 
+**/data
+
 # pip src
 **/src
 *.egg-info
@@ -308,6 +310,8 @@ TSWLatexianTemp*
 tex/paper/backboard/main.pdf
 tex/paper/backboard/_region_*
 tex/paper/surfing_the_walls/main.pdf
+
+tex/paper/cockpit/cockpit_paper.pdf
 
 # Test
 .coverage

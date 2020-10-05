@@ -87,3 +87,16 @@ def has_zeros(tensor, verbose=True):
         print(f"Encountered {zero_count} zeros")
 
     return zero
+
+
+def set_up_problem(tproblem_cls, batch_size=5, seed=None, l2_reg=0.0):
+    """Create DeepOBS problem with neural network, and set to train mode."""
+    if seed is not None:
+        set_deepobs_seed(seed)
+
+    tproblem = tproblem_cls(batch_size, l2_reg=l2_reg)
+
+    tproblem.set_up()
+    tproblem.train_init_op()
+
+    return tproblem

@@ -74,8 +74,10 @@ def compare_quantities(
 def get_output_sgd_test_runner(
     quantities, testproblem, num_epochs=1, batch_size=4, lr=0.01, momentum=0.0, seed=0
 ):
+    from backboard.utils import fix_deepobs_data_dir
+
     set_deepobs_seed(seed)
-    set_data_dir("~/tmp/data_deepobs")
+    fix_deepobs_data_dir()
     hotfix_deepobs_argparse()
 
     run_sgd_test_runner(

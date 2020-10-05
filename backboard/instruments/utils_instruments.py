@@ -66,26 +66,37 @@ def create_basic_plot(
             limit. If it is given as a list, the first value is used as the lower
             bound and the second one as an upper bound. Defaults to None.
         fontweight (str, optional): Fontweight of the title. Defaults to "normal".
-        facecolor (str, optional): Facecolor of the plot. "summary" would use the
-            default facecolor defined for those plots in the cockpit_plotter.
-            Defaults to None, which does not apply any color.
+        facecolor (tuple, optional): Facecolor of the plot. Defaults to None,
+            which does not apply any color.
         zero_lines (bool, optional): Whether to highligh the x and y = 0.
             Defaults to False.
         center (bool, optional): Whether to center the limits of the plot.
             Can also be given as a list, where the first element is applied to
             the x-axis and the second to the y-axis. Defaults to False.
     """
-    sns.scatterplot(
-        x=x,
-        y=y,
-        hue="iteration",
-        palette=cmap,
-        edgecolor=None,
-        marker=marker,
-        s=10,
-        data=data,
-        ax=ax,
-    )
+    try:
+        sns.scatterplot(
+            x=x,
+            y=y,
+            hue="iteration",
+            palette=cmap,
+            edgecolor=None,
+            marker=marker,
+            s=10,
+            data=data,
+            ax=ax,
+        )
+    except TypeError:
+        sns.scatterplot(
+            x=x,
+            y=y,
+            palette=cmap,
+            edgecolor=None,
+            marker=marker,
+            s=10,
+            data=data,
+            ax=ax,
+        )
 
     # Save what is being ploted as labels, if not otherwise given
     xlabel = x if xlabel is None else xlabel
@@ -98,17 +109,29 @@ def create_basic_plot(
         data["EMA_" + x] = data[x].ewm(alpha=EMA_alpha, adjust=False).mean()
         x = "EMA_" + x
     if EMA != "":
-        sns.scatterplot(
-            x=x,
-            y=y,
-            hue="iteration",
-            palette=EMA_cmap,
-            edgecolor=None,
-            marker=EMA_marker,
-            s=1,
-            data=data,
-            ax=ax,
-        )
+        try:
+            sns.scatterplot(
+                x=x,
+                y=y,
+                hue="iteration",
+                palette=EMA_cmap,
+                edgecolor=None,
+                marker=EMA_marker,
+                s=1,
+                data=data,
+                ax=ax,
+            )
+        except TypeError:
+            sns.scatterplot(
+                x=x,
+                y=y,
+                palette=EMA_cmap,
+                edgecolor=None,
+                marker=EMA_marker,
+                s=1,
+                data=data,
+                ax=ax,
+            )
 
     _beautify_plot(
         ax=ax,
@@ -140,9 +163,6 @@ def _beautify_plot(
     zero_lines=False,
     center=False,
 ):
-    # Settings
-    color_summary_plots = "#ababba"
-
     ax.set_title(title, fontweight=fontweight, fontsize="large")
     if ax.get_legend() is not None:
         ax.get_legend().remove()
@@ -161,13 +181,13 @@ def _beautify_plot(
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
 
-    if facecolor == "summary":
-        ax.set_facecolor(color_summary_plots)
+    if facecolor is not None:
+        ax.set_facecolor(facecolor)
 
     # Zero lines
     if zero_lines:
-        ax.axvline(0, ls="-", color="white", linewidth=1.5, zorder=0)
-        ax.axhline(0, ls="-", color="white", linewidth=1.5, zorder=0)
+        ax.axvline(0, ls="-", color="#ababba", linewidth=1.5, zorder=0)
+        ax.axhline(0, ls="-", color="#ababba", linewidth=1.5, zorder=0)
 
 
 def _compute_plot_limits(ax, xlim, ylim, center=False):
@@ -246,3 +266,28 @@ def _add_last_value_to_legend(ax, percentage=False):
         plot_labels.append(formating.format(label, line.get_ydata()[-1]))
     ax.get_legend().remove()
     ax.legend(lines, plot_labels)
+
+
+def check_data(data, requires, min_elements=1):
+    """Checks if all elements of requires are available in data.
+
+    Args:
+        data (pandas.DataFrame): A dataframe holding the data.
+        requires ([str]): A list of string that should be part of data.
+        min_elements (int, optional): Minimal number of elements required for plotting.
+            Defaults to 2. This is in general necessary, so that seaborn can apply
+            its colormap.
+
+    Returns:
+        bool: Check whether all elements of requires exist in data
+    """
+    for r in requires:
+        # Check fails if element does not exists in the data frame
+        if r not in data.columns:
+            return False
+        # Or if it exists but has not enough elements
+        else:
+            if len(data[r].dropna()) < min_elements:
+                return False
+
+    return True

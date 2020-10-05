@@ -14,7 +14,7 @@ Note: Similar to the norm test, the two tested ways to compute the inner product
 import pytest
 
 from backboard.quantities.inner_product_test import InnerProductTest
-from deepobs.config import set_data_dir
+
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -44,7 +44,9 @@ def test_inner_product_test_math(
     Note: This test does not check if the value itself makes sense/is correct.
     """
     set_deepobs_seed(0)
-    set_data_dir("~/tmp/data_deepobs")
+    from backboard.utils import fix_deepobs_data_dir
+
+    fix_deepobs_data_dir()
     hotfix_deepobs_argparse()
 
     quantities = [

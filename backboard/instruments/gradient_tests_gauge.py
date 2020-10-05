@@ -1,7 +1,11 @@
 """Gradient Tests Gauge."""
 
+import warnings
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+
+from backboard.instruments.utils_instruments import check_data
 
 
 def gradient_tests_gauge(self, fig, gridspec):
@@ -16,6 +20,16 @@ def gradient_tests_gauge(self, fig, gridspec):
     # Plot
     title = "Gradient Tests"
 
+    # Check if the required data is available, else skip this instrument
+    requires = ["iteration", "inner_product_test", "norm_test", "orthogonality_test"]
+    plot_possible = check_data(self.tracking_data, requires, min_elements=1)
+    if not plot_possible:
+        warnings.warn(
+            "Couldn't get the required data for the " + title + " instrument",
+            stacklevel=1,
+        )
+        return
+
     ax = fig.add_subplot(gridspec)
     ax.set_title(title, fontweight="bold", fontsize="large")
     ax.set_axis_off()
@@ -28,12 +42,14 @@ def gradient_tests_gauge(self, fig, gridspec):
     ax_inner = fig.add_subplot(gs[2, 0])
     ax_ortho = fig.add_subplot(gs[0, 2])
 
-    _format(ax_all, ax_norm, ax_inner, ax_ortho)
+    _format(self, ax_all, ax_norm, ax_inner, ax_ortho)
     _plot(self, ax_all, ax_norm, ax_inner, ax_ortho)
 
 
-def _format(ax_all, ax_norm, ax_inner, ax_ortho):
+def _format(self, ax_all, ax_norm, ax_inner, ax_ortho):
     """Format axes of all subplots."""
+    iter_scale = "symlog" if self.show_log_iter else "linear"
+
     ax_all.yaxis.tick_right()
     ax_all.set_xlim([-1, 1])
     ax_all.set_ylim([0, 2])
@@ -41,20 +57,30 @@ def _format(ax_all, ax_norm, ax_inner, ax_ortho):
     ax_all.set_axisbelow(True)
     ax_all.grid(ls="--")
     ax_all.plot(0, 1, color="black", marker="+", markersize=18, markeredgewidth=4)
+    ax_all.set_facecolor(self.bg_color_instruments)
 
     ax_norm.set_ylabel("norm")
-    ax_norm.set_ylim([0, 1])
+    ax_norm.set_yscale("log")
+
     ax_norm.xaxis.tick_top()
+    ax_norm.set_facecolor(self.bg_color_instruments)
+    ax_norm.set_xscale(iter_scale)
 
     ax_inner.set_ylabel("inner")
-    ax_inner.set_ylim([0, 1])
+    ax_inner.set_yscale("log")
+
     ax_inner.invert_yaxis()
+    ax_inner.set_facecolor(self.bg_color_instruments)
+    ax_inner.set_xscale(iter_scale)
 
     ax_ortho.set_title("ortho")
     ax_ortho.xaxis.tick_top()
     ax_ortho.yaxis.tick_right()
-    ax_ortho.set_xlim([0, 1])
+    ax_ortho.set_xscale("log")
+
     ax_ortho.invert_yaxis()
+    ax_ortho.set_yscale(iter_scale)
+    ax_ortho.set_facecolor(self.bg_color_instruments)
 
 
 def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
@@ -70,64 +96,70 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
     orthogonality_test_widths = log.orthogonality_test.tolist()
 
     # plot norm test
-    ax_all.add_artist(plt.Circle((0, 1), norm_test_radii[-1], color="blue", fill=False))
-    ax_all.add_artist(plt.Circle((0, 1), norm_test_radii[-1], color="blue", alpha=0.4))
+    ax_all.add_artist(
+        plt.Circle((0, 1), norm_test_radii[-1], color=self.primary_color, fill=False)
+    )
+    ax_all.add_artist(
+        plt.Circle((0, 1), norm_test_radii[-1], color=self.primary_color, alpha=0.6)
+    )
     ax_all.plot(
         [-1, -1],
         [1, 1 + norm_test_radii[-1]],
-        color="blue",
+        color=self.primary_color,
         linewidth=6,
     )
 
-    ax_norm.fill_between(steps_array, norm_test_radii, color="blue", alpha=0.4)
-    ax_norm.plot(steps_array, norm_test_radii, color="blue")
+    ax_norm.fill_between(
+        steps_array, norm_test_radii, color=self.primary_color, alpha=0.6
+    )
+    ax_norm.plot(steps_array, norm_test_radii, color=self.primary_color)
 
     # plot inner product test
     ax_all.axhspan(
         1 - inner_product_test_widths[-1],
         1 + inner_product_test_widths[-1],
-        color="red",
-        alpha=0.4,
+        color=self.secondary_color,
+        alpha=0.6,
     )
     ax_all.axhspan(
         1 - inner_product_test_widths[-1],
         1 + inner_product_test_widths[-1],
-        color="red",
+        color=self.secondary_color,
         fill=False,
     )
     ax_all.plot(
         [-1, -1],
         [1 - inner_product_test_widths[-1], 1],
-        color="red",
+        color=self.secondary_color,
         linewidth=6,
     )
 
     ax_inner.fill_between(
-        steps_array, inner_product_test_widths, color="red", alpha=0.4
+        steps_array, inner_product_test_widths, color=self.secondary_color, alpha=0.6
     )
-    ax_inner.plot(steps_array, inner_product_test_widths, color="red")
+    ax_inner.plot(steps_array, inner_product_test_widths, color=self.secondary_color)
 
     # plot orthogonality test
     ax_all.axvspan(
         -orthogonality_test_widths[-1],
         orthogonality_test_widths[-1],
-        color="green",
-        alpha=0.4,
+        color=self.tertiary_color,
+        alpha=0.8,
     )
     ax_all.axvspan(
         -orthogonality_test_widths[-1],
         orthogonality_test_widths[-1],
-        color="green",
+        color=self.tertiary_color,
         fill=False,
     )
     ax_all.plot(
         [0, orthogonality_test_widths[-1]],
         [2, 2],
-        color="green",
+        color=self.tertiary_color,
         linewidth=6,
     )
 
-    ax_ortho.plot(orthogonality_test_widths, steps_array, color="green")
+    ax_ortho.plot(orthogonality_test_widths, steps_array, color=self.tertiary_color)
 
     # workaround to fill between curve and y axis
     ortho_vertices = (
@@ -139,5 +171,5 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
     codes[0] = mpl.path.Path.MOVETO
 
     path = mpl.path.Path(ortho_vertices, codes)
-    patch = mpl.patches.PathPatch(path, facecolor="green", alpha=0.4, lw=0)
+    patch = mpl.patches.PathPatch(path, facecolor=self.tertiary_color, alpha=0.6, lw=0)
     ax_ortho.add_patch(patch)

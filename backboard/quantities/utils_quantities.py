@@ -126,3 +126,9 @@ def has_zeros(tensor, verbose=True):
         print(f"Encountered {zero_count} zeros")
 
     return zero
+
+
+def abs_max(tensor):
+    """Return maximum absolute entry in ``tensor``."""
+    min_val, max_val = tensor.min(), tensor.max()
+    return max(min_val.abs(), max_val.abs())

@@ -2,11 +2,11 @@
 
 import torch
 
-from backboard.quantities.quantity import Quantity
+from backboard.quantities.quantity import SingleStepQuantity
 from backpack import extensions
 
 
-class InnerProductTest(Quantity):
+class InnerProductTest(SingleStepQuantity):
     """Inner Product Quantitiy Class.
 
     Inner product test proposed in bollapragada2017adaptive.
@@ -15,7 +15,15 @@ class InnerProductTest(Quantity):
         - https://arxiv.org/pdf/1710.11258.pdf
     """
 
-    def __init__(self, track_interval, use_double=False, verbose=False, check=False):
+    def __init__(
+        self,
+        track_interval=1,
+        track_offset=0,
+        use_double=False,
+        verbose=False,
+        check=False,
+        track_schedule=None,
+    ):
         """Initialize.
 
         Args:
@@ -31,9 +39,13 @@ class InnerProductTest(Quantity):
               Enabling ``check`` will compute the quantity via two different
               BackPACK quantities and compare them. This is roughly 2x as expensive.
         """
-        super().__init__(track_interval)
+        super().__init__(
+            track_interval=track_interval,
+            track_offset=track_offset,
+            verbose=verbose,
+            track_schedule=track_schedule,
+        )
         self._use_double = use_double
-        self._verbose = verbose
         self._check = check
 
     def extensions(self, global_step):
@@ -45,7 +57,7 @@ class InnerProductTest(Quantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
-        if global_step % self._track_interval == 0:
+        if self.is_active(global_step):
             ext = [extensions.BatchDotGrad()]
 
             if self._check:
@@ -64,9 +76,15 @@ class InnerProductTest(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if global_step % self._track_interval == 0:
-            inner_product_test = self._compute(params, batch_loss)
-            self.output[global_step]["inner_product_test"] = inner_product_test.item()
+        if self.is_active(global_step):
+            inner_product_test = self._compute(params, batch_loss).item()
+
+            if self._verbose:
+                print(
+                    f"[Step {global_step}] InnerProductTest: {inner_product_test:.4f}"
+                )
+
+            self.output[global_step]["inner_product_test"] = inner_product_test
 
             if self._check:
                 self.__run_check(params, batch_loss)
@@ -105,12 +123,7 @@ class InnerProductTest(Quantity):
         Returns:
             [type]: [description]
         """
-        theta_max = (var_projection / batch_size / grad_l2_squared ** 2).sqrt()
-
-        if self._verbose:
-            print(f"Maximum value passing inner product test: θₘₐₓ={theta_max:.4f}")
-
-        return theta_max
+        return (var_projection / batch_size / grad_l2_squared ** 2).sqrt()
 
     def _compute_projection_variance(self, batch_size, batch_dot, grad_l2_squared):
         """Compute sample variance of individual gradient projections onto the gradient.
