@@ -315,3 +315,6 @@ tex/paper/cockpit/cockpit_paper.pdf
 
 # Test
 .coverage
+
+# local emacs variables
+!**/.dir-locals.el
