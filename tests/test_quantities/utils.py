@@ -2,7 +2,6 @@
 
 import numpy
 
-from deepobs.config import set_data_dir
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
