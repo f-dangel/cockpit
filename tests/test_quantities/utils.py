@@ -54,18 +54,15 @@ def compare_quantities(
             for q in quantities
         ]
     else:
-        output1, output2 = [
-            get_output_sgd_test_runner(
-                quantities,
-                testproblem,
-                num_epochs=num_epochs,
-                batch_size=batch_size,
-                lr=lr,
-                momentum=momentum,
-                seed=seed,
-            )[0]
-            for q in quantities
-        ]
+        output1, output2 = get_output_sgd_test_runner(
+            quantities,
+            testproblem,
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            lr=lr,
+            momentum=momentum,
+            seed=seed,
+        )
 
     compare_outputs(output1, output2)
 
