@@ -6,6 +6,7 @@ from backboard.quantities.batch_grad_hists import (
     BatchGradHistogram2d,
 )
 from backboard.quantities.distance import Distance
+from backboard.quantities.early_stopping import EarlyStopping
 from backboard.quantities.grad_norm import GradNorm
 from backboard.quantities.inner_product_test import InnerProductTest
 from backboard.quantities.loss import Loss
@@ -38,4 +39,5 @@ __all__ = [
     "BatchGradHistogram1d",
     "BatchGradHistogram2d",
     "Time",
+    "EarlyStopping",
 ]
