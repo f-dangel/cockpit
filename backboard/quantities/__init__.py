@@ -5,6 +5,7 @@ from backboard.quantities.batch_grad_hists import (
     BatchGradHistogram1d,
     BatchGradHistogram2d,
 )
+from backboard.quantities.cabs import CABS
 from backboard.quantities.distance import Distance
 from backboard.quantities.early_stopping import EarlyStopping
 from backboard.quantities.grad_norm import GradNorm
@@ -40,4 +41,5 @@ __all__ = [
     "BatchGradHistogram2d",
     "Time",
     "EarlyStopping",
+    "CABS",
 ]
