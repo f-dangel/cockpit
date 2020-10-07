@@ -10,6 +10,7 @@ class EarlyStopping(SingleStepQuantity):
     """Evidence-based (EB) early-stopping criterion.
 
     Note: Proposed in
+
         - Mahsereci, M., Balles, L., Lassner, C., & Hennig, P.,
           Early stopping without a validation set (2017).
     """
