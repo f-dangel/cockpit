@@ -1,7 +1,9 @@
 """All Instruments for the Cockpit."""
 
 from backboard.instruments.alpha_gauge import alpha_gauge
+from backboard.instruments.cabs_gauge import cabs_gauge
 from backboard.instruments.distance_gauge import distance_gauge
+from backboard.instruments.early_stopping_gauge import early_stopping_gauge
 from backboard.instruments.grad_norm_gauge import grad_norm_gauge
 from backboard.instruments.gradient_tests_gauge import gradient_tests_gauge
 from backboard.instruments.histogram_1d_gauge import histogram_1d_gauge
@@ -24,4 +26,6 @@ __all__ = [
     "performance_gauge",
     "tic_gauge",
     "trace_gauge",
+    "early_stopping_gauge",
+    "cabs_gauge",
 ]
