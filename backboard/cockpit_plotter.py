@@ -18,17 +18,21 @@ from deepobs import config
 class CockpitPlotter:
     """Cockpit Plotter Class."""
 
-    def __init__(self, logpath):
+    def __init__(self, logpath, secondary_screen=False):
         """Initialize the cockpit plotter.
 
         Args:
-            logpath (str): Full path to the JSON logfile
+            logpath (str): Full path to the JSON logfile.
+            secondary_screen (bool): Whether to plot other experimental quantities
+                on a secondary screen.
         """
         # Split (and store) logpath up to indentify testproblem, data set, etc.
         self.__dict__ = utils_plotting._split_logpath(logpath)
 
         self._mpl_default_backend = plt.get_backend()
         self._mpl_no_show_backend = "Agg"
+
+        self._secondary_screen = secondary_screen
 
         # Set plotting parameters
         self._set_plotting_params()
@@ -68,7 +72,7 @@ class CockpitPlotter:
         self.show_log_iter = show_log_iter
 
         if not hasattr(self, "fig"):
-            self.fig = plt.figure(constrained_layout=False)
+            self.fig = plt.figure("Primary screen", constrained_layout=False)
 
         # read in results
         self._read_tracking_results()
@@ -115,6 +119,9 @@ class CockpitPlotter:
 
         # Post Process Title, Legend etc.
         self._post_process_plot()
+
+        if self._secondary_screen:
+            self._plot_secondary_screen()
 
         plt.tight_layout()
 
@@ -332,3 +339,12 @@ class CockpitPlotter:
         # ax.set_frame_on(False)
         # ax.get_xaxis().set_visible(False)
         # ax.get_yaxis().set_visible(False)
+
+    def _plot_secondary_screen(self):
+        """Plot a second figure with experimental quantities."""
+        if not hasattr(self, "secondary_fig"):
+            self.secondary_fig = plt.figure(
+                "Secondary screen", constrained_layout=False
+            )
+
+        self.secondary_fig.clf()

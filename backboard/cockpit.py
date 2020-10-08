@@ -92,6 +92,7 @@ class Cockpit:
         quantities=None,
         plot=True,
         plot_schedule=None,
+        secondary_screen=False,
     ):
         """Initialize the Cockpit.
 
@@ -108,6 +109,8 @@ class Cockpit:
             plot_schedule (callable): Function that maps an iteration to a boolean
                 which determines if a plot should be created and tracked data output
                 should be written.
+            secondary_screen (bool): Whether to plot other experimental quantities
+                on a secondary screen.
         """
         # Store all parameters as attributes
         self.tproblem = tproblem
@@ -135,7 +138,9 @@ class Cockpit:
         self._plot_schedule = plot_schedule
         self._enable_plotting = plot
         if self._enable_plotting:
-            self.cockpit_plotter = CockpitPlotter(self.logpath)
+            self.cockpit_plotter = CockpitPlotter(
+                self.logpath, secondary_screen=secondary_screen
+            )
 
     def _get_extensions(self, global_step):
         """Collect BackPACK extensions required at current iteration."""
