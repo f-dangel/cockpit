@@ -70,7 +70,7 @@ class EarlyStopping(SingleStepQuantity):
             if self._verbose:
                 print(f"[Step {global_step}] StoppingCriterion: {stop_crit:.4f}")
 
-            self.output[global_step]["stopping_criterion"] = stop_crit
+            self.output[global_step]["early_stopping"] = stop_crit
 
     def _compute(self, params, batch_loss):
         """Compute the criterion.
