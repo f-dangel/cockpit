@@ -348,3 +348,57 @@ class CockpitPlotter:
             )
 
         self.secondary_fig.clf()
+
+        secondary_outer_widths = [1]
+        secondary_outer_heights = [1, 3]
+
+        self.secondary_grid_spec = self.secondary_fig.add_gridspec(
+            ncols=1,
+            nrows=2,
+            width_ratios=secondary_outer_widths,
+            height_ratios=secondary_outer_heights,
+            wspace=0.1,
+            hspace=0.1,
+        )
+
+        self._plot_auxiliary(self.secondary_grid_spec[0, 0])
+        self._plot_layerwise(self.secondary_grid_spec[1, 0])
+
+    def _plot_auxiliary(self, grid_spec):
+        """Plot auxiliary quantities to the secondary screen."""
+
+        # Use grid_spec with a "dummy plot" to set Group title and color
+        self.ax_auxiliary = self.secondary_fig.add_subplot(grid_spec)
+        self.ax_auxiliary.set_title("AUXILIARY", fontweight="bold", fontsize="x-large")
+        self.ax_auxiliary.set_facecolor(self.bg_color_one)
+        self.ax_auxiliary.set_xticklabels([])
+        self.ax_auxiliary.set_yticklabels([])
+
+        # Build inner structure of this plotting group
+        # We use additional "dummy" gridspecs to position the instruments
+        self.gs_auxiliary = grid_spec.subgridspec(
+            3,
+            7,
+            width_ratios=[0.05, 1, 0.05, 1, 0.05, 1, 0.05],
+            height_ratios=[0.0, 1, 0.0],
+            hspace=self.inner_hspace,
+        )
+
+        # plot mean GS NR
+        instruments.mean_gsnr_gauge(self, self.secondary_fig, self.gs_auxiliary[1, 1])
+        # TODO Replace with CABS
+        instruments.mean_gsnr_gauge(self, self.secondary_fig, self.gs_auxiliary[1, 3])
+        # TODO Replace with EarlyStopping
+        instruments.mean_gsnr_gauge(self, self.secondary_fig, self.gs_auxiliary[1, 5])
+
+    def _plot_layerwise(self, grid_spec):
+        """Plot layerwise 2d histograms to the secondary screen."""
+        # Use grid_spec with a "dummy plot" to set Group title and color
+        self.ax_layerwise = self.secondary_fig.add_subplot(grid_spec)
+        self.ax_layerwise.set_title("LAYERWISE", fontweight="bold", fontsize="x-large")
+        self.ax_layerwise.set_facecolor(self.bg_color_two)
+        self.ax_layerwise.set_xticklabels([])
+        self.ax_layerwise.set_yticklabels([])
+
+        # TODO Build inner structure
+        # TODO Plot layerwise histograms
