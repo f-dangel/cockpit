@@ -386,10 +386,10 @@ class CockpitPlotter:
 
         # plot mean GS NR
         instruments.mean_gsnr_gauge(self, self.secondary_fig, self.gs_auxiliary[1, 1])
-        # TODO Replace with CABS
-        instruments.mean_gsnr_gauge(self, self.secondary_fig, self.gs_auxiliary[1, 3])
-        # TODO Replace with EarlyStopping
-        instruments.mean_gsnr_gauge(self, self.secondary_fig, self.gs_auxiliary[1, 5])
+        instruments.cabs_gauge(self, self.secondary_fig, self.gs_auxiliary[1, 3])
+        instruments.early_stopping_gauge(
+            self, self.secondary_fig, self.gs_auxiliary[1, 5]
+        )
 
     def _plot_layerwise(self, grid_spec):
         """Plot layerwise 2d histograms to the secondary screen."""
