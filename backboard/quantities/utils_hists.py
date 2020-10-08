@@ -1,9 +1,10 @@
 """Utility functions for individual gradient histograms."""
 
-
 import warnings
 
 import torch
+
+from backboard.quantities.utils_quantities import abs_max
 
 _range = range
 

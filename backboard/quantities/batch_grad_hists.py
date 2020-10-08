@@ -13,7 +13,6 @@ from backboard.quantities.utils_hists import (
     transform_param_abs_max,
     transform_param_min_max,
 )
-from backboard.quantities.utils_quantities import abs_max
 from backpack import extensions
 
 
