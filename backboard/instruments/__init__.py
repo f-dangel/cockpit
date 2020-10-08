@@ -8,6 +8,7 @@ from backboard.instruments.histogram_1d_gauge import histogram_1d_gauge
 from backboard.instruments.histogram_2d_gauge import histogram_2d_gauge
 from backboard.instruments.hyperparameter_gauge import hyperparameter_gauge
 from backboard.instruments.max_ev_gauge import max_ev_gauge
+from backboard.instruments.mean_gsnr_gauge import mean_gsnr_gauge
 from backboard.instruments.performance_gauge import performance_gauge
 from backboard.instruments.tic_gauge import tic_gauge
 from backboard.instruments.trace_gauge import trace_gauge
@@ -24,4 +25,5 @@ __all__ = [
     "performance_gauge",
     "tic_gauge",
     "trace_gauge",
+    "mean_gsnr_gauge",
 ]
