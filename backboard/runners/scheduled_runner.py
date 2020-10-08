@@ -20,6 +20,7 @@ class ScheduleCockpitRunner(PTRunner):
         quantities=None,
         plot=True,
         plot_schedule=None,
+        secondary_screen=False,
     ):
         """Initialize the runner.
 
@@ -32,6 +33,8 @@ class ScheduleCockpitRunner(PTRunner):
             plot_schedule (callable): Function that maps an iteration to a boolean
                 which determines if a plot should be created and tracked data output
                 should be written.
+            secondary_screen (bool): Whether to plot other experimental quantities
+                on a secondary screen.
         """
         super(ScheduleCockpitRunner, self).__init__(
             optimizer_class, hyperparameter_names
@@ -39,6 +42,7 @@ class ScheduleCockpitRunner(PTRunner):
         self._quantities = quantities
         self._enable_plotting = plot
         self._plot_schedule = plot_schedule
+        self._secondary_screen = secondary_screen
 
     def training(  # noqa: C901
         self,
@@ -86,6 +90,7 @@ class ScheduleCockpitRunner(PTRunner):
             plot_schedule=self._make_plot_schedule(
                 tproblem, training_params["plot_interval"]
             ),
+            secondary_screen=self._secondary_screen,
         )
 
         # Lists to log train/test loss and accuracy.
