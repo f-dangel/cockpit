@@ -9,8 +9,8 @@ import seaborn as sns
 from backboard.instruments.utils_instruments import _beautify_plot, check_data
 
 
-def histogram_2d_gauge(self, fig, gridspec, transformation=None):
-    """Twp-dimensional histogram of the individual gradient and parameter elements.
+def histogram_2d_gauge(self, fig, gridspec, transformation=None, marginals=True):
+    """Two-dimensional histogram of the individual gradient and parameter elements.
 
     Args:
         self (cockpit.plotter): The cockpit plotter requesting this instrument.
@@ -20,6 +20,7 @@ def histogram_2d_gauge(self, fig, gridspec, transformation=None):
         transformation (method): Some map applied to the bin values as a
             transformation for the plot. Defaults to `None` which means no
             transformation.
+        marginal (bool): Whether to plot the marginal histograms as well.
     """
     # Plot
     title = "Gradient/Parameter Element Histogram"
@@ -35,10 +36,19 @@ def histogram_2d_gauge(self, fig, gridspec, transformation=None):
         return
 
     ax = fig.add_subplot(gridspec)
+    ax.set_axis_off()
+    ax.set_title(title, fontweight="bold", fontsize="large")
 
-    plot_args = {
-        "title": title,
-        "fontweight": "bold",
+    # Gridspecs (inside gridspec)
+    gs = gridspec.subgridspec(3, 3, wspace=0, hspace=0)
+
+    # plot the joint
+    if marginals:
+        ax_joint = fig.add_subplot(gs[1:, :2])
+    else:
+        ax_joint = fig.add_subplot(gs[:, :])
+
+    joint_plot_args = {
         "facecolor": self.bg_color_instruments,
         "xlabel": "parameter element value",
         "ylabel": "gradient element value",
@@ -48,16 +58,38 @@ def histogram_2d_gauge(self, fig, gridspec, transformation=None):
 
     cmap = self.alpha_cmap
 
-    sns.heatmap(data=df, cbar=False, cmap=cmap)
+    sns.heatmap(data=df, cbar=False, cmap=cmap, ax=ax_joint)
 
-    _beautify_plot(ax=ax, **plot_args)
+    _beautify_plot(ax=ax_joint, **joint_plot_args)
 
     # "Zero lines
     # TODO This assumes that the bins are symmetrical!
-    ax.axvline(df.shape[1] / 2, ls="-", color="#ababba", linewidth=1.5, zorder=0)
-    ax.axhline(df.shape[0] / 2, ls="-", color="#ababba", linewidth=1.5, zorder=0)
+    ax_joint.axvline(df.shape[1] / 2, ls="-", color="#ababba", linewidth=1.5, zorder=0)
+    ax_joint.axhline(df.shape[0] / 2, ls="-", color="#ababba", linewidth=1.5, zorder=0)
 
-    ax.set_title(title, fontweight="bold", fontsize="large")
+    # plot the marginals
+    if marginals:
+        ax_xmargin = fig.add_subplot(gs[1:, 2])
+        ax_xmargin.set_xscale("log")
+        ax_xmargin.get_yaxis().set_visible(False)
+        # TODO Use exactly the same y limits as ax_joint
+        vals, mid_points, bin_size = _get_xmargin_histogram_data(self.tracking_data)
+        ax_xmargin.barh(
+            mid_points, vals, height=bin_size, color=self.primary_color, linewidth=0.1
+        )
+
+        ax_ymargin = fig.add_subplot(gs[0, :2])
+        ax_ymargin.set_yscale("log")
+        ax_ymargin.get_xaxis().set_visible(False)
+        # TODO Use exactly the same x limits as ax_joint
+        vals, mid_points, bin_size = _get_ymargin_histogram_data(self.tracking_data)
+        ax_ymargin.bar(
+            mid_points,
+            vals,
+            width=bin_size,
+            color=self.primary_color,
+            linewidth=0.2,
+        )
 
 
 def _default_trafo(array):
@@ -97,3 +129,48 @@ def _get_2d_histogram_data(tracking_data, transformation=None):
     )
 
     return df
+
+
+def _get_xmargin_histogram_data(tracking_data):
+    """Compute histogram data when marginalizing out y-dimension.
+
+    Returns:
+        vals (numpy.array): Bin counts of one-dimensional histogram when the
+            two-dimensional histogram is reduced over the y-dimension.
+        mid_points (numpy.array): One-dimensional array containing the center
+            points of the histogram bins.
+        bin_size (float): Width of a bin.
+    """
+    data = tracking_data[["x_edges", "hist_2d"]].dropna().tail(1)
+
+    vals = np.array(data.hist_2d.to_numpy()[0]).sum(1)
+    bins = np.array(data.x_edges.to_numpy()[0])
+
+    bin_size = bins[1] - bins[0]
+
+    mid_points = (bins[1:] + bins[:-1]) / 2
+
+    return vals, mid_points, bin_size
+
+
+def _get_ymargin_histogram_data(tracking_data):
+    """Compute histogram data when marginalizing out x-dimension.
+
+    Returns:
+        vals (numpy.array): Bin counts of one-dimensional histogram when the
+            two-dimensional histogram is reduced over the x-dimension.
+        mid_points (numpy.array): One-dimensional array containing the center
+            points of the histogram bins.
+        bin_size (float): Width of a bin.
+    """
+
+    data = tracking_data[["y_edges", "hist_2d"]].dropna().tail(1)
+
+    vals = np.array(data.hist_2d.to_numpy()[0]).sum(0)
+    bins = np.array(data.y_edges.to_numpy()[0])
+
+    bin_size = bins[1] - bins[0]
+
+    mid_points = (bins[1:] + bins[:-1]) / 2
+
+    return vals, mid_points, bin_size
