@@ -6,7 +6,13 @@ import numpy
 import torch
 
 from backboard.quantities.quantity import SingleStepQuantity
-from backboard.quantities.utils_hists import histogram2d
+from backboard.quantities.utils_hists import (
+    histogram2d,
+    transform_grad_batch_abs_max,
+    transform_grad_batch_min_max,
+    transform_param_abs_max,
+    transform_param_min_max,
+)
 from backboard.quantities.utils_quantities import abs_max
 from backpack import extensions
 
@@ -556,43 +562,3 @@ class BatchGradHistogram2d(SingleStepQuantity):
         x_edges = torch.linspace(self._xmin, self._xmax, steps=self._xbins + 1)
         y_edges = torch.linspace(self._ymin, self._ymax, steps=self._ybins + 1)
         return x_edges, y_edges
-
-
-def transform_grad_batch_abs_max(batch_grad):
-    """Compute maximum value of absolute individual gradients.
-
-    Transformation used by BackPACK's ``BatchGradTransforms``.
-    """
-    batch_size = batch_grad.shape[0]
-    return batch_size * abs_max(batch_grad.data).item()
-
-
-def transform_param_abs_max(batch_grad):
-    """Compute maximum value of absolute individual gradients.
-
-    Transformation used by BackPACK's ``BatchGradTransforms``.
-    """
-    return abs_max(batch_grad._param_weakref().data).item()
-
-
-def transform_grad_batch_min_max(batch_grad):
-    """Compute minimum and maximum value of absolute individual gradients.
-
-    Transformation used by BackPACK's ``BatchGradTransforms``.
-    """
-    batch_size = batch_grad.shape[0]
-    return [
-        batch_size * batch_grad.data.min().item(),
-        batch_size * batch_grad.data.max().item(),
-    ]
-
-
-def transform_param_min_max(batch_grad):
-    """Compute minimum and maximum value of absolute individual gradients.
-
-    Transformation used by BackPACK's ``BatchGradTransforms``.
-    """
-    return [
-        batch_grad._param_weakref().data.min().item(),
-        batch_grad._param_weakref().data.max().item(),
-    ]
