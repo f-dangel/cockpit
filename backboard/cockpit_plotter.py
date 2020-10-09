@@ -3,6 +3,7 @@
 import glob
 import json
 import os
+import warnings
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -400,5 +401,47 @@ class CockpitPlotter:
         self.ax_layerwise.set_xticklabels([])
         self.ax_layerwise.set_yticklabels([])
 
-        # TODO Build inner structure
-        # TODO Plot layerwise histograms
+        # Build inner structure
+        try:
+            param_groups = int(
+                self.tracking_data[["param_groups"]].dropna().tail(1).to_numpy()
+            )
+        except KeyError:
+            warnings.warn("Cannot create layerwise plots (missing 'param_groups')")
+            return
+
+        def get_layout(num_plots, min_rows=2, min_cols=2):
+            """Step-wise increase rows and columns until they can fit all plots."""
+            dims = [min_rows, min_cols]
+
+            increase_next = 0
+            while dims[0] * dims[1] < num_plots:
+                dims[increase_next] = dims[increase_next] + 1
+                increase_next = (increase_next + 1) % 2
+
+            return dims
+
+        num_rows, num_cols = get_layout(param_groups)
+
+        self.gs_layerwise = grid_spec.subgridspec(
+            2 * num_rows + 1,
+            2 * num_cols + 1,
+            width_ratios=num_cols * [0.05, 1] + [0.05],
+            height_ratios=num_rows * [0.0, 1] + [0.0],
+            hspace=self.inner_hspace,
+        )
+
+        def to_grid(idx):
+            """Map one-dimension index to coordinates in 2d layout.
+
+            Need to take into account the padding around actual plots.
+            """
+            assert 0 <= idx < param_groups
+            x_unpadded, y_unpadded = divmod(idx, num_cols)
+            return 2 * x_unpadded + 1, 2 * y_unpadded + 1
+
+        for idx in range(param_groups):
+            x, y = to_grid(idx)
+            instruments.histogram_2d_gauge(
+                self, self.secondary_fig, self.gs_layerwise[x, y], idx=idx
+            )
