@@ -197,7 +197,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         xmin=-1,
         xmax=1,
         min_xrange=1e-6,
-        xbins=100,
+        xbins=40,
         ymin=-2,
         ymax=2,
         min_yrange=1e-6,
