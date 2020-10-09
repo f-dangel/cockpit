@@ -263,7 +263,7 @@ class CockpitPlotter:
     def _animate(self, screen, fp_out, duration, loop):
         """Generate animation from paths to images and save."""
         # load frames
-        pattern = os.path.splitext(self.logpath)[0] + f"__epoch__*__{screen}.png"
+        pattern = os.path.splitext(self.logpath)[0] + f"__{screen}__epoch__*.png"
         frame_paths = sorted(glob.glob(pattern))
         frame, *frames = [Image.open(f) for f in frame_paths]
 
@@ -334,8 +334,8 @@ class CockpitPlotter:
 
         file_path = (
             os.path.splitext(self.logpath)[0]
-            + savename_append
             + f"__{screen}"
+            + savename_append
             + self.save_format
         )
 
