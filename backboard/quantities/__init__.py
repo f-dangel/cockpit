@@ -4,6 +4,7 @@ from backboard.quantities.alpha import AlphaExpensive, AlphaOptimized
 from backboard.quantities.batch_grad_hists import (
     BatchGradHistogram1d,
     BatchGradHistogram2d,
+    LayerwiseBatchGradHistogram2d,
 )
 from backboard.quantities.cabs import CABS
 from backboard.quantities.distance import Distance
@@ -39,6 +40,7 @@ __all__ = [
     "Trace",
     "BatchGradHistogram1d",
     "BatchGradHistogram2d",
+    "LayerwiseBatchGradHistogram2d",
     "Time",
     "EarlyStopping",
     "CABS",
