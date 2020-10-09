@@ -131,7 +131,10 @@ class CockpitPlotter:
             plt.show(block=block)
             plt.pause(0.001)
         if save_plot:
-            self._save(savename_append)
+            self._save(savename_append, screen="primary")
+
+            if self._secondary_screen:
+                self._save(savename_append, screen="secondary")
 
     def _plot_step(self, grid_spec):
         """Plot all instruments having to do with step size in the given gridspec.
@@ -230,7 +233,11 @@ class CockpitPlotter:
         """
         instruments.performance_gauge(self, self.fig, grid_spec)
 
-    def build_animation(self, duration=200, loop=0):
+    def build_animation(
+        self,
+        duration=200,
+        loop=0,
+    ):
         """Build an animation from the stored images during training.
 
         TODO Make this independant of stored images. Instead generate those images
@@ -242,16 +249,29 @@ class CockpitPlotter:
             loop (int, optional): Number of times the GIF should loop.
                 Defaults to 0 which means it will loop forever.
         """
-        # Filepaths
-        fp_in = os.path.splitext(self.logpath)[0] + "__epoch__*.png"
-        fp_out = os.path.splitext(self.logpath)[0] + ".gif"
+        screens = ["primary"]
+        if self._secondary_screen:
+            screens.append("secondary")
+
+        for screen in screens:
+            fp_out = os.path.splitext(self.logpath)[0] + f"__{screen}.gif"
+            self._animate(screen, fp_out, duration, loop)
+
+    def _get_anim_frames(self, screen):
+        """Load frames for animation."""
+
+    def _animate(self, screen, fp_out, duration, loop):
+        """Generate animation from paths to images and save."""
+        # load frames
+        pattern = os.path.splitext(self.logpath)[0] + f"__epoch__*__{screen}.png"
+        frame_paths = sorted(glob.glob(pattern))
+        frame, *frames = [Image.open(f) for f in frame_paths]
 
         # Collect images and create Animation
-        img, *imgs = [Image.open(f) for f in sorted(glob.glob(fp_in))]
-        img.save(
+        frame.save(
             fp=fp_out,
             format="GIF",
-            append_images=imgs,
+            append_images=frames,
             save_all=True,
             duration=duration,
             loop=loop,
@@ -300,20 +320,31 @@ class CockpitPlotter:
         # Rename index to 'iteration' and store it in seperate column
         self.tracking_data = self.tracking_data.rename_axis("iteration").reset_index()
 
-    def _save(self, savename_append=None):
+    def _save(self, savename_append=None, screen="primary"):
         """Save the (internal) figure to file.
 
         Args:
             savename_append (str, optional): Optional appendix to the savefile
                 name. Defaults to None.
+            screen (str): String that specifies screen figure should be saved.
+                Possible options are ``'primary'`` and ``'secondary'``.
         """
+        if savename_append is None:
+            savename_append = ""
+
         file_path = (
-            os.path.splitext(self.logpath)[0] + self.save_format
-            if savename_append is None
-            else os.path.splitext(self.logpath)[0] + savename_append + self.save_format
+            os.path.splitext(self.logpath)[0]
+            + savename_append
+            + f"__{screen}"
+            + self.save_format
         )
 
-        self.fig.savefig(file_path)
+        if screen == "primary":
+            self.fig.savefig(file_path)
+        elif screen == "secondary":
+            self.secondary_fig.savefig(file_path)
+        else:
+            raise ValueError(f"screen must be 'primary' or 'secondar'y. Got {screen}")
 
     def _post_process_plot(self):
         """Process the plotting figure, by adding a title, legend, etc."""
