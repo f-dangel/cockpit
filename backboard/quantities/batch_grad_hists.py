@@ -211,6 +211,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         ypad=0.2,
         check=False,
         track_schedule=None,
+        keep_individual=False,
     ):
         """Initialize the 2D Histogram of individual gradient elements over parameters.
 
@@ -241,6 +242,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
             ypad (float): Relative padding added to the y limits.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
+            keep_individual (bool): Whether to keep individual parameter histograms.
         """
         super().__init__(
             track_interval=track_interval,
@@ -260,6 +262,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         self._use_numpy = use_numpy
         self._xpad = xpad
         self._ypad = ypad
+        self._keep_individual = keep_individual
 
         if adapt_schedule is None:
             self._adapt_schedule = self._track_schedule
@@ -326,34 +329,79 @@ class BatchGradHistogram2d(SingleStepQuantity):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if self.is_active(global_step):
+            self._compute_aggregated(global_step, params, batch_loss)
+
+            if self._keep_individual:
+                self._compute_individual(global_step, params, batch_loss)
+
+        self._update_limits(global_step, params, batch_loss)
+
+    def _compute_aggregated(self, global_step, params, batch_loss):
+        """Aggregate histogram data over parameters and save to output."""
+        x_edges, y_edges = self._get_current_bin_edges()
+        hist = sum(p.grad_batch_transforms["hist_2d"] for p in params)
+
+        if self._check:
+            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+            num_params = sum(p.numel() for p in params)
+            num_counts = hist.sum()
+            assert batch_size * num_params == num_counts
+
+        self.output[global_step]["hist_2d"] = hist.cpu().numpy().tolist()
+        self.output[global_step]["x_edges"] = x_edges.cpu().numpy().tolist()
+        self.output[global_step]["y_edges"] = y_edges.cpu().numpy().tolist()
+
+        if self._verbose:
+            print(
+                f"[Step {global_step}] BatchGradHistogram2d"
+                + f" x_edges 0,...,4: {x_edges[:5]}"
+            )
+            print(
+                f"[Step {global_step}] BatchGradHistogram2d"
+                + f" y_edges 0,...,4: {y_edges[:5]}"
+            )
+            print(
+                f"[Step {global_step}] BatchGradHistogram2d"
+                + f" counts [0,...,4][0,...,4]: {hist[:5,:5]}"
+            )
+
+    def _compute_individual(self, global_step, params, batch_loss):
+        """Save histogram for each parameter to output."""
+        for idx, p in enumerate(params):
             x_edges, y_edges = self._get_current_bin_edges()
-            hist = sum(p.grad_batch_transforms["hist_2d"] for p in params)
+
+            hist = p.grad_batch_transforms["hist_2d"]
 
             if self._check:
                 batch_size = self._fetch_batch_size_hotfix(batch_loss)
-                num_params = sum(p.numel() for p in params)
+                num_params = p.numel()
                 num_counts = hist.sum()
                 assert batch_size * num_params == num_counts
 
-            self.output[global_step]["hist_2d"] = hist.cpu().numpy().tolist()
-            self.output[global_step]["x_edges"] = x_edges.cpu().numpy().tolist()
-            self.output[global_step]["y_edges"] = y_edges.cpu().numpy().tolist()
+            self.output[global_step][f"param_{idx}_hist_2d"] = (
+                hist.cpu().numpy().tolist()
+            )
+            self.output[global_step][f"param_{idx}_x_edges"] = (
+                x_edges.cpu().numpy().tolist()
+            )
+            self.output[global_step][f"param_{idx}_y_edges"] = (
+                y_edges.cpu().numpy().tolist()
+            )
 
             if self._verbose:
                 print(
-                    f"[Step {global_step}] BatchGradHistogram2d"
+                    f"[Step {global_step}] BatchGradHistogram2d param_{idx}"
                     + f" x_edges 0,...,4: {x_edges[:5]}"
                 )
                 print(
-                    f"[Step {global_step}] BatchGradHistogram2d"
+                    f"[Step {global_step}] BatchGradHistogram2d param_{idx}"
                     + f" y_edges 0,...,4: {y_edges[:5]}"
                 )
                 print(
-                    f"[Step {global_step}] BatchGradHistogram2d"
+                    f"[Step {global_step}] BatchGradHistogram2d param_{idx}"
                     + f" counts [0,...,4][0,...,4]: {hist[:5,:5]}"
                 )
-
-        self._update_limits(global_step, params, batch_loss)
+        self.output[global_step]["param_groups"] = len(params)
 
     def __preprocess(self, batch_grad, param):
         """Scale and clamp the data used for histograms."""
@@ -561,101 +609,3 @@ class BatchGradHistogram2d(SingleStepQuantity):
         x_edges = torch.linspace(self._xmin, self._xmax, steps=self._xbins + 1)
         y_edges = torch.linspace(self._ymin, self._ymax, steps=self._ybins + 1)
         return x_edges, y_edges
-
-
-class LayerwiseBatchGradHistogram2d(BatchGradHistogram2d):
-    """Layer-wise 2d histogram of individual gradient elements over parameters.
-
-    Individual gradient values are binned among the x-axis, parameter values are
-    binned among the y-axis.
-    """
-
-    def extensions(self, global_step):
-        """Return list of BackPACK extensions required for the computation.
-
-        Args:
-            global_step (int): The current iteration number.
-
-        Returns:
-            list: (Potentially empty) list with required BackPACK quantities.
-        """
-        ext = []
-
-        if self.is_active(global_step):
-            ext.append(
-                extensions.BatchGradTransforms(
-                    transforms={"param_hist_2d": self._compute_histogram}
-                )
-            )
-
-        if self._adapt_schedule(global_step):
-            if self._adapt_policy == "abs_max":
-                ext.append(
-                    extensions.BatchGradTransforms(
-                        transforms={
-                            "grad_batch_abs_max": transform_grad_batch_abs_max,
-                            "param_abs_max": transform_param_abs_max,
-                        }
-                    )
-                )
-            elif self._adapt_policy == "min_max":
-                ext.append(
-                    extensions.BatchGradTransforms(
-                        transforms={
-                            "grad_batch_min_max": transform_grad_batch_min_max,
-                            "param_min_max": transform_param_min_max,
-                        }
-                    )
-                )
-            else:
-                raise ValueError("Invalid adaptation policy")
-
-        return ext
-
-    def compute(self, global_step, params, batch_loss):
-        """Compute the two-dimensional histogram at the current iteration.
-
-        Args:
-            global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-        """
-        if self.is_active(global_step):
-            for idx, p in enumerate(params):
-                x_edges, y_edges = self._get_current_bin_edges()
-
-                hist = p.grad_batch_transforms["param_hist_2d"]
-
-                if self._check:
-                    batch_size = self._fetch_batch_size_hotfix(batch_loss)
-                    num_params = p.numel()
-                    num_counts = hist.sum()
-                    assert batch_size * num_params == num_counts
-
-                self.output[global_step][f"param_{idx}_hist_2d"] = (
-                    hist.cpu().numpy().tolist()
-                )
-                self.output[global_step][f"param_{idx}_x_edges"] = (
-                    x_edges.cpu().numpy().tolist()
-                )
-                self.output[global_step][f"param_{idx}_y_edges"] = (
-                    y_edges.cpu().numpy().tolist()
-                )
-
-                if self._verbose:
-                    print(
-                        f"[Step {global_step}] LayerwiseBatchGradHistogram2d param_{idx}"
-                        + f" x_edges 0,...,4: {x_edges[:5]}"
-                    )
-                    print(
-                        f"[Step {global_step}] LayerwiseBatchGradHistogram2d param_{idx}"
-                        + f" y_edges 0,...,4: {y_edges[:5]}"
-                    )
-                    print(
-                        f"[Step {global_step}] LayerwiseBatchGradHistogram2d param_{idx}"
-                        + f" counts [0,...,4][0,...,4]: {hist[:5,:5]}"
-                    )
-            self.output[global_step]["param_groups"] = len(params)
-
-        self._update_limits(global_step, params, batch_loss)
