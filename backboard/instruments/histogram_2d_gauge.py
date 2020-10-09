@@ -174,6 +174,8 @@ def _get_xmargin_histogram_data(tracking_data, idx=None):
 
     vals = np.array(getattr(data, hist_key).to_numpy()[0]).sum(1)
     bins = np.array(getattr(data, x_key).to_numpy()[0])
+    # invert to be consistent with 2d plot
+    vals = vals[::-1]
 
     bin_size = bins[1] - bins[0]
 
