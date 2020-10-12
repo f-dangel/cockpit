@@ -257,9 +257,6 @@ class CockpitPlotter:
             fp_out = os.path.splitext(self.logpath)[0] + f"__{screen}.gif"
             self._animate(screen, fp_out, duration, loop)
 
-    def _get_anim_frames(self, screen):
-        """Load frames for animation."""
-
     def _animate(self, screen, fp_out, duration, loop):
         """Generate animation from paths to images and save."""
         # load frames
