@@ -6,8 +6,13 @@ import numpy
 import torch
 
 from backboard.quantities.quantity import SingleStepQuantity
-from backboard.quantities.utils_hists import histogram2d
-from backboard.quantities.utils_quantities import abs_max
+from backboard.quantities.utils_hists import (
+    histogram2d,
+    transform_grad_batch_abs_max,
+    transform_grad_batch_min_max,
+    transform_param_abs_max,
+    transform_param_min_max,
+)
 from backpack import extensions
 
 
@@ -192,7 +197,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         xmin=-1,
         xmax=1,
         min_xrange=1e-6,
-        xbins=100,
+        xbins=40,
         ymin=-2,
         ymax=2,
         min_yrange=1e-6,
@@ -206,6 +211,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         ypad=0.2,
         check=False,
         track_schedule=None,
+        keep_individual=False,
     ):
         """Initialize the 2D Histogram of individual gradient elements over parameters.
 
@@ -236,6 +242,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
             ypad (float): Relative padding added to the y limits.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
+            keep_individual (bool): Whether to keep individual parameter histograms.
         """
         super().__init__(
             track_interval=track_interval,
@@ -255,6 +262,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         self._use_numpy = use_numpy
         self._xpad = xpad
         self._ypad = ypad
+        self._keep_individual = keep_individual
 
         if adapt_schedule is None:
             self._adapt_schedule = self._track_schedule
@@ -312,7 +320,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         return ext
 
     def compute(self, global_step, params, batch_loss):
-        """Evaluate the trace of the Hessian at the current point.
+        """Compute the two-dimensional histogram at the current iteration.
 
         Args:
             global_step (int): The current iteration number.
@@ -321,34 +329,79 @@ class BatchGradHistogram2d(SingleStepQuantity):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if self.is_active(global_step):
+            self._compute_aggregated(global_step, params, batch_loss)
+
+            if self._keep_individual:
+                self._compute_individual(global_step, params, batch_loss)
+
+        self._update_limits(global_step, params, batch_loss)
+
+    def _compute_aggregated(self, global_step, params, batch_loss):
+        """Aggregate histogram data over parameters and save to output."""
+        x_edges, y_edges = self._get_current_bin_edges()
+        hist = sum(p.grad_batch_transforms["hist_2d"] for p in params)
+
+        if self._check:
+            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+            num_params = sum(p.numel() for p in params)
+            num_counts = hist.sum()
+            assert batch_size * num_params == num_counts
+
+        self.output[global_step]["hist_2d"] = hist.cpu().numpy().tolist()
+        self.output[global_step]["x_edges"] = x_edges.cpu().numpy().tolist()
+        self.output[global_step]["y_edges"] = y_edges.cpu().numpy().tolist()
+
+        if self._verbose:
+            print(
+                f"[Step {global_step}] BatchGradHistogram2d"
+                + f" x_edges 0,...,4: {x_edges[:5]}"
+            )
+            print(
+                f"[Step {global_step}] BatchGradHistogram2d"
+                + f" y_edges 0,...,4: {y_edges[:5]}"
+            )
+            print(
+                f"[Step {global_step}] BatchGradHistogram2d"
+                + f" counts [0,...,4][0,...,4]: {hist[:5,:5]}"
+            )
+
+    def _compute_individual(self, global_step, params, batch_loss):
+        """Save histogram for each parameter to output."""
+        for idx, p in enumerate(params):
             x_edges, y_edges = self._get_current_bin_edges()
-            hist = sum(p.grad_batch_transforms["hist_2d"] for p in params)
+
+            hist = p.grad_batch_transforms["hist_2d"]
 
             if self._check:
                 batch_size = self._fetch_batch_size_hotfix(batch_loss)
-                num_params = sum(p.numel() for p in params)
+                num_params = p.numel()
                 num_counts = hist.sum()
                 assert batch_size * num_params == num_counts
 
-            self.output[global_step]["hist_2d"] = hist.cpu().numpy().tolist()
-            self.output[global_step]["x_edges"] = x_edges.cpu().numpy().tolist()
-            self.output[global_step]["y_edges"] = y_edges.cpu().numpy().tolist()
+            self.output[global_step][f"param_{idx}_hist_2d"] = (
+                hist.cpu().numpy().tolist()
+            )
+            self.output[global_step][f"param_{idx}_x_edges"] = (
+                x_edges.cpu().numpy().tolist()
+            )
+            self.output[global_step][f"param_{idx}_y_edges"] = (
+                y_edges.cpu().numpy().tolist()
+            )
 
             if self._verbose:
                 print(
-                    f"[Step {global_step}] BatchGradHistogram2d"
+                    f"[Step {global_step}] BatchGradHistogram2d param_{idx}"
                     + f" x_edges 0,...,4: {x_edges[:5]}"
                 )
                 print(
-                    f"[Step {global_step}] BatchGradHistogram2d"
+                    f"[Step {global_step}] BatchGradHistogram2d param_{idx}"
                     + f" y_edges 0,...,4: {y_edges[:5]}"
                 )
                 print(
-                    f"[Step {global_step}] BatchGradHistogram2d"
+                    f"[Step {global_step}] BatchGradHistogram2d param_{idx}"
                     + f" counts [0,...,4][0,...,4]: {hist[:5,:5]}"
                 )
-
-        self._update_limits(global_step, params, batch_loss)
+        self.output[global_step]["param_groups"] = len(params)
 
     def __preprocess(self, batch_grad, param):
         """Scale and clamp the data used for histograms."""
@@ -556,43 +609,3 @@ class BatchGradHistogram2d(SingleStepQuantity):
         x_edges = torch.linspace(self._xmin, self._xmax, steps=self._xbins + 1)
         y_edges = torch.linspace(self._ymin, self._ymax, steps=self._ybins + 1)
         return x_edges, y_edges
-
-
-def transform_grad_batch_abs_max(batch_grad):
-    """Compute maximum value of absolute individual gradients.
-
-    Transformation used by BackPACK's ``BatchGradTransforms``.
-    """
-    batch_size = batch_grad.shape[0]
-    return batch_size * abs_max(batch_grad.data).item()
-
-
-def transform_param_abs_max(batch_grad):
-    """Compute maximum value of absolute individual gradients.
-
-    Transformation used by BackPACK's ``BatchGradTransforms``.
-    """
-    return abs_max(batch_grad._param_weakref().data).item()
-
-
-def transform_grad_batch_min_max(batch_grad):
-    """Compute minimum and maximum value of absolute individual gradients.
-
-    Transformation used by BackPACK's ``BatchGradTransforms``.
-    """
-    batch_size = batch_grad.shape[0]
-    return [
-        batch_size * batch_grad.data.min().item(),
-        batch_size * batch_grad.data.max().item(),
-    ]
-
-
-def transform_param_min_max(batch_grad):
-    """Compute minimum and maximum value of absolute individual gradients.
-
-    Transformation used by BackPACK's ``BatchGradTransforms``.
-    """
-    return [
-        batch_grad._param_weakref().data.min().item(),
-        batch_grad._param_weakref().data.max().item(),
-    ]

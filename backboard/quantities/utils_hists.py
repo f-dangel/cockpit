@@ -1,9 +1,10 @@
 """Utility functions for individual gradient histograms."""
 
-
 import warnings
 
 import torch
+
+from backboard.quantities.utils_quantities import abs_max
 
 _range = range
 
@@ -209,3 +210,43 @@ def histogram2d(sample, bins, range, check_input=False):
     )
 
     return hist.reshape(xbins, ybins), axes
+
+
+def transform_grad_batch_abs_max(batch_grad):
+    """Compute maximum value of absolute individual gradients.
+
+    Transformation used by BackPACK's ``BatchGradTransforms``.
+    """
+    batch_size = batch_grad.shape[0]
+    return batch_size * abs_max(batch_grad.data).item()
+
+
+def transform_param_abs_max(batch_grad):
+    """Compute maximum value of absolute individual gradients.
+
+    Transformation used by BackPACK's ``BatchGradTransforms``.
+    """
+    return abs_max(batch_grad._param_weakref().data).item()
+
+
+def transform_grad_batch_min_max(batch_grad):
+    """Compute minimum and maximum value of absolute individual gradients.
+
+    Transformation used by BackPACK's ``BatchGradTransforms``.
+    """
+    batch_size = batch_grad.shape[0]
+    return [
+        batch_size * batch_grad.data.min().item(),
+        batch_size * batch_grad.data.max().item(),
+    ]
+
+
+def transform_param_min_max(batch_grad):
+    """Compute minimum and maximum value of absolute individual gradients.
+
+    Transformation used by BackPACK's ``BatchGradTransforms``.
+    """
+    return [
+        batch_grad._param_weakref().data.min().item(),
+        batch_grad._param_weakref().data.max().item(),
+    ]

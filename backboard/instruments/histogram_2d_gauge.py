@@ -9,7 +9,9 @@ import seaborn as sns
 from backboard.instruments.utils_instruments import _beautify_plot, check_data
 
 
-def histogram_2d_gauge(self, fig, gridspec, transformation=None, marginals=True):
+def histogram_2d_gauge(
+    self, fig, gridspec, transformation=None, marginals=True, idx=None
+):
     """Two-dimensional histogram of the individual gradient and parameter elements.
 
     Args:
@@ -21,12 +23,20 @@ def histogram_2d_gauge(self, fig, gridspec, transformation=None, marginals=True)
             transformation for the plot. Defaults to `None` which means no
             transformation.
         marginal (bool): Whether to plot the marginal histograms as well.
+        idx (int): Index of parameter whose histogram data should be used.
+            If ``None`` (default), uses data of all parameters.
     """
     # Plot
-    title = "Gradient/Parameter Element Histogram"
+    title_suffix = "(all)" if idx is None else f"(parameter {idx})"
+    title = f"Gradient/Parameter Element Histogram {title_suffix}"
 
     # Check if the required data is available, else skip this instrument
-    requires = ["x_edges", "y_edges", "hist_2d"]
+    key_prefix = "" if idx is None else f"param_{idx}_"
+    x_key = key_prefix + "x_edges"
+    y_key = key_prefix + "y_edges"
+    hist_key = key_prefix + "hist_2d"
+    requires = [x_key, y_key, hist_key]
+
     plot_possible = check_data(self.tracking_data, requires, min_elements=1)
     if not plot_possible:
         warnings.warn(
@@ -54,7 +64,9 @@ def histogram_2d_gauge(self, fig, gridspec, transformation=None, marginals=True)
         "ylabel": "gradient element value",
     }
 
-    df = _get_2d_histogram_data(self.tracking_data, transformation=transformation)
+    df = _get_2d_histogram_data(
+        self.tracking_data, transformation=transformation, idx=idx
+    )
 
     cmap = self.alpha_cmap
 
@@ -73,7 +85,9 @@ def histogram_2d_gauge(self, fig, gridspec, transformation=None, marginals=True)
         ax_xmargin.set_xscale("log")
         ax_xmargin.get_yaxis().set_visible(False)
         # TODO Use exactly the same y limits as ax_joint
-        vals, mid_points, bin_size = _get_xmargin_histogram_data(self.tracking_data)
+        vals, mid_points, bin_size = _get_xmargin_histogram_data(
+            self.tracking_data, idx=idx
+        )
         ax_xmargin.barh(
             mid_points, vals, height=bin_size, color=self.primary_color, linewidth=0.1
         )
@@ -82,7 +96,9 @@ def histogram_2d_gauge(self, fig, gridspec, transformation=None, marginals=True)
         ax_ymargin.set_yscale("log")
         ax_ymargin.get_xaxis().set_visible(False)
         # TODO Use exactly the same x limits as ax_joint
-        vals, mid_points, bin_size = _get_ymargin_histogram_data(self.tracking_data)
+        vals, mid_points, bin_size = _get_ymargin_histogram_data(
+            self.tracking_data, idx=idx
+        )
         ax_ymargin.bar(
             mid_points,
             vals,
@@ -97,7 +113,7 @@ def _default_trafo(array):
     return np.log10(array + 1)
 
 
-def _get_2d_histogram_data(tracking_data, transformation=None):
+def _get_2d_histogram_data(tracking_data, transformation=None, idx=None):
     """Returns the histogram data for the plot.
 
     Currently we return the bins and values of the last iteration tracked before
@@ -107,10 +123,17 @@ def _get_2d_histogram_data(tracking_data, transformation=None):
         tracking_data (pandas.DataFrame): DataFrame holding the tracking data.
         transformation (method): Some map applied to the bin values as a
             transformation for the plot. Use logarithmic transformation per default.
+        idx (int): Index of parameter whose histogram data should be used.
+            If ``None`` (default), uses data of all parameters.
     """
-    data = tracking_data[["x_edges", "y_edges", "hist_2d"]].dropna().tail(1)
+    key_prefix = "" if idx is None else f"param_{idx}_"
+    x_key = key_prefix + "x_edges"
+    y_key = key_prefix + "y_edges"
+    hist_key = key_prefix + "hist_2d"
 
-    vals = np.array(data.hist_2d.to_numpy()[0])
+    data = tracking_data[[x_key, y_key, hist_key]].dropna().tail(1)
+
+    vals = np.array(getattr(data, hist_key).to_numpy()[0])
 
     # apply transformation
     if transformation is None:
@@ -118,8 +141,8 @@ def _get_2d_histogram_data(tracking_data, transformation=None):
 
     vals = transformation(vals)
 
-    x_bins = np.array(data.x_edges.to_numpy()[0])
-    y_bins = np.array(data.y_edges.to_numpy()[0])
+    x_bins = np.array(getattr(data, x_key).to_numpy()[0])
+    y_bins = np.array(getattr(data, y_key).to_numpy()[0])
 
     x_mid_points = (x_bins[1:] + x_bins[:-1]) / 2
     y_mid_points = (y_bins[1:] + y_bins[:-1]) / 2
@@ -131,7 +154,7 @@ def _get_2d_histogram_data(tracking_data, transformation=None):
     return df
 
 
-def _get_xmargin_histogram_data(tracking_data):
+def _get_xmargin_histogram_data(tracking_data, idx=None):
     """Compute histogram data when marginalizing out y-dimension.
 
     Returns:
@@ -140,11 +163,19 @@ def _get_xmargin_histogram_data(tracking_data):
         mid_points (numpy.array): One-dimensional array containing the center
             points of the histogram bins.
         bin_size (float): Width of a bin.
+        idx (int): Index of parameter whose histogram data should be used.
+            If ``None`` (default), uses data of all parameters.
     """
-    data = tracking_data[["x_edges", "hist_2d"]].dropna().tail(1)
+    key_prefix = "" if idx is None else f"param_{idx}_"
+    x_key = key_prefix + "x_edges"
+    hist_key = key_prefix + "hist_2d"
 
-    vals = np.array(data.hist_2d.to_numpy()[0]).sum(1)
-    bins = np.array(data.x_edges.to_numpy()[0])
+    data = tracking_data[[x_key, hist_key]].dropna().tail(1)
+
+    vals = np.array(getattr(data, hist_key).to_numpy()[0]).sum(1)
+    bins = np.array(getattr(data, x_key).to_numpy()[0])
+    # invert to be consistent with 2d plot
+    vals = vals[::-1]
 
     bin_size = bins[1] - bins[0]
 
@@ -153,7 +184,7 @@ def _get_xmargin_histogram_data(tracking_data):
     return vals, mid_points, bin_size
 
 
-def _get_ymargin_histogram_data(tracking_data):
+def _get_ymargin_histogram_data(tracking_data, idx=None):
     """Compute histogram data when marginalizing out x-dimension.
 
     Returns:
@@ -162,12 +193,18 @@ def _get_ymargin_histogram_data(tracking_data):
         mid_points (numpy.array): One-dimensional array containing the center
             points of the histogram bins.
         bin_size (float): Width of a bin.
+        idx (int): Index of parameter whose histogram data should be used.
+            If ``None`` (default), uses data of all parameters.
     """
+    key_prefix = "" if idx is None else f"param_{idx}_"
+    y_key = key_prefix + "y_edges"
+    hist_key = key_prefix + "hist_2d"
 
-    data = tracking_data[["y_edges", "hist_2d"]].dropna().tail(1)
+    data = tracking_data[[y_key, hist_key]].dropna().tail(1)
 
-    vals = np.array(data.hist_2d.to_numpy()[0]).sum(0)
-    bins = np.array(data.y_edges.to_numpy()[0])
+    vals = np.array(getattr(data, hist_key).to_numpy()[0]).sum(0)
+
+    bins = np.array(getattr(data, y_key).to_numpy()[0])
 
     bin_size = bins[1] - bins[0]
 

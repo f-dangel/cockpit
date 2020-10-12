@@ -3,6 +3,7 @@
 import glob
 import json
 import os
+import warnings
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -130,7 +131,10 @@ class CockpitPlotter:
             plt.show(block=block)
             plt.pause(0.001)
         if save_plot:
-            self._save(savename_append)
+            self._save(savename_append, screen="primary")
+
+            if self._secondary_screen:
+                self._save(savename_append, screen="secondary")
 
     def _plot_step(self, grid_spec):
         """Plot all instruments having to do with step size in the given gridspec.
@@ -229,7 +233,11 @@ class CockpitPlotter:
         """
         instruments.performance_gauge(self, self.fig, grid_spec)
 
-    def build_animation(self, duration=200, loop=0):
+    def build_animation(
+        self,
+        duration=200,
+        loop=0,
+    ):
         """Build an animation from the stored images during training.
 
         TODO Make this independant of stored images. Instead generate those images
@@ -241,16 +249,26 @@ class CockpitPlotter:
             loop (int, optional): Number of times the GIF should loop.
                 Defaults to 0 which means it will loop forever.
         """
-        # Filepaths
-        fp_in = os.path.splitext(self.logpath)[0] + "__epoch__*.png"
-        fp_out = os.path.splitext(self.logpath)[0] + ".gif"
+        screens = ["primary"]
+        if self._secondary_screen:
+            screens.append("secondary")
+
+        for screen in screens:
+            fp_out = os.path.splitext(self.logpath)[0] + f"__{screen}.gif"
+            self._animate(screen, fp_out, duration, loop)
+
+    def _animate(self, screen, fp_out, duration, loop):
+        """Generate animation from paths to images and save."""
+        # load frames
+        pattern = os.path.splitext(self.logpath)[0] + f"__{screen}__epoch__*.png"
+        frame_paths = sorted(glob.glob(pattern))
+        frame, *frames = [Image.open(f) for f in frame_paths]
 
         # Collect images and create Animation
-        img, *imgs = [Image.open(f) for f in sorted(glob.glob(fp_in))]
-        img.save(
+        frame.save(
             fp=fp_out,
             format="GIF",
-            append_images=imgs,
+            append_images=frames,
             save_all=True,
             duration=duration,
             loop=loop,
@@ -299,20 +317,31 @@ class CockpitPlotter:
         # Rename index to 'iteration' and store it in seperate column
         self.tracking_data = self.tracking_data.rename_axis("iteration").reset_index()
 
-    def _save(self, savename_append=None):
+    def _save(self, savename_append=None, screen="primary"):
         """Save the (internal) figure to file.
 
         Args:
             savename_append (str, optional): Optional appendix to the savefile
                 name. Defaults to None.
+            screen (str): String that specifies screen figure should be saved.
+                Possible options are ``'primary'`` and ``'secondary'``.
         """
+        if savename_append is None:
+            savename_append = ""
+
         file_path = (
-            os.path.splitext(self.logpath)[0] + self.save_format
-            if savename_append is None
-            else os.path.splitext(self.logpath)[0] + savename_append + self.save_format
+            os.path.splitext(self.logpath)[0]
+            + f"__{screen}"
+            + savename_append
+            + self.save_format
         )
 
-        self.fig.savefig(file_path)
+        if screen == "primary":
+            self.fig.savefig(file_path)
+        elif screen == "secondary":
+            self.secondary_fig.savefig(file_path)
+        else:
+            raise ValueError(f"screen must be 'primary' or 'secondar'y. Got {screen}")
 
     def _post_process_plot(self):
         """Process the plotting figure, by adding a title, legend, etc."""
@@ -386,10 +415,10 @@ class CockpitPlotter:
 
         # plot mean GS NR
         instruments.mean_gsnr_gauge(self, self.secondary_fig, self.gs_auxiliary[1, 1])
-        # TODO Replace with CABS
-        instruments.mean_gsnr_gauge(self, self.secondary_fig, self.gs_auxiliary[1, 3])
-        # TODO Replace with EarlyStopping
-        instruments.mean_gsnr_gauge(self, self.secondary_fig, self.gs_auxiliary[1, 5])
+        instruments.cabs_gauge(self, self.secondary_fig, self.gs_auxiliary[1, 3])
+        instruments.early_stopping_gauge(
+            self, self.secondary_fig, self.gs_auxiliary[1, 5]
+        )
 
     def _plot_layerwise(self, grid_spec):
         """Plot layerwise 2d histograms to the secondary screen."""
@@ -400,5 +429,47 @@ class CockpitPlotter:
         self.ax_layerwise.set_xticklabels([])
         self.ax_layerwise.set_yticklabels([])
 
-        # TODO Build inner structure
-        # TODO Plot layerwise histograms
+        # Build inner structure
+        try:
+            param_groups = int(
+                self.tracking_data[["param_groups"]].dropna().tail(1).to_numpy()
+            )
+        except KeyError:
+            warnings.warn("Cannot create layerwise plots (missing 'param_groups')")
+            return
+
+        def get_layout(num_plots, min_rows=2, min_cols=2):
+            """Step-wise increase rows and columns until they can fit all plots."""
+            dims = [min_rows, min_cols]
+
+            increase_next = 0
+            while dims[0] * dims[1] < num_plots:
+                dims[increase_next] = dims[increase_next] + 1
+                increase_next = (increase_next + 1) % 2
+
+            return dims
+
+        num_rows, num_cols = get_layout(param_groups)
+
+        self.gs_layerwise = grid_spec.subgridspec(
+            2 * num_rows + 1,
+            2 * num_cols + 1,
+            width_ratios=num_cols * [0.05, 1] + [0.05],
+            height_ratios=num_rows * [0.0, 1] + [0.0],
+            hspace=self.inner_hspace,
+        )
+
+        def to_grid(idx):
+            """Map one-dimension index to coordinates in 2d layout.
+
+            Need to take into account the padding around actual plots.
+            """
+            assert 0 <= idx < param_groups
+            x_unpadded, y_unpadded = divmod(idx, num_cols)
+            return 2 * x_unpadded + 1, 2 * y_unpadded + 1
+
+        for idx in range(param_groups):
+            x, y = to_grid(idx)
+            instruments.histogram_2d_gauge(
+                self, self.secondary_fig, self.gs_layerwise[x, y], idx=idx
+            )
