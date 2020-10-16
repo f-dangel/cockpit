@@ -10,7 +10,7 @@ _range = range
 
 
 def histogramdd(  # noqa: C901
-    sample, bins=None, range=None, weights=None, remove_overflow=True
+    sample, bins=None, range=None, weights=None, remove_outliers=True
 ):
     """Create N-dimensional histograms.
 
@@ -24,7 +24,7 @@ def histogramdd(  # noqa: C901
         range (sequence, optional): Each item in the sequence is either a (min,max)
             Tuple, or None, in which case the edges are calculated as the minimum and
             maximum of input data
-        remove_overflow (bool, optional): Whether the overflow bins should be included
+        remove_outliers (bool, optional): Whether the overflow bins should be included
             in the final histogram or not
 
     Returns:
@@ -164,7 +164,7 @@ def histogramdd(  # noqa: C901
     hist = torch.bincount(l, minlength=(multiindex[0] * (bins[0] + 2)), weights=weights)
     hist = hist.reshape(tuple(bins + 2))
 
-    if remove_overflow:
+    if remove_outliers:
         core = D * (slice(1, -1),)
         hist = hist[core]
 
