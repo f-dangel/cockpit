@@ -1,2 +1,3 @@
 memory-profiler
 pytest-benchmark
+tikzplotlib
