@@ -37,6 +37,16 @@ class CockpitPlotter:
 
         # Set plotting parameters
         self._set_plotting_params()
+        self._set_layout_params()
+
+    def _set_layout_params(self):
+        """Initialize parameters that define the plot layout."""
+        # Individual parts are managed separetely but (for now) they share a layout
+        self.inner_num_rows = 5
+        self.inner_num_cols = 3
+        self.inner_width_ratios = [0.05, 1, 0.05]
+        self.inner_height_ratios = [0.0, 1, 1, 1, 0.00]
+        self.inner_hspace = 0.6
 
     def _set_backend(self, show_plot):
         """Use a backend that does (not) show plots."""
@@ -103,14 +113,6 @@ class CockpitPlotter:
             wspace=0.1,
             hspace=0.1,
         )
-
-        # Individual parts are managed separetely but (for now) they use a shared
-        # layout
-        self.inner_num_rows = 5
-        self.inner_num_cols = 3
-        self.inner_width_ratios = [0.05, 1, 0.05]
-        self.inner_height_ratios = [0.0, 1, 1, 1, 0.00]
-        self.inner_hspace = 0.6
 
         self._plot_step(self.grid_spec[0, 0])
         self._plot_gradients(self.grid_spec[0, 1])
