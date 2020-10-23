@@ -2,7 +2,7 @@
 
 import torch
 
-from backboard.experiments.utils import register, replace
+from backboard.experiments.utils import replace
 from deepobs.pytorch.datasets.cifar10 import cifar10
 from deepobs.pytorch.testproblems import cifar10_3c3d
 from deepobs.pytorch.testproblems.testproblems_modules import net_cifar10_3c3d
@@ -32,8 +32,12 @@ class cifar10_3c3dsig(_cifar10_3c3dact):
     @staticmethod
     def _replace_relu(module):
         """Replace all occurrences of `ReLU` by `Sigmoids`."""
-        trigger = lambda mod: isinstance(mod, torch.nn.ReLU)
-        make_new = lambda mod: torch.nn.Sigmoid()
+
+        def trigger(mod):
+            return isinstance(mod, torch.nn.ReLU)
+
+        def make_new(mod):
+            return torch.nn.Sigmoid()
 
         replace(module, trigger, make_new)
 
@@ -44,7 +48,11 @@ class cifar10_3c3dtanh(_cifar10_3c3dact):
     @staticmethod
     def _replace_relu(module):
         """Replace all occurrences of `ReLU` by `Tanh`."""
-        trigger = lambda mod: isinstance(mod, torch.nn.ReLU)
-        make_new = lambda mod: torch.nn.Tanh()
+
+        def trigger(mod):
+            return isinstance(mod, torch.nn.ReLU)
+
+        def make_new(mod):
+            return torch.nn.Tanh()
 
         replace(module, trigger, make_new)
