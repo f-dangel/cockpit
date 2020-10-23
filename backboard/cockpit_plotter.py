@@ -37,6 +37,16 @@ class CockpitPlotter:
 
         # Set plotting parameters
         self._set_plotting_params()
+        self._set_layout_params()
+
+    def _set_layout_params(self):
+        """Initialize parameters that define the plot layout."""
+        # Individual parts are managed separetely but (for now) they share a layout
+        self.inner_num_rows = 5
+        self.inner_num_cols = 3
+        self.inner_width_ratios = [0.05, 1, 0.05]
+        self.inner_height_ratios = [0.0, 1, 1, 1, 0.00]
+        self.inner_hspace = 0.6
 
     def _set_backend(self, show_plot):
         """Use a backend that does (not) show plots."""
@@ -103,14 +113,6 @@ class CockpitPlotter:
             wspace=0.1,
             hspace=0.1,
         )
-
-        # Individual parts are managed separetely but (for now) they use a shared
-        # layout
-        self.inner_num_rows = 5
-        self.inner_num_cols = 3
-        self.inner_width_ratios = [0.05, 1, 0.05]
-        self.inner_height_ratios = [0.0, 1, 1, 1, 0.00]
-        self.inner_hspace = 0.6
 
         self._plot_step(self.grid_spec[0, 0])
         self._plot_gradients(self.grid_spec[0, 1])
@@ -390,18 +392,22 @@ class CockpitPlotter:
             hspace=0.1,
         )
 
+        self.__set_ax_auxiliary(self.secondary_grid_spec[0, 0])
         self._plot_auxiliary(self.secondary_grid_spec[0, 0])
+
+        self.__set_ax_layerwise(self.secondary_grid_spec[1, 0])
         self._plot_layerwise(self.secondary_grid_spec[1, 0])
 
-    def _plot_auxiliary(self, grid_spec):
-        """Plot auxiliary quantities to the secondary screen."""
-
-        # Use grid_spec with a "dummy plot" to set Group title and color
+    def __set_ax_auxiliary(self, grid_spec):
+        """Use grid_spec with a "dummy plot" to set Group title and color."""
         self.ax_auxiliary = self.secondary_fig.add_subplot(grid_spec)
         self.ax_auxiliary.set_title("AUXILIARY", fontweight="bold", fontsize="x-large")
         self.ax_auxiliary.set_facecolor(self.bg_color_one)
         self.ax_auxiliary.set_xticklabels([])
         self.ax_auxiliary.set_yticklabels([])
+
+    def _plot_auxiliary(self, grid_spec):
+        """Plot auxiliary quantities to the secondary screen."""
 
         # Build inner structure of this plotting group
         # We use additional "dummy" gridspecs to position the instruments
@@ -420,14 +426,16 @@ class CockpitPlotter:
             self, self.secondary_fig, self.gs_auxiliary[1, 5]
         )
 
-    def _plot_layerwise(self, grid_spec):
-        """Plot layerwise 2d histograms to the secondary screen."""
-        # Use grid_spec with a "dummy plot" to set Group title and color
+    def __set_ax_layerwise(self, grid_spec):
+        """Use grid_spec with a "dummy plot" to set Group title and color."""
         self.ax_layerwise = self.secondary_fig.add_subplot(grid_spec)
         self.ax_layerwise.set_title("LAYERWISE", fontweight="bold", fontsize="x-large")
         self.ax_layerwise.set_facecolor(self.bg_color_two)
         self.ax_layerwise.set_xticklabels([])
         self.ax_layerwise.set_yticklabels([])
+
+    def _plot_layerwise(self, grid_spec, fig=None):
+        """Plot layerwise 2d histograms to the secondary screen."""
 
         # Build inner structure
         try:
@@ -468,8 +476,9 @@ class CockpitPlotter:
             x_unpadded, y_unpadded = divmod(idx, num_cols)
             return 2 * x_unpadded + 1, 2 * y_unpadded + 1
 
+        if fig is None:
+            fig = self.secondary_fig
+
         for idx in range(param_groups):
             x, y = to_grid(idx)
-            instruments.histogram_2d_gauge(
-                self, self.secondary_fig, self.gs_layerwise[x, y], idx=idx
-            )
+            instruments.histogram_2d_gauge(self, fig, self.gs_layerwise[x, y], idx=idx)
