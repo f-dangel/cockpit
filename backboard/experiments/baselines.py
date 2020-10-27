@@ -22,7 +22,7 @@ hyperparams_SGD = {
 }
 
 
-def run_sgd_baseline(problem, output_dir):
+def run_sgd_baseline(problem, output_dir, num_epochs=None, batch_size=None):
     """Run DeepOBS grid search for SGD. Disable ℓ₂ regularization."""
     optimizer_class = SGD
     hyperparams = hyperparams_SGD
@@ -35,6 +35,8 @@ def run_sgd_baseline(problem, output_dir):
     )
     tuner.tune(
         problem,
+        num_epochs=num_epochs,
+        batch_size=batch_size,
         rerun_best_setting=True,
         skip_if_exists=True,
         output_dir=output_dir,
@@ -52,7 +54,7 @@ hyperparams_Adam = {
 }
 
 
-def run_adam_baseline(problem, output_dir):
+def run_adam_baseline(problem, output_dir, num_epochs=None, batch_size=None):
     """Run DeepOBS grid search for Adam. Disable ℓ₂ regularization."""
     optimizer_class = Adam
     hyperparams = hyperparams_Adam
@@ -66,6 +68,8 @@ def run_adam_baseline(problem, output_dir):
     )
     tuner.tune(
         problem,
+        num_epochs=num_epochs,
+        batch_size=batch_size,
         rerun_best_setting=True,
         skip_if_exists=True,
         output_dir=output_dir,
