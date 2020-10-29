@@ -2,6 +2,7 @@
 
 import pytest
 
+from backboard.context import get_batch_size
 from backboard.quantities import EarlyStopping
 from backpack import extensions
 from tests.test_quantities.utils import compare_quantities, get_output_sgd_test_runner
@@ -39,7 +40,7 @@ class EarlyStoppingExpensive(EarlyStopping):
 
         return ext
 
-    def _compute(self, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Compute the criterion.
 
         Evaluates the left hand side of Equ. 7 in
@@ -49,7 +50,7 @@ class EarlyStoppingExpensive(EarlyStopping):
 
         If this value exceeds 0, training should be stopped.
         """
-        B = self._fetch_batch_size_hotfix(batch_loss)
+        B = get_batch_size(global_step)
 
         # compensate BackPACK's 1/B scaling
         batch_grad = B * self._fetch_batch_grad(params, aggregate=True)

@@ -2,6 +2,7 @@
 
 import pytest
 
+from backboard.context import get_batch_size
 from backboard.quantities import CABS
 from backpack import extensions
 from tests.test_quantities.utils import compare_quantities, get_output_sgd_test_runner
@@ -38,7 +39,7 @@ class CABSExpensive(CABS):
 
         return ext
 
-    def _compute(self, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Compute the CABS rule. Return suggested batch size.
 
         Evaluates Equ. 22 of
@@ -46,7 +47,7 @@ class CABSExpensive(CABS):
         - Balles, L., Romero, J., & Hennig, P.,
           Coupling adaptive batch sizes with learning rates (2017).
         """
-        B = self._fetch_batch_size_hotfix(batch_loss)
+        B = get_batch_size(global_step)
 
         grad_squared = self._fetch_grad(params, aggregate=True) ** 2
         # # compensate BackPACK's 1/B scaling

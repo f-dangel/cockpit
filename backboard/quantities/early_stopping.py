@@ -2,6 +2,7 @@
 
 import warnings
 
+from backboard.context import get_batch_size
 from backboard.quantities.quantity import SingleStepQuantity
 from backpack import extensions
 
@@ -65,14 +66,14 @@ class EarlyStopping(SingleStepQuantity):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if self.is_active(global_step):
-            stop_crit = self._compute(params, batch_loss).item()
+            stop_crit = self._compute(global_step, params, batch_loss).item()
 
             if self._verbose:
                 print(f"[Step {global_step}] StoppingCriterion: {stop_crit:.4f}")
 
             self.output[global_step]["early_stopping"] = stop_crit
 
-    def _compute(self, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Compute the criterion.
 
         Evaluates the left hand side of Equ. 7 in
@@ -82,7 +83,7 @@ class EarlyStopping(SingleStepQuantity):
 
         If this value exceeds 0, training should be stopped.
         """
-        B = self._fetch_batch_size_hotfix(batch_loss)
+        B = get_batch_size(global_step)
 
         grad_squared = self._fetch_grad(params, aggregate=True) ** 2
 

@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import torch
 
-from backboard.context import get_individual_losses
+from backboard.context import get_batch_size, get_individual_losses
 from backboard.quantities.quantity import Quantity
 from backboard.quantities.utils_quantities import (
     _layerwise_dot_product,
@@ -164,7 +164,7 @@ class AlphaExpensive(_Alpha):
             info["params"] = {id(p): p.data.clone().detach() for p in params}
             info["grad"] = {id(p): p.grad.data.clone().detach() for p in params}
             # L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's computes ¹/ₙ ∇ℓᵢ, we have to rescale
-            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+            batch_size = get_batch_size(global_step)
             info["batch_grad"] = {
                 id(p): batch_size * p.grad_batch.data.clone().detach() for p in params
             }
