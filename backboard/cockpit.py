@@ -8,6 +8,7 @@ from collections import defaultdict
 
 from backboard import quantities
 from backboard.cockpit_plotter import CockpitPlotter
+from backboard.context import CockpitCTX
 from backboard.quantities.utils_quantities import _update_dicts
 from backobs import extend_with_access_unreduced_loss
 from backpack import backpack, backpack_deactivate_io
@@ -167,6 +168,11 @@ class Cockpit:
             backpack.backpack: BackPACK with the appropriate extensions, or the
                 backpack_disable_io context.
         """
+        CockpitCTX.erase()
+
+        if info is not None:
+            CockpitCTX.set(info, global_step)
+
         ext = self._get_extensions(global_step)
 
         # Collect if create graph is needed and set switch
