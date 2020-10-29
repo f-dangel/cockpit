@@ -153,11 +153,15 @@ class Cockpit:
 
         return ext
 
-    def __call__(self, global_step, debug=False):
+    def __call__(self, global_step, info=None, debug=False):
         """Returns the backpack extensions that should be used in this iteration.
 
         Args:
             global_step (int): Current number of iteration.
+            info (dict): Dictionary that specifies additional information. Some
+                quantities require additional information that is overly difficult
+                to infer from a backward pass, like the individual losses.
+            debug (bool): Enable debug mode.
 
         Returns:
             backpack.backpack: BackPACK with the appropriate extensions, or the

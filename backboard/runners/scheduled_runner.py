@@ -166,8 +166,10 @@ class _ScheduleCockpitRunner(PTRunner):
                 try:
                     opt.zero_grad()
 
+                    info = {}
+
                     # COCKPIT: Use necessary BackPACK extensions and track #
-                    with cockpit(global_step):
+                    with cockpit(global_step, info=info):
                         batch_loss, _ = tproblem.get_batch_loss_and_accuracy(
                             reduction="mean"
                         )
