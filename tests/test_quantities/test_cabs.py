@@ -10,11 +10,11 @@ from tests.test_quantities.utils import compare_quantities, get_output_sgd_test_
 TESTPROBLEMS = [
     "quadratic_deep",
     "mnist_logreg",
-    "fmnist_2c2d",
+    # "fmnist_2c2d",
     "mnist_mlp",
     "fmnist_logreg",
     "fmnist_mlp",
-    "mnist_2c2d",
+    # "mnist_2c2d",
     "cifar10_3c3d",
 ]
 
