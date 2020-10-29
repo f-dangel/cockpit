@@ -10,8 +10,12 @@ from backboard.benchmark.utils import _get_train_steps_per_epoch
 from deepobs.pytorch.runners.runner import PTRunner
 
 
-class ScheduleCockpitRunner(PTRunner):
-    """Schedule Runner using a learning rate schedule."""
+class _ScheduleCockpitRunner(PTRunner):
+    """Abstract schedule Runner using a learning rate schedule.
+
+    This class serves as base class for running regular DeepOBS experiments with the
+    cockpit, as well as memory/runtime benchmarks and tests.
+    """
 
     def __init__(
         self,
@@ -36,9 +40,7 @@ class ScheduleCockpitRunner(PTRunner):
             secondary_screen (bool): Whether to plot other experimental quantities
                 on a secondary screen.
         """
-        super(ScheduleCockpitRunner, self).__init__(
-            optimizer_class, hyperparameter_names
-        )
+        super().__init__(optimizer_class, hyperparameter_names)
         self._quantities = quantities
         self._enable_plotting = plot
         self._plot_schedule = plot_schedule
@@ -117,30 +119,31 @@ class ScheduleCockpitRunner(PTRunner):
 
         for epoch_count in range(num_epochs + 1):
             # Evaluate at beginning of epoch.
-            self.evaluate_all(
-                epoch_count,
-                num_epochs,
-                tproblem,
-                train_losses,
-                valid_losses,
-                test_losses,
-                train_accuracies,
-                valid_accuracies,
-                test_accuracies,
-            )
+            if self._should_eval():
+                self.evaluate_all(
+                    epoch_count,
+                    num_epochs,
+                    tproblem,
+                    train_losses,
+                    valid_losses,
+                    test_losses,
+                    train_accuracies,
+                    valid_accuracies,
+                    test_accuracies,
+                )
 
-            # COCKPIT: Log already computed quantities #
-            cockpit.log(
-                global_step,
-                epoch_count,
-                train_losses[-1],
-                valid_losses[-1],
-                test_losses[-1],
-                train_accuracies[-1],
-                valid_accuracies[-1],
-                test_accuracies[-1],
-                opt.param_groups[0]["lr"],
-            )
+                # COCKPIT: Log already computed quantities #
+                cockpit.log(
+                    global_step,
+                    epoch_count,
+                    train_losses[-1],
+                    valid_losses[-1],
+                    test_losses[-1],
+                    train_accuracies[-1],
+                    valid_accuracies[-1],
+                    test_accuracies[-1],
+                    opt.param_groups[0]["lr"],
+                )
 
             # Break from train loop after the last round of evaluation
             if epoch_count == num_epochs:
@@ -198,6 +201,8 @@ class ScheduleCockpitRunner(PTRunner):
 
                     batch_count += 1
                     global_step += 1
+
+                    self._maybe_stop_iteration(global_step, batch_count)
 
                 except StopIteration:
                     break
@@ -311,3 +316,35 @@ class ScheduleCockpitRunner(PTRunner):
 
         else:
             return self._plot_schedule
+
+    def _maybe_stop_iteration(self, global_step, batch_count):
+        """Optionally stop iteration of an epoch earlier.
+
+        The iteration will be stopped if a ``StopIteration`` exception is raised.
+
+        Args:
+            global_step (int): Number of iterations performed in total.
+            batch_count (int): Number of mini-batches drawn in the current epoch.
+        """
+        raise NotImplementedError()
+
+    def _should_eval(self):
+        """Return bool that determines computation of DeepOBS' metrics on large sets.
+
+        This method can be used to disable the computation of train/test/valid losses
+        and accuracies at the beginning of each epoch. The computation will be switched
+        off if this function returns ``False``.
+        """
+        raise NotImplementedError()
+
+
+class ScheduleCockpitRunner(_ScheduleCockpitRunner):
+    """Schedule Runner using a learning rate schedule."""
+
+    def _maybe_stop_iteration(self, global_step, batch_count):
+        """Never stop the default DeepOBS iteration of an epoch."""
+        pass
+
+    def _should_eval(self):
+        """Enable DeepOBS' evaluation of test/train/valid losses and accuracies."""
+        return True
