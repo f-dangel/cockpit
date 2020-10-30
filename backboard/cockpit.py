@@ -8,6 +8,7 @@ from collections import defaultdict
 
 from backboard import quantities
 from backboard.cockpit_plotter import CockpitPlotter
+from backboard.context import CockpitCTX
 from backboard.quantities.utils_quantities import _update_dicts
 from backobs import extend_with_access_unreduced_loss
 from backpack import backpack, backpack_deactivate_io
@@ -153,16 +154,25 @@ class Cockpit:
 
         return ext
 
-    def __call__(self, global_step, debug=False):
+    def __call__(self, global_step, info=None, debug=False):
         """Returns the backpack extensions that should be used in this iteration.
 
         Args:
             global_step (int): Current number of iteration.
+            info (dict): Dictionary that specifies additional information. Some
+                quantities require additional information that is overly difficult
+                to infer from a backward pass, like the individual losses.
+            debug (bool): Enable debug mode.
 
         Returns:
             backpack.backpack: BackPACK with the appropriate extensions, or the
                 backpack_disable_io context.
         """
+        CockpitCTX.erase()
+
+        if info is not None:
+            CockpitCTX.set(info, global_step)
+
         ext = self._get_extensions(global_step)
 
         # Collect if create graph is needed and set switch

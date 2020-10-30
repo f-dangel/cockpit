@@ -3,18 +3,17 @@
 import pytest
 
 from backboard.quantities import BatchGradHistogram1d, BatchGradHistogram2d
-
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
 TESTPROBLEMS = [
     "mnist_logreg",
-    "fmnist_2c2d",
+    # "fmnist_2c2d",
     "mnist_mlp",
     "fmnist_logreg",
     "fmnist_mlp",
-    "mnist_2c2d",
-    # "cifar10_3c3d",
+    # "mnist_2c2d",
+    "cifar10_3c3d",
 ]
 
 TRACK_INTERVAL = 1

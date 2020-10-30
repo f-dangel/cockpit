@@ -173,11 +173,11 @@ def test_small_step():
 
 TESTPROBLEMS = [
     "mnist_logreg",
-    "fmnist_2c2d",
+    # "fmnist_2c2d",
     "mnist_mlp",
     "fmnist_logreg",
     "fmnist_mlp",
-    "mnist_2c2d",
+    # "mnist_2c2d",
     # "cifar10_3c3d",
 ]
 

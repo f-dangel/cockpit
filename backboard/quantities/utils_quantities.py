@@ -16,25 +16,6 @@ def _update_dicts(master_dict, update_dict):
             master_dict[key][subkey] = subvalue
 
 
-def _unreduced_loss_hotfix(batch_loss):
-    """A simple hotfix for the unreduced loss values.
-
-    For the quadratic_deep problem of DeepOBS, the unreduced losses are a matrix
-    and should be averaged over the second axis.
-
-    Args:
-        batch_loss (torch.Tensor): Mini-batch loss from current step, with the
-            unreduced losses as an attribute.
-
-    Returns:
-        torch.Tensor: (Averaged) unreduced losses.
-    """
-    batch_losses = batch_loss._unreduced_loss
-    if len(batch_losses.shape) == 2:
-        batch_losses = batch_losses.mean(1)
-    return batch_losses
-
-
 def _layerwise_dot_product(x_s, y_s):
     """Computes the dot product of two parameter vectors layerwise.
 

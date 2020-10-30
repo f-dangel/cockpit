@@ -12,7 +12,7 @@ TESTPROBLEMS = [
     "fmnist_logreg",
     "fmnist_mlp",
     # "fmnist_2c2d",
-    "mnist_2c2d",
+    # "mnist_2c2d",
     "cifar10_3c3d",
 ]
 

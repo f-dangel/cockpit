@@ -2,6 +2,7 @@
 
 import torch
 
+from backboard.context import get_batch_size
 from backboard.quantities.quantity import SingleStepQuantity
 from backboard.quantities.utils_quantities import (
     has_negative,
@@ -111,7 +112,7 @@ class TICDiag(TIC):
 
         """
         if self.is_active(global_step):
-            tic = self._compute(params, batch_loss).item()
+            tic = self._compute(global_step, params, batch_loss).item()
 
             if self._verbose:
                 print(f"[Step {global_step}] TICDiag: {tic:.4f}")
@@ -119,12 +120,13 @@ class TICDiag(TIC):
             self.output[global_step]["tic_diag"] = tic
 
             if self._check:
-                self.__run_check(params, batch_loss)
+                self.__run_check(global_step, params, batch_loss)
 
-    def _compute(self, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Compute the TICDiag using a diagonal curvature approximation.
 
         Args:
+            global_step (int): The current iteration number.
             params ([torch.Tensor]): List of parameters considered in the computation.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
@@ -135,11 +137,11 @@ class TICDiag(TIC):
             sum_grad_squared = sum_grad_squared.double()
             curvature = curvature.double()
 
-        batch_size = self._fetch_batch_size_hotfix(batch_loss)
+        batch_size = get_batch_size(global_step)
 
         return (batch_size * sum_grad_squared / (curvature + self._epsilon)).sum()
 
-    def __run_check(self, params, batch_loss):
+    def __run_check(self, global_step, params, batch_loss):
         """Run sanity checks for TICDiag."""
 
         def _compute_tic_with_batch_grad(params):
@@ -159,12 +161,12 @@ class TICDiag(TIC):
             if has_negative(curv_stable):
                 raise ValueError("Diagonal curvature + ε has negative entries.")
 
-            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+            batch_size = get_batch_size(global_step)
 
             return torch.einsum("j,nj->", 1 / curv_stable, batch_size * batch_grad ** 2)
 
         # sanity check 1: Both TICDiags match
-        tic_from_sgs = self._compute(params, batch_loss)
+        tic_from_sgs = self._compute(global_step, params, batch_loss)
         tic_from_batch_grad = _compute_tic_with_batch_grad(params)
 
         report_nonclose_values(tic_from_sgs, tic_from_batch_grad, atol=ATOL, rtol=RTOL)
@@ -187,7 +189,7 @@ class TICTrace(TIC):
 
         """
         if self.is_active(global_step):
-            tic = self._compute(params, batch_loss).item()
+            tic = self._compute(global_step, params, batch_loss).item()
 
             if self._verbose:
                 print(f"[Step {global_step}] TICTrace: {tic:.4f}")
@@ -195,12 +197,13 @@ class TICTrace(TIC):
             self.output[global_step]["tic_trace"] = tic
 
             if self._check:
-                self.__run_check(params, batch_loss)
+                self.__run_check(global_step, params, batch_loss)
 
-    def _compute(self, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Compute the TICTrace using a trace approximation.
 
         Args:
+            global_step (int): The current iteration number.
             params ([torch.Tensor]): List of parameters considered in the computation.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
@@ -211,11 +214,11 @@ class TICTrace(TIC):
             sum_grad_squared = sum_grad_squared.double()
             curvature = curvature.double()
 
-        batch_size = self._fetch_batch_size_hotfix(batch_loss)
+        batch_size = get_batch_size(global_step)
 
         return batch_size * sum_grad_squared.sum() / (curvature.sum() + self._epsilon)
 
-    def __run_check(self, params, batch_loss):
+    def __run_check(self, global_step, params, batch_loss):
         """Run sanity checks for TICTrace."""
 
         def _compute_tic_with_batch_grad(params):
@@ -235,12 +238,12 @@ class TICTrace(TIC):
             if has_negative(curv_trace_stable):
                 raise ValueError("Curvature trace + ε has negative entries.")
 
-            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+            batch_size = get_batch_size(global_step)
 
             return batch_size * (batch_grad ** 2).sum() / curv_trace_stable
 
         # sanity check 1: Both TICTraces match
-        tic_from_sgs = self._compute(params, batch_loss)
+        tic_from_sgs = self._compute(global_step, params, batch_loss)
         tic_from_batch_grad = _compute_tic_with_batch_grad(params)
 
         report_nonclose_values(tic_from_sgs, tic_from_batch_grad, atol=ATOL, rtol=RTOL)
