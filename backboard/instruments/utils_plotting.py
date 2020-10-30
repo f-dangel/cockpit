@@ -1,5 +1,7 @@
 """Utility functions for the CockpitPlotter."""
 
+import warnings
+
 import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -13,14 +15,26 @@ def _split_logpath(logpath):
     Returns:
         [dict]: Dictioniary of logpath, testproblem, optimizer, etc.
     """
-    dicty = {
-        "logpath": logpath + ".json",
-        "optimizer": logpath.split("/")[-3],
-        "testproblem": logpath.split("/")[-4],
-        "dataset": logpath.split("/")[-4].split("_", 1)[0],
-        "model": logpath.split("/")[-4].split("_", 1)[1],
-    }
-
+    try:
+        dicty = {
+            "logpath": logpath + ".json",
+            "optimizer": logpath.split("/")[-3],
+            "testproblem": logpath.split("/")[-4],
+            "dataset": logpath.split("/")[-4].split("_", 1)[0],
+            "model": logpath.split("/")[-4].split("_", 1)[1],
+        }
+    except Exception:
+        warnings.warn(
+            "Could not extract information about optimizer, dataset and model."
+            + "Setting them to unknown."
+        )
+        dicty = {
+            "logpath": logpath + ".json",
+            "optimizer": "unknown_optimizer",
+            "testproblem": "unknown_testproblem",
+            "dataset": "unknown_dataset",
+            "model": "unknown_model",
+        }
     return dicty
 
 
