@@ -3,7 +3,7 @@ numpy
 pandas
 scipy
 seaborn
-torch
+torch==1.6.0
 # BatchDotGrad extensions
 -e git://github.com/f-dangel/backpack.git@batch-grad-transform#egg=backpack
 # -e git://github.com/f-dangel/backpack.git@development#egg=backpack
