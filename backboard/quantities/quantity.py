@@ -196,6 +196,16 @@ class Quantity:
         return batch_l2
 
     @staticmethod
+    def _fetch_batch_l2_squared_via_batch_grad_transforms(params, aggregate=False):
+        """Same as _fetch_batch_l2_squared, assumes BatchGradTransforms computation."""
+        batch_l2 = [p.grad_batch_transforms["batch_l2"] for p in params]
+
+        if aggregate:
+            batch_l2 = sum(batch_l2)
+
+        return batch_l2
+
+    @staticmethod
     def _fetch_batch_dot(params, aggregate=False):
         """Return individual gradient pairwise dot products.
 
