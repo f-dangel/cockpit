@@ -35,3 +35,15 @@ def batch_dot_transform(batch_grad):
 def get_first_n_alphabet(n):
     """Return the first n lowercase letters of the alphabet as a list."""
     return string.ascii_lowercase[:n]
+
+
+def BatchGradTransforms_SumGradSquared():
+    """Compute sum of squared individual gradients via individual gradients."""
+    return extensions.BatchGradTransforms(
+        {"sum_grad_squared": sum_grad_squared_transform}
+    )
+
+
+def sum_grad_squared_transform(batch_grad):
+    """Transform individual gradients into second non-centered moment."""
+    return (batch_grad ** 2).sum(0)

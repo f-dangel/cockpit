@@ -270,6 +270,16 @@ class Quantity:
         return sum_grad_squared
 
     @staticmethod
+    def _fetch_sum_grad_squared_via_batch_grad_transforms(params, aggregate=False):
+        """Same as _fetch_sum_grad_squared, assumes BatchGradTransforms computation."""
+        sum_grad_squared = [p.grad_batch_transforms["sum_grad_squared"] for p in params]
+
+        if aggregate:
+            sum_grad_squared = torch.cat([sgs.flatten() for sgs in sum_grad_squared])
+
+        return sum_grad_squared
+
+    @staticmethod
     def _fetch_diag_curvature(params, savefield, aggregate=True):
         """Return diagonal curvature approximation.
 
