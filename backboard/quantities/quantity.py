@@ -233,6 +233,16 @@ class Quantity:
         return batch_dot_grad
 
     @staticmethod
+    def _fetch_batch_dot_via_batch_grad_transforms(params, aggregate=False):
+        """Same as _fetch_batch_dot, assumes BatchGradTransforms computation."""
+        batch_dot_grad = [p.grad_batch_transforms["batch_dot"] for p in params]
+
+        if aggregate:
+            batch_dot_grad = sum(batch_dot_grad)
+
+        return batch_dot_grad
+
+    @staticmethod
     def _fetch_sum_grad_squared(params, aggregate=False):
         """Return sum of squared individual gradients.
 

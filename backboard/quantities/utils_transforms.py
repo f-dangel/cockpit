@@ -1,12 +1,37 @@
+import string
+
+from torch import einsum
+
 from backpack import extensions
 
 
 def BatchGradTransforms_BatchL2Grad():
     """Compute individual gradient ℓ₂ norms via individual gradients."""
-    return extensions.BatchGradTransforms({"batch_l2": batch_l2_grad_transform})
+    return extensions.BatchGradTransforms({"batch_l2": batch_l2_transform})
 
 
-def batch_l2_grad_transform(batch_grad):
+def batch_l2_transform(batch_grad):
     """Transform individual gradients into individual ℓ₂ norms."""
     sum_axes = list(range(batch_grad.dim()))[1:]
     return (batch_grad ** 2).sum(sum_axes)
+
+
+def BatchGradTransforms_BatchDotGrad():
+    """Compute pairwise individual gradient dot products via individual gradients."""
+    return extensions.BatchGradTransforms({"batch_dot": batch_dot_transform})
+
+
+def batch_dot_transform(batch_grad):
+    """Transform individual gradients into pairwise dot products."""
+    # make einsum string
+    letters = get_first_n_alphabet(batch_grad.dim() + 1)
+    n1, n2, sum_out = letters[0], letters[1], "".join(letters[2:])
+
+    einsum_equation = f"{n1}{sum_out},{n2}{sum_out}->{n1}{n2}"
+
+    return einsum(einsum_equation, batch_grad, batch_grad)
+
+
+def get_first_n_alphabet(n):
+    """Return the first n lowercase letters of the alphabet as a list."""
+    return string.ascii_lowercase[:n]
