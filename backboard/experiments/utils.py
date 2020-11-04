@@ -90,6 +90,8 @@ def _set_plotting_params():
         "ytick.major.pad": 0.0,
         # More space between subplots
         "figure.subplot.hspace": 0.3,
+        # Less space around the plot
+        "savefig.pad_inches": 0.0,
     }
     plt.rcParams.update(tex_fonts)
 
@@ -117,6 +119,8 @@ def _get_plot_size(
     """
     if textwidth == "cvpr":
         width = 496.85625
+    elif textwidth == "cvpr_col":
+        width = 237.13594
     else:
         width = textwidth
 
