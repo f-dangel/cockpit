@@ -310,9 +310,8 @@ class _ScheduleCockpitRunner(PTRunner):
         this function. Otherwise, create a default schedule which plots every
         ``plot_interval`` epochs.
         """
-        steps_per_epoch = _get_train_steps_per_epoch(tproblem)
-
         if self._plot_schedule is None:
+            steps_per_epoch = _get_train_steps_per_epoch(tproblem)
 
             def default_plot_schedule(global_step):
                 """Plot and write data at the end of every ``plot_interval`` epoch."""
