@@ -3,6 +3,7 @@
 import torch
 
 from backboard.quantities.quantity import SingleStepQuantity
+from backboard.quantities.utils_transforms import BatchGradTransforms_BatchL2Grad
 from backpack import extensions
 
 
@@ -53,7 +54,7 @@ class NormTest(SingleStepQuantity):
             list: (Potentially empty) list with required BackPACK quantities.
         """
         if self.is_active(global_step):
-            ext = [extensions.BatchL2Grad()]
+            ext = [BatchGradTransforms_BatchL2Grad()]
 
             if self._check:
                 ext.append(extensions.BatchGrad())
@@ -95,7 +96,9 @@ class NormTest(SingleStepQuantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        batch_l2_squared = self._fetch_batch_l2_squared(params, aggregate=True)
+        batch_l2_squared = self._fetch_batch_l2_squared_via_batch_grad_transforms(
+            params, aggregate=True
+        )
         grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
         batch_size = batch_l2_squared.size(0)
 
@@ -185,7 +188,9 @@ class NormTest(SingleStepQuantity):
 
         # sanity check 1: ample variance ℓ₁  norm via individual gradients should match
         # result from computation with individual gradients ℓ₂ norms.
-        batch_l2_squared = self._fetch_batch_l2_squared(params, aggregate=True)
+        batch_l2_squared = self._fetch_batch_l2_squared_via_batch_grad_transforms(
+            params, aggregate=True
+        )
         grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
         batch_size = batch_l2_squared.size(0)
 

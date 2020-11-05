@@ -4,6 +4,7 @@ import torch
 
 from backboard.context import get_batch_size
 from backboard.quantities.quantity import SingleStepQuantity
+from backboard.quantities.utils_transforms import BatchGradTransforms_BatchDotGrad
 from backpack import extensions
 
 
@@ -59,7 +60,7 @@ class InnerProductTest(SingleStepQuantity):
             list: (Potentially empty) list with required BackPACK quantities.
         """
         if self.is_active(global_step):
-            ext = [extensions.BatchDotGrad()]
+            ext = [BatchGradTransforms_BatchDotGrad()]
 
             if self._check:
                 ext.append(extensions.BatchGrad())
@@ -102,7 +103,9 @@ class InnerProductTest(SingleStepQuantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        batch_dot = self._fetch_batch_dot(params, aggregate=True)
+        batch_dot = self._fetch_batch_dot_via_batch_grad_transforms(
+            params, aggregate=True
+        )
         grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
         batch_size = batch_dot.size(0)
 
@@ -199,7 +202,9 @@ class InnerProductTest(SingleStepQuantity):
 
         # sanity check 1: Variances of projected individual gradients should match
         # result from computation with individual gradients.
-        batch_dot = self._fetch_batch_dot(params, aggregate=True)
+        batch_dot = self._fetch_batch_dot_via_batch_grad_transforms(
+            params, aggregate=True
+        )
         grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
         batch_size = batch_dot.size(0)
 
