@@ -180,7 +180,15 @@ def benchmark(
 
                         this_steps = _compute_steps(steps, track_events, track_interval)
 
-                        quantities = [q(track_interval=track_interval) for q in config]
+                        def track_schedule(global_step):
+                            return (
+                                global_step >= 0 and global_step % track_interval == 0
+                            )
+
+                        quantities = [
+                            q(track_schedule=track_schedule, verbose=True)
+                            for q in config
+                        ]
                         runtime = run_benchmark(
                             testproblem, quantities, this_steps, random_seed
                         )
