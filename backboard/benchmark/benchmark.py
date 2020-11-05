@@ -6,7 +6,7 @@ from torch.optim import SGD
 from backboard.benchmark.utils import get_train_size
 from backboard.cockpit_plotter import CockpitPlotter
 from backboard.quantities import Time
-from backboard.runners.scheduled_runner import ScheduleCockpitRunner
+from backboard.runners.scheduled_runner import _ScheduleCockpitRunner
 from deepobs.pytorch.config import set_default_device
 
 
@@ -36,6 +36,18 @@ def _check_quantities(quantities):
             )
 
 
+class BenchmarkRunner(_ScheduleCockpitRunner):
+    """Runner with disabled computation DeepOBS' additional metrics."""
+
+    def _maybe_stop_iteration(self, global_step, batch_count):
+        """Don't interrupt."""
+        pass
+
+    def _should_eval(self):
+        """Disable DeepOBS' evaluation of test/train/valid losses and accuracies."""
+        return False
+
+
 def _make_runner(quantities):
     """Return a DeepOBS runner that tracks the specified quantities."""
     optimizer_class = SGD
@@ -45,8 +57,16 @@ def _make_runner(quantities):
         "nesterov": {"type": bool, "default": False},
     }
 
-    return ScheduleCockpitRunner(
-        optimizer_class, hyperparams, quantities=quantities, plot=False
+    def plot_schedule(global_step):
+        """Never plot."""
+        return False
+
+    return BenchmarkRunner(
+        optimizer_class,
+        hyperparams,
+        quantities=quantities,
+        plot=False,
+        plot_schedule=plot_schedule,
     )
 
 
