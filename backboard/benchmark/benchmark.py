@@ -206,7 +206,10 @@ def benchmark(
                             )
 
                         quantities = [
-                            q(track_schedule=track_schedule, verbose=True)
+                            q(
+                                track_schedule=track_schedule,
+                                # verbose=True,
+                            )
                             for q in config
                         ]
                         runtime = run_benchmark(
