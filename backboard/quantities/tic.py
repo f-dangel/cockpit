@@ -9,6 +9,7 @@ from backboard.quantities.utils_quantities import (
     has_zeros,
     report_nonclose_values,
 )
+from backboard.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
 from backpack import extensions
 
 ATOL = 1e-5
@@ -90,7 +91,7 @@ class TIC(SingleStepQuantity):
             if self._check:
                 ext.append(extensions.BatchGrad())
 
-            ext.append(extensions.SumGradSquared())
+            ext.append(BatchGradTransforms_SumGradSquared())
 
         else:
             ext = []
@@ -130,7 +131,9 @@ class TICDiag(TIC):
             params ([torch.Tensor]): List of parameters considered in the computation.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        sum_grad_squared = self._fetch_sum_grad_squared(params, aggregate=True)
+        sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
+            params, aggregate=True
+        )
         curvature = self._fetch_diag_curvature(params, self._curvature, aggregate=True)
 
         if self._use_double:
@@ -207,7 +210,9 @@ class TICTrace(TIC):
             params ([torch.Tensor]): List of parameters considered in the computation.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        sum_grad_squared = self._fetch_sum_grad_squared(params, aggregate=True)
+        sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
+            params, aggregate=True
+        )
         curvature = self._fetch_diag_curvature(params, self._curvature, aggregate=True)
 
         if self._use_double:

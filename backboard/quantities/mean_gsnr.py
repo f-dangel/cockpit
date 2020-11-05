@@ -10,6 +10,7 @@ from backboard.quantities.utils_quantities import (
     has_zeros,
     report_nonclose_values,
 )
+from backboard.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
 from backpack import extensions
 
 ATOL = 1e-5
@@ -68,14 +69,13 @@ class MeanGSNR(SingleStepQuantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
+        ext = []
+
         if self.is_active(global_step):
-            ext = [extensions.SumGradSquared()]
+            ext.append(BatchGradTransforms_SumGradSquared())
 
             if self._check:
                 ext.append(extensions.BatchGrad())
-
-        else:
-            ext = []
 
         return ext
 
@@ -121,12 +121,14 @@ class MeanGSNR(SingleStepQuantity):
         """
         if self._use_double:
             grad_squared = self._fetch_grad(params, aggregate=True).double() ** 2
-            sum_grad_squared = self._fetch_sum_grad_squared(
+            sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
                 params, aggregate=True
             ).double()
         else:
             grad_squared = self._fetch_grad(params, aggregate=True) ** 2
-            sum_grad_squared = self._fetch_sum_grad_squared(params, aggregate=True)
+            sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
+                params, aggregate=True
+            )
 
         batch_size = get_batch_size(global_step)
 

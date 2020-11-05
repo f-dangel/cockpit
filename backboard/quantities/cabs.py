@@ -2,7 +2,7 @@
 
 from backboard.context import get_batch_size
 from backboard.quantities.quantity import SingleStepQuantity
-from backpack import extensions
+from backboard.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
 
 
 class CABS(SingleStepQuantity):
@@ -55,7 +55,7 @@ class CABS(SingleStepQuantity):
         ext = []
 
         if self.is_active(global_step):
-            ext.append(extensions.SumGradSquared())
+            ext.append(BatchGradTransforms_SumGradSquared())
 
         return ext
 
@@ -89,6 +89,11 @@ class CABS(SingleStepQuantity):
 
         grad_squared = self._fetch_grad(params, aggregate=True) ** 2
         # # compensate BackPACK's 1/B scaling
-        sgs_compensated = B ** 2 * self._fetch_sum_grad_squared(params, aggregate=True)
+        sgs_compensated = (
+            B ** 2
+            * self._fetch_sum_grad_squared_via_batch_grad_transforms(
+                params, aggregate=True
+            )
+        )
 
         return lr * (sgs_compensated - B * grad_squared).sum() / (B * batch_loss.item())
