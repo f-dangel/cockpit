@@ -5,6 +5,7 @@ import warnings
 import numpy
 import torch
 
+from backboard.context import get_batch_size
 from backboard.quantities.quantity import SingleStepQuantity
 from backboard.quantities.utils_hists import (
     histogram2d,
@@ -116,7 +117,7 @@ class BatchGradHistogram1d(SingleStepQuantity):
             hist = sum(p.grad_batch_transforms["hist_1d"] for p in params)
 
             if self._check:
-                batch_size = self._fetch_batch_size_hotfix(batch_loss)
+                batch_size = get_batch_size(global_step)
                 num_params = sum(p.numel() for p in params)
                 num_counts = hist.sum()
                 assert batch_size * num_params == num_counts
@@ -360,7 +361,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         hist = sum(p.grad_batch_transforms["hist_2d"] for p in params)
 
         if self._check:
-            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+            batch_size = get_batch_size(global_step)
             num_params = sum(p.numel() for p in params)
             num_counts = hist.sum()
             assert batch_size * num_params == num_counts
@@ -391,7 +392,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
             hist = p.grad_batch_transforms["hist_2d"]
 
             if self._check:
-                batch_size = self._fetch_batch_size_hotfix(batch_loss)
+                batch_size = get_batch_size(global_step)
                 num_params = p.numel()
                 num_counts = hist.sum()
                 assert batch_size * num_params == num_counts

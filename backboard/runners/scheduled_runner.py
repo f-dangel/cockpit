@@ -166,11 +166,19 @@ class _ScheduleCockpitRunner(PTRunner):
                 try:
                     opt.zero_grad()
 
+                    batch_loss, _ = tproblem.get_batch_loss_and_accuracy(
+                        reduction="mean"
+                    )
+
+                    info = {
+                        "batch_size": self._extract_batch_size(batch_loss),
+                        "individual_losses": self._extract_individual_losses(
+                            batch_loss
+                        ),
+                    }
+
                     # COCKPIT: Use necessary BackPACK extensions and track #
-                    with cockpit(global_step):
-                        batch_loss, _ = tproblem.get_batch_loss_and_accuracy(
-                            reduction="mean"
-                        )
+                    with cockpit(global_step, info=info):
                         batch_loss.backward(create_graph=cockpit.create_graph)
 
                     cockpit.track(global_step, batch_loss)
@@ -302,9 +310,8 @@ class _ScheduleCockpitRunner(PTRunner):
         this function. Otherwise, create a default schedule which plots every
         ``plot_interval`` epochs.
         """
-        steps_per_epoch = _get_train_steps_per_epoch(tproblem)
-
         if self._plot_schedule is None:
+            steps_per_epoch = _get_train_steps_per_epoch(tproblem)
 
             def default_plot_schedule(global_step):
                 """Plot and write data at the end of every ``plot_interval`` epoch."""
@@ -316,6 +323,43 @@ class _ScheduleCockpitRunner(PTRunner):
 
         else:
             return self._plot_schedule
+
+    @staticmethod
+    def _extract_batch_size(batch_loss):
+        """Return the batch size from individual losses in ``batch_loss``.
+
+        Note:
+            Requires access to unreduced losses made accessible by BackOBS.
+
+        Args:
+            batch_loss (torch.Tensor): Mini-batch loss computed from a forward
+                of a DeepOBS testproblem extended by BackOBS.
+
+        Returns:
+            int: Mini-batch size
+        """
+        return len(batch_loss._unreduced_loss)
+
+    @staticmethod
+    def _extract_individual_losses(batch_loss):
+        """A simple hotfix for the unreduced loss values.
+
+        For the quadratic_deep problem of DeepOBS, the unreduced losses are a matrix
+        and should be averaged over the second axis.
+
+        Args:
+            batch_loss (torch.Tensor): Mini-batch loss from current step, with the
+                unreduced losses as an attribute.
+
+        Returns:
+            torch.Tensor: (Averaged) individual losses.
+        """
+        batch_losses = batch_loss._unreduced_loss
+
+        if len(batch_losses.shape) == 2:
+            batch_losses = batch_losses.mean(1)
+
+        return batch_losses
 
     def _maybe_stop_iteration(self, global_step, batch_count):
         """Optionally stop iteration of an epoch earlier.

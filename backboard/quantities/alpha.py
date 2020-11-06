@@ -6,11 +6,11 @@ import warnings
 import numpy as np
 import torch
 
+from backboard.context import get_batch_size, get_individual_losses
 from backboard.quantities.quantity import Quantity
 from backboard.quantities.utils_quantities import (
     _layerwise_dot_product,
     _root_sum_of_squares,
-    _unreduced_loss_hotfix,
 )
 from backpack import extensions
 
@@ -50,7 +50,7 @@ class _Alpha(Quantity):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if self._is_position(global_step, pos="end"):
-            self._end_info = self._fetch_values(params, batch_loss, pos="end")
+            self._end_info = self._fetch_values(params, batch_loss, "end", global_step)
 
             alpha = self._compute_alpha()
 
@@ -61,9 +61,11 @@ class _Alpha(Quantity):
             self.clear_info()
 
         if self._is_position(global_step, pos="start"):
-            self._start_info = self._fetch_values(params, batch_loss, pos="start")
+            self._start_info = self._fetch_values(
+                params, batch_loss, "start", global_step
+            )
 
-    def _fetch_values(self, params, batch_loss, pos):
+    def _fetch_values(self, params, batch_loss, pos, global_step):
         """Fetch values for quadratic fit. Return as dictionary.
 
         The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
@@ -146,7 +148,7 @@ class AlphaExpensive(_Alpha):
 
         return ext
 
-    def _fetch_values(self, params, batch_loss, pos):
+    def _fetch_values(self, params, batch_loss, pos, global_step):
         """Fetch values for quadratic fit. Return as dictionary.
 
         The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
@@ -156,13 +158,13 @@ class AlphaExpensive(_Alpha):
         if pos in ["start", "end"]:
             # 0ᵗʰ order info
             info["f"] = batch_loss.item()
-            info["var_f"] = _unreduced_loss_hotfix(batch_loss).var().item()
+            info["var_f"] = get_individual_losses(global_step).var().item()
 
             # temporary information required to compute quantities used in fit
             info["params"] = {id(p): p.data.clone().detach() for p in params}
             info["grad"] = {id(p): p.grad.data.clone().detach() for p in params}
             # L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's computes ¹/ₙ ∇ℓᵢ, we have to rescale
-            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+            batch_size = get_batch_size(global_step)
             info["batch_grad"] = {
                 id(p): batch_size * p.grad_batch.data.clone().detach() for p in params
             }
@@ -214,7 +216,7 @@ class AlphaOptimized(_Alpha):
 
         return ext
 
-    def _fetch_values(self, params, batch_loss, pos):
+    def _fetch_values(self, params, batch_loss, pos, global_step):
         """Fetch values for quadratic fit. Return as dictionary.
 
         The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
@@ -225,7 +227,7 @@ class AlphaOptimized(_Alpha):
 
         # 0ᵗʰ order info
         info["f"] = batch_loss.item()
-        info["var_f"] = _unreduced_loss_hotfix(batch_loss).var().item()
+        info["var_f"] = get_individual_losses(global_step).var().item()
 
         # 1ˢᵗ order info
         info["df"], info["var_df"] = self._fetch_df_and_var_df(params, pos)

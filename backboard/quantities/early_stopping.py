@@ -2,8 +2,9 @@
 
 import warnings
 
+from backboard.context import get_batch_size
 from backboard.quantities.quantity import SingleStepQuantity
-from backpack import extensions
+from backboard.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
 
 
 class EarlyStopping(SingleStepQuantity):
@@ -48,10 +49,10 @@ class EarlyStopping(SingleStepQuantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
+        ext = []
+
         if self.is_active(global_step):
-            ext = [extensions.SumGradSquared()]
-        else:
-            ext = []
+            ext.append(BatchGradTransforms_SumGradSquared())
 
         return ext
 
@@ -65,14 +66,14 @@ class EarlyStopping(SingleStepQuantity):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if self.is_active(global_step):
-            stop_crit = self._compute(params, batch_loss).item()
+            stop_crit = self._compute(global_step, params, batch_loss).item()
 
             if self._verbose:
                 print(f"[Step {global_step}] StoppingCriterion: {stop_crit:.4f}")
 
             self.output[global_step]["early_stopping"] = stop_crit
 
-    def _compute(self, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Compute the criterion.
 
         Evaluates the left hand side of Equ. 7 in
@@ -82,12 +83,17 @@ class EarlyStopping(SingleStepQuantity):
 
         If this value exceeds 0, training should be stopped.
         """
-        B = self._fetch_batch_size_hotfix(batch_loss)
+        B = get_batch_size(global_step)
 
         grad_squared = self._fetch_grad(params, aggregate=True) ** 2
 
         # compensate BackPACK's 1/B scaling
-        sgs_compensated = B ** 2 * self._fetch_sum_grad_squared(params, aggregate=True)
+        sgs_compensated = (
+            B ** 2
+            * self._fetch_sum_grad_squared_via_batch_grad_transforms(
+                params, aggregate=True
+            )
+        )
 
         diag_variance = (sgs_compensated - B * grad_squared) / (B - 1)
 

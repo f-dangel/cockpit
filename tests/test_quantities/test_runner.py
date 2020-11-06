@@ -68,8 +68,15 @@ def run_sgd_test_runner(
         },
     }
 
+    def plot_schedule(global_step):
+        return False
+
     runner = TestScheduleCockpitRunner(
-        optimizer_class_sgd, hyperparams_sgd, quantities=quantities, plot=False
+        optimizer_class_sgd,
+        hyperparams_sgd,
+        quantities=quantities,
+        plot=False,
+        plot_schedule=plot_schedule,
     )
 
     runner.run(

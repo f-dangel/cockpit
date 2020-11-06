@@ -1,7 +1,8 @@
 """Class for tracking the CABS criterion for adaptive batch size."""
 
+from backboard.context import get_batch_size
 from backboard.quantities.quantity import SingleStepQuantity
-from backpack import extensions
+from backboard.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
 
 
 class CABS(SingleStepQuantity):
@@ -54,7 +55,7 @@ class CABS(SingleStepQuantity):
         ext = []
 
         if self.is_active(global_step):
-            ext.append(extensions.SumGradSquared())
+            ext.append(BatchGradTransforms_SumGradSquared())
 
         return ext
 
@@ -68,14 +69,14 @@ class CABS(SingleStepQuantity):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if self.is_active(global_step):
-            cabs = self._compute(params, batch_loss).item()
+            cabs = self._compute(global_step, params, batch_loss).item()
 
             if self._verbose:
                 print(f"[Step {global_step}] CABS(lr={self._lr}): {cabs:.4f}")
 
             self.output[global_step]["cabs"] = cabs
 
-    def _compute(self, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Compute the CABS rule. Return suggested batch size.
 
         Evaluates Equ. 22 of
@@ -83,11 +84,16 @@ class CABS(SingleStepQuantity):
         - Balles, L., Romero, J., & Hennig, P.,
           Coupling adaptive batch sizes with learning rates (2017).
         """
-        B = self._fetch_batch_size_hotfix(batch_loss)
+        B = get_batch_size(global_step)
         lr = self._lr
 
         grad_squared = self._fetch_grad(params, aggregate=True) ** 2
         # # compensate BackPACK's 1/B scaling
-        sgs_compensated = B ** 2 * self._fetch_sum_grad_squared(params, aggregate=True)
+        sgs_compensated = (
+            B ** 2
+            * self._fetch_sum_grad_squared_via_batch_grad_transforms(
+                params, aggregate=True
+            )
+        )
 
         return lr * (sgs_compensated - B * grad_squared).sum() / (B * batch_loss.item())

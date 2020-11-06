@@ -8,9 +8,10 @@ from collections import defaultdict
 
 from backboard import quantities
 from backboard.cockpit_plotter import CockpitPlotter
+from backboard.context import CockpitCTX
 from backboard.quantities.utils_quantities import _update_dicts
 from backobs import extend_with_access_unreduced_loss
-from backpack import backpack, backpack_deactivate_io
+from backpack import backpack, backpack_deactivate_io, extend
 from backpack.extensions import BatchGradTransforms
 from deepobs.pytorch.testproblems.testproblem import TestProblem
 
@@ -128,8 +129,9 @@ class Cockpit:
         if isinstance(tproblem, TestProblem):
             extend_with_access_unreduced_loss(tproblem, detach=True)
         else:
-            # TODO How do we handle general PyTorch nets?
-            raise NotImplementedError
+            model, lossfunc = tproblem
+            extend(model)
+            extend(lossfunc)
 
         # Prepare logpath
         self._prepare_logpath(logpath)
@@ -153,16 +155,25 @@ class Cockpit:
 
         return ext
 
-    def __call__(self, global_step, debug=False):
+    def __call__(self, global_step, info=None, debug=False):
         """Returns the backpack extensions that should be used in this iteration.
 
         Args:
             global_step (int): Current number of iteration.
+            info (dict): Dictionary that specifies additional information. Some
+                quantities require additional information that is overly difficult
+                to infer from a backward pass, like the individual losses.
+            debug (bool): Enable debug mode.
 
         Returns:
             backpack.backpack: BackPACK with the appropriate extensions, or the
                 backpack_disable_io context.
         """
+        CockpitCTX.erase()
+
+        if info is not None:
+            CockpitCTX.set(info, global_step)
+
         ext = self._get_extensions(global_step)
 
         # Collect if create graph is needed and set switch
@@ -186,6 +197,14 @@ class Cockpit:
 
         return context_manager()
 
+    def _get_tracked_params(self):
+        """Return list of parameters that are tracked by the cockpit."""
+        if isinstance(self.tproblem, TestProblem):
+            return [p for p in self.tproblem.net.parameters() if p.requires_grad]
+        else:
+            model, _ = self.tproblem
+            return [p for p in model.parameters() if p.requires_grad]
+
     def track(self, global_step, batch_loss):
         """Tracking all quantities.
 
@@ -195,7 +214,7 @@ class Cockpit:
         """
         self.__warn_invalid_loss(batch_loss, global_step)
 
-        params = [p for p in self.tproblem.net.parameters() if p.requires_grad]
+        params = self._get_tracked_params()
 
         before_cleanup = [
             q for q in self.quantities if not isinstance(q, quantities.MaxEV)
@@ -219,7 +238,7 @@ class Cockpit:
 
         ext = self._get_extensions(global_step)
 
-        for param in self.tproblem.net.parameters():
+        for param in self._get_tracked_params():
             for e in ext:
                 try:
                     field = e.savefield
@@ -240,7 +259,12 @@ class Cockpit:
             else:
                 self._remove_module_io(module)
 
-        remove_net_io(self.tproblem.net)
+        if isinstance(self.tproblem, TestProblem):
+            remove_net_io(self.tproblem.net)
+        else:
+            model, lossfunc = self.tproblem
+            remove_net_io(model)
+            remove_net_io(lossfunc)
 
     @staticmethod
     def _has_children(net):
