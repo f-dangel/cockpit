@@ -1,3 +1,4 @@
+import os
 import warnings
 from collections import defaultdict
 
@@ -53,7 +54,7 @@ def _runner_stop_after(step=None):
 
             if global_step > self.STOP_AFTER:
                 warnings.warn(f"BenchmarkRunner stopping epoch at step {global_step}")
-                setattr(self, "_already_stopped", True)
+                self._already_stopped = True
                 raise StopIteration
 
         def _should_eval(self):
@@ -180,7 +181,7 @@ def _compute_steps(steps, track_events, track_interval):
         return steps
 
 
-def benchmark(
+def benchmark(  # noqa: C901
     testproblems,
     configs,
     track_intervals,
@@ -205,7 +206,17 @@ def benchmark(
         "device",
         "time_per_step",
     ]
-    data = pandas.DataFrame(columns=columns)
+
+    if savefile is not None and os.path.exists(savefile):
+        # try loading
+        data = pandas.read_csv(savefile, comment="#", index_col=[0])
+        assert set(data.columns) == set(columns), (
+            f"Loaded file {savefile} has inconsistent columns:"
+            + f"\n\tFound:   {list(data.columns)}"
+            + f"\n\tRequire: {columns}"
+        )
+    else:
+        data = pandas.DataFrame(columns=columns)
 
     for device in devices:
         set_default_device(device)
@@ -217,22 +228,6 @@ def benchmark(
 
                         this_steps = _compute_steps(steps, track_events, track_interval)
 
-                        def track_schedule(global_step):
-                            return (
-                                global_step >= 0 and global_step % track_interval == 0
-                            )
-
-                        quantities = [
-                            q(
-                                track_schedule=track_schedule,
-                                # verbose=True,
-                            )
-                            for q in config
-                        ]
-                        runtime = run_benchmark(
-                            testproblem, quantities, this_steps, random_seed
-                        )
-
                         run_data = {
                             "testproblem": testproblem,
                             "quantities": name,
@@ -240,17 +235,49 @@ def benchmark(
                             "steps": this_steps,
                             "random_seed": random_seed,
                             "device": device,
-                            "time_per_step": runtime,
                         }
-                        data = data.append(run_data, ignore_index=True)
 
-                        if savefile is not None:
-                            with open(savefile, "w") as f:
-                                if header is not None:
-                                    header_comment = "\n".join(
-                                        "# " + line for line in header.splitlines()
-                                    )
-                                    f.write(header_comment + "\n")
-                                data.to_csv(f)
+                        run_exists = (
+                            (data["testproblem"] == testproblem)
+                            & (data["quantities"] == name)
+                            & (data["steps"] == this_steps)
+                            & (data["track_interval"] == track_interval)
+                            & (data["random_seed"] == random_seed)
+                            & (data["device"] == device)
+                        ).any()
+
+                        if run_exists:
+                            print(f"Setting already exists and is skipped: {run_data}")
+                        else:
+                            print(f"Running setting: {run_data}")
+
+                            def track_schedule(global_step):
+                                return (
+                                    global_step >= 0
+                                    and global_step % track_interval == 0
+                                )
+
+                            quantities = [
+                                q(
+                                    track_schedule=track_schedule,
+                                    # verbose=True,
+                                )
+                                for q in config
+                            ]
+                            runtime = run_benchmark(
+                                testproblem, quantities, this_steps, random_seed
+                            )
+                            run_data["time_per_step"] = runtime
+
+                            data = data.append(run_data, ignore_index=True)
+
+                            if savefile is not None:
+                                with open(savefile, "w") as f:
+                                    if header is not None:
+                                        header_comment = "\n".join(
+                                            "# " + line for line in header.splitlines()
+                                        )
+                                        f.write(header_comment + "\n")
+                                    data.to_csv(f)
 
     return data
