@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict
 
 import pandas
@@ -36,19 +37,33 @@ def _check_quantities(quantities):
             )
 
 
-class BenchmarkRunner(_ScheduleCockpitRunner):
-    """Runner with disabled computation DeepOBS' additional metrics."""
+def _runner_stop_after(step=None):
+    class BenchmarkRunner(_ScheduleCockpitRunner):
+        """Runner with disabled computation DeepOBS' additional metrics."""
 
-    def _maybe_stop_iteration(self, global_step, batch_count):
-        """Don't interrupt."""
-        pass
+        STOP_AFTER = step
 
-    def _should_eval(self):
-        """Disable DeepOBS' evaluation of test/train/valid losses and accuracies."""
-        return False
+        def _maybe_stop_iteration(self, global_step, batch_count):
+            """Don't interrupt."""
+            if self.STOP_AFTER is None:
+                return
+
+            if getattr(self, "_already_stopped", False):
+                raise RuntimeError("Runner must stop at last epoch.")
+
+            if global_step > self.STOP_AFTER:
+                warnings.warn(f"BenchmarkRunner stopping epoch at step {global_step}")
+                setattr(self, "_already_stopped", True)
+                raise StopIteration
+
+        def _should_eval(self):
+            """Disable DeepOBS' evaluation of test/train/valid losses and accuracies."""
+            return False
+
+    return BenchmarkRunner
 
 
-def _make_runner(quantities):
+def _make_runner(quantities, steps):
     """Return a DeepOBS runner that tracks the specified quantities."""
     optimizer_class = SGD
     hyperparams = {
@@ -61,7 +76,9 @@ def _make_runner(quantities):
         """Never plot."""
         return False
 
-    return BenchmarkRunner(
+    runner_cls = _runner_stop_after(step=steps)
+
+    return runner_cls(
         optimizer_class,
         hyperparams,
         quantities=quantities,
@@ -111,7 +128,7 @@ def run_benchmark(testproblem, quantities, steps, random_seed):
     _check_timer(quantities, steps)
     _check_quantities(quantities)
 
-    runner = _make_runner(quantities)
+    runner = _make_runner(quantities, steps)
     num_epochs = _get_num_epochs(runner, testproblem, steps)
 
     runner.run(
