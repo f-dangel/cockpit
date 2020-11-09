@@ -40,7 +40,6 @@ def configured_quantities(label):
         quantities.GradNorm,
         quantities.InnerProductTest,
         quantities.Loss,
-        quantities.MeanGSNR,
         quantities.NormTest,
         quantities.OrthogonalityTest,
         quantities.Time,
