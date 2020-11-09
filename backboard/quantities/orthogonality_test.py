@@ -5,6 +5,7 @@ import math
 import torch
 
 from backboard.quantities.quantity import SingleStepQuantity
+from backboard.quantities.utils_transforms import BatchGradTransforms_BatchDotGrad
 from backpack import extensions
 
 
@@ -60,7 +61,7 @@ class OrthogonalityTest(SingleStepQuantity):
             list: (Potentially empty) list with required BackPACK quantities.
         """
         if self.is_active(global_step):
-            ext = [extensions.BatchDotGrad()]
+            ext = [BatchGradTransforms_BatchDotGrad()]
 
             if self._check:
                 ext.append(extensions.BatchGrad())
@@ -103,7 +104,9 @@ class OrthogonalityTest(SingleStepQuantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        batch_dot = self._fetch_batch_dot(params, aggregate=True)
+        batch_dot = self._fetch_batch_dot_via_batch_grad_transforms(
+            params, aggregate=True
+        )
         batch_size = batch_dot.size(0)
         grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
 
@@ -211,7 +214,9 @@ class OrthogonalityTest(SingleStepQuantity):
 
         # sanity check 1: Variances of orthogonal projected individual gradients
         # should match result from computation with individual gradients.
-        batch_dot = self._fetch_batch_dot(params, aggregate=True)
+        batch_dot = self._fetch_batch_dot_via_batch_grad_transforms(
+            params, aggregate=True
+        )
         grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
         batch_size = batch_dot.size(0)
 

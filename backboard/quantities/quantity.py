@@ -91,21 +91,6 @@ class Quantity:
         """
         raise NotImplementedError
 
-    def _fetch_batch_size_hotfix(self, batch_loss):
-        """Return the batch size from individual losses in ``batch_loss``.
-
-        Note:
-            Requires access to unreduced losses made accessible by BackOBS.
-
-        Args:
-            batch_loss (torch.Tensor): Mini-batch loss computed from a forward
-                of a DeepOBS testproblem extended by BackOBS.
-
-        Returns:
-            int: Mini-batch size
-        """
-        return len(batch_loss._unreduced_loss)
-
     @staticmethod
     def _fetch_grad(params, aggregate=False):
         """Return parameter gradients.
@@ -211,6 +196,16 @@ class Quantity:
         return batch_l2
 
     @staticmethod
+    def _fetch_batch_l2_squared_via_batch_grad_transforms(params, aggregate=False):
+        """Same as _fetch_batch_l2_squared, assumes BatchGradTransforms computation."""
+        batch_l2 = [p.grad_batch_transforms["batch_l2"] for p in params]
+
+        if aggregate:
+            batch_l2 = sum(batch_l2)
+
+        return batch_l2
+
+    @staticmethod
     def _fetch_batch_dot(params, aggregate=False):
         """Return individual gradient pairwise dot products.
 
@@ -238,6 +233,16 @@ class Quantity:
         return batch_dot_grad
 
     @staticmethod
+    def _fetch_batch_dot_via_batch_grad_transforms(params, aggregate=False):
+        """Same as _fetch_batch_dot, assumes BatchGradTransforms computation."""
+        batch_dot_grad = [p.grad_batch_transforms["batch_dot"] for p in params]
+
+        if aggregate:
+            batch_dot_grad = sum(batch_dot_grad)
+
+        return batch_dot_grad
+
+    @staticmethod
     def _fetch_sum_grad_squared(params, aggregate=False):
         """Return sum of squared individual gradients.
 
@@ -258,6 +263,16 @@ class Quantity:
                 parameters.
         """
         sum_grad_squared = [p.sum_grad_squared for p in params]
+
+        if aggregate:
+            sum_grad_squared = torch.cat([sgs.flatten() for sgs in sum_grad_squared])
+
+        return sum_grad_squared
+
+    @staticmethod
+    def _fetch_sum_grad_squared_via_batch_grad_transforms(params, aggregate=False):
+        """Same as _fetch_sum_grad_squared, assumes BatchGradTransforms computation."""
+        sum_grad_squared = [p.grad_batch_transforms["sum_grad_squared"] for p in params]
 
         if aggregate:
             sum_grad_squared = torch.cat([sgs.flatten() for sgs in sum_grad_squared])

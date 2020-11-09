@@ -8,7 +8,7 @@ from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
 TESTPROBLEMS = [
     "mnist_logreg",
-    "fmnist_2c2d",
+    # "fmnist_2c2d",
     # "mnist_mlp",
     # "fmnist_logreg",
     # "fmnist_mlp",

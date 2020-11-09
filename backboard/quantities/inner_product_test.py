@@ -2,7 +2,9 @@
 
 import torch
 
+from backboard.context import get_batch_size
 from backboard.quantities.quantity import SingleStepQuantity
+from backboard.quantities.utils_transforms import BatchGradTransforms_BatchDotGrad
 from backpack import extensions
 
 
@@ -58,7 +60,7 @@ class InnerProductTest(SingleStepQuantity):
             list: (Potentially empty) list with required BackPACK quantities.
         """
         if self.is_active(global_step):
-            ext = [extensions.BatchDotGrad()]
+            ext = [BatchGradTransforms_BatchDotGrad()]
 
             if self._check:
                 ext.append(extensions.BatchGrad())
@@ -87,7 +89,7 @@ class InnerProductTest(SingleStepQuantity):
             self.output[global_step]["inner_product_test"] = inner_product_test
 
             if self._check:
-                self.__run_check(params, batch_loss)
+                self.__run_check(global_step, params, batch_loss)
         else:
             pass
 
@@ -101,7 +103,9 @@ class InnerProductTest(SingleStepQuantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        batch_dot = self._fetch_batch_dot(params, aggregate=True)
+        batch_dot = self._fetch_batch_dot_via_batch_grad_transforms(
+            params, aggregate=True
+        )
         grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
         batch_size = batch_dot.size(0)
 
@@ -171,7 +175,7 @@ class InnerProductTest(SingleStepQuantity):
 
         return batch_size_theta
 
-    def __run_check(self, params, batch_loss):
+    def __run_check(self, global_step, params, batch_loss):
         """Run sanity checks to verify math rearrangements."""
 
         def _compute_projection_variance_from_batch_grad(params):
@@ -181,7 +185,7 @@ class InnerProductTest(SingleStepQuantity):
             in bollapragada2017adaptive (https://arxiv.org/pdf/1710.11258.pdf)
             """
             batch_grad = self._fetch_batch_grad(params, aggregate=True)
-            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+            batch_size = get_batch_size(global_step)
             grad = self._fetch_grad(params, aggregate=True)
             grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
 
@@ -198,7 +202,9 @@ class InnerProductTest(SingleStepQuantity):
 
         # sanity check 1: Variances of projected individual gradients should match
         # result from computation with individual gradients.
-        batch_dot = self._fetch_batch_dot(params, aggregate=True)
+        batch_dot = self._fetch_batch_dot_via_batch_grad_transforms(
+            params, aggregate=True
+        )
         grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
         batch_size = batch_dot.size(0)
 

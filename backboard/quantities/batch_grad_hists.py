@@ -5,6 +5,7 @@ import warnings
 import numpy
 import torch
 
+from backboard.context import get_batch_size
 from backboard.quantities.quantity import SingleStepQuantity
 from backboard.quantities.utils_hists import (
     histogram2d,
@@ -31,6 +32,7 @@ class BatchGradHistogram1d(SingleStepQuantity):
         verbose=False,
         check=False,
         track_schedule=None,
+        remove_outliers=False,
     ):
         """Initialize the 1D Histogram of individual gradient elements.
 
@@ -46,7 +48,8 @@ class BatchGradHistogram1d(SingleStepQuantity):
             verbose (bool): Turns on verbose mode. Defaults to ``False``.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
-
+            remove_outliers (bool): Whether outliers should be removed. If ``False``,
+                they show up in the edge bins.
         """
         super().__init__(
             track_interval=track_interval,
@@ -70,6 +73,8 @@ class BatchGradHistogram1d(SingleStepQuantity):
             self._adapt_schedule = adapt_schedule
 
         self._check = check
+
+        self._remove_outliers = remove_outliers
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -112,7 +117,7 @@ class BatchGradHistogram1d(SingleStepQuantity):
             hist = sum(p.grad_batch_transforms["hist_1d"] for p in params)
 
             if self._check:
-                batch_size = self._fetch_batch_size_hotfix(batch_loss)
+                batch_size = get_batch_size(global_step)
                 num_params = sum(p.numel() for p in params)
                 num_counts = hist.sum()
                 assert batch_size * num_params == num_counts
@@ -144,16 +149,30 @@ class BatchGradHistogram1d(SingleStepQuantity):
                 `p` is of shape `(*)`, the individual gradients have shape `(N, *)`,
                 where `N` denotes the batch size.
         """
-        batch_size = batch_grad.shape[0]
-
-        # clip to interval, elements outside [xmin, xmax] would be ignored
-        batch_grad_clamped = torch.clamp(
-            batch_size * batch_grad.data, self._xmin, self._xmax
-        )
+        # NOTE ``batch_grad`` is 1/B ∇ℓᵢ so we need to compensate the 1/B. Instead of
+        # multiplying ``batch_grad`` with the batch size, we instead scale the histogram
+        # range to avoid an additional copy of batch_grad
+        B = batch_grad.shape[0]
 
         return torch.histc(
-            batch_grad_clamped, bins=self._bins, min=self._xmin, max=self._xmax
+            self.__preprocess(batch_grad),
+            bins=self._bins,
+            min=self._xmin / B,
+            max=self._xmax / B,
         )
+
+    def __preprocess(self, batch_grad):
+        """Clip to histogram range if outliers should not be removed."""
+        # NOTE ``batch_grad`` is 1/B ∇ℓᵢ so we need to compensate the 1/B. Instead of
+        # multiplying ``batch_grad`` with the batch size, we instead scale the histogram
+        # range to avoid an additional copy of batch_grad
+        if self._remove_outliers:
+            return batch_grad
+        else:
+            B = batch_grad.shape[0]
+
+            # clip to interval, elements outside [xmin / B, xmax / B] would be ignored
+            return torch.clamp(batch_grad.data, self._xmin / B, self._xmax / B)
 
     def _update_limits(self, global_step, params, batch_loss):
         """Update limits for next histogram computation."""
@@ -342,7 +361,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         hist = sum(p.grad_batch_transforms["hist_2d"] for p in params)
 
         if self._check:
-            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+            batch_size = get_batch_size(global_step)
             num_params = sum(p.numel() for p in params)
             num_counts = hist.sum()
             assert batch_size * num_params == num_counts
@@ -373,7 +392,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
             hist = p.grad_batch_transforms["hist_2d"]
 
             if self._check:
-                batch_size = self._fetch_batch_size_hotfix(batch_loss)
+                batch_size = get_batch_size(global_step)
                 num_params = p.numel()
                 num_counts = hist.sum()
                 assert batch_size * num_params == num_counts

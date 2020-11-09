@@ -318,3 +318,4 @@ tex/paper/cockpit/cockpit_paper.pdf
 
 # local emacs variables
 !**/.dir-locals.el
+/tex/paper/cockpit/cvpr_rebuttal.pdf

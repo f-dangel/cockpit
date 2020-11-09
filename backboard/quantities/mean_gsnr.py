@@ -2,6 +2,7 @@
 
 import torch
 
+from backboard.context import get_batch_size
 from backboard.quantities.quantity import SingleStepQuantity
 from backboard.quantities.utils_quantities import (
     has_nans,
@@ -9,6 +10,7 @@ from backboard.quantities.utils_quantities import (
     has_zeros,
     report_nonclose_values,
 )
+from backboard.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
 from backpack import extensions
 
 ATOL = 1e-5
@@ -67,14 +69,13 @@ class MeanGSNR(SingleStepQuantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
+        ext = []
+
         if self.is_active(global_step):
-            ext = [extensions.SumGradSquared()]
+            ext.append(BatchGradTransforms_SumGradSquared())
 
             if self._check:
                 ext.append(extensions.BatchGrad())
-
-        else:
-            ext = []
 
         return ext
 
@@ -88,7 +89,7 @@ class MeanGSNR(SingleStepQuantity):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         if self.is_active(global_step):
-            mean_gsnr = self._compute(params, batch_loss).item()
+            mean_gsnr = self._compute(global_step, params, batch_loss).item()
 
             if self._verbose:
                 print(f"[Step {global_step}] MeanGSNR: {mean_gsnr:.4f}")
@@ -96,21 +97,22 @@ class MeanGSNR(SingleStepQuantity):
             self.output[global_step]["mean_gsnr"] = mean_gsnr
 
             if self._check:
-                self.__run_check(params, batch_loss)
+                self.__run_check(global_step, params, batch_loss)
 
-    def _compute(self, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Return maximum θ for which the norm test would pass.
 
         The norm test is defined by Equation (3.9) in byrd2012sample.
 
         Args:
+            global_step (int): The current iteration number.
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        return self._compute_gsnr(params, batch_loss).mean()
+        return self._compute_gsnr(global_step, params, batch_loss).mean()
 
-    def _compute_gsnr(self, params, batch_loss):
+    def _compute_gsnr(self, global_step, params, batch_loss):
         """Compute gradient signal-to-noise ratio.
 
         Args:
@@ -119,20 +121,22 @@ class MeanGSNR(SingleStepQuantity):
         """
         if self._use_double:
             grad_squared = self._fetch_grad(params, aggregate=True).double() ** 2
-            sum_grad_squared = self._fetch_sum_grad_squared(
+            sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
                 params, aggregate=True
             ).double()
         else:
             grad_squared = self._fetch_grad(params, aggregate=True) ** 2
-            sum_grad_squared = self._fetch_sum_grad_squared(params, aggregate=True)
+            sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
+                params, aggregate=True
+            )
 
-        batch_size = self._fetch_batch_size_hotfix(batch_loss)
+        batch_size = get_batch_size(global_step)
 
         return grad_squared / (
             batch_size * sum_grad_squared - grad_squared + self._epsilon
         )
 
-    def __run_check(self, params, batch_loss):
+    def __run_check(self, global_step, params, batch_loss):
         """Check if variance is non-negative and hence GSNR is not NaN."""
 
         def _compute_gsnr_from_batch_grad(params):
@@ -146,7 +150,7 @@ class MeanGSNR(SingleStepQuantity):
             if self._use_double:
                 batch_grad = batch_grad.double()
 
-            batch_size = self._fetch_batch_size_hotfix(batch_loss)
+            batch_size = get_batch_size(global_step)
 
             rescaled_batch_grad = batch_size * batch_grad
 
@@ -166,7 +170,7 @@ class MeanGSNR(SingleStepQuantity):
         gsnr_from_batch_grad = _compute_gsnr_from_batch_grad(params)
         assert not has_nans(gsnr_from_batch_grad), "GSNR from batch_grad has NaNs"
 
-        gsnr_from_sum_grad_squared = self._compute_gsnr(params, batch_loss)
+        gsnr_from_sum_grad_squared = self._compute_gsnr(global_step, params, batch_loss)
         assert not has_nans(
             gsnr_from_sum_grad_squared
         ), "GSNR from sum_grad_squared has NaNs"
