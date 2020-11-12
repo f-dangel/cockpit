@@ -9,6 +9,7 @@ from backboard.context import get_batch_size
 from backboard.quantities.quantity import SingleStepQuantity
 from backboard.quantities.utils_hists import (
     histogram2d,
+    histogramdd,
     transform_grad_batch_abs_max,
     transform_grad_batch_min_max,
     transform_param_abs_max,
@@ -223,6 +224,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         ybins=50,
         save_memory=True,
         use_numpy=False,
+        use_third_party=False,
         adapt_schedule=None,
         adapt_policy="abs_max",
         verbose=False,
@@ -247,6 +249,10 @@ class BatchGradHistogram2d(SingleStepQuantity):
             save_memory (bool): Sacrifice binning runtime for less memory.
             use_numpy (bool): Whether to use the ``numpy`` implementation for histo-
                 grams. Alternatively, use a ``torch`` implementation.
+            use_third_party (bool): Only active is ``use_numpy`` is ``False``. If
+                ``True``, use the open-source ``histogramdd`` implementation which is
+                under review for being merged into PyTorch. Else, use own
+                implementation.
             adapt_schedule (callable): Function that maps ``global_step`` to a boolean
                 that indicates if the limits should be updated. If ``None``, adapt
                 every time the histogram is recomputed.
@@ -279,6 +285,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         self._ybins = ybins
         self._save_memory = save_memory
         self._use_numpy = use_numpy
+        self._use_third_party = use_third_party
         self._xpad = xpad
         self._ypad = ypad
         self._keep_individual = keep_individual
@@ -472,7 +479,10 @@ class BatchGradHistogram2d(SingleStepQuantity):
         if self._use_numpy:
             hist_func = numpy.histogram2d
         else:
-            hist_func = histogram2d
+            if self._use_third_party:
+                hist_func = histogramdd
+            else:
+                hist_func = histogram2d
 
         for n in range(batch_size):
             if self._use_numpy:
@@ -513,7 +523,10 @@ class BatchGradHistogram2d(SingleStepQuantity):
             hist_func = numpy.histogram2d
         else:
             args = (torch.stack((batch_grad_clamped, param_clamped)),)
-            hist_func = histogram2d
+            if self._use_third_party:
+                hist_func = histogramdd
+            else:
+                hist_func = histogram2d
 
         hist = hist_func(*args, bins=hist_bins, range=hist_range)[0]
 
