@@ -35,7 +35,7 @@ def gradient_tests_gauge(self, fig, gridspec):
     ax.set_axis_off()
 
     # Gridspecs (inside gridspec)
-    gs = gridspec.subgridspec(3, 3, wspace=0, hspace=0)
+    gs = gridspec.subgridspec(3, 3, wspace=0.05, hspace=0.1)
 
     ax_all = fig.add_subplot(gs[1:, 1:])
     ax_norm = fig.add_subplot(gs[1, 0])
