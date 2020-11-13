@@ -50,9 +50,11 @@ def _format(self, ax_all, ax_norm, ax_inner, ax_ortho):
     """Format axes of all subplots."""
     iter_scale = "symlog" if self.show_log_iter else "linear"
 
+    # area around cross
+    w = 1
     ax_all.yaxis.tick_right()
-    ax_all.set_xlim([-1, 1])
-    ax_all.set_ylim([0, 2])
+    ax_all.set_xlim([-w, w])
+    ax_all.set_ylim([1 - w, 1 + w])
 
     ax_all.set_axisbelow(True)
     ax_all.grid(ls="--")
