@@ -212,6 +212,43 @@ def histogram2d(sample, bins, range, check_input=False):
     return hist.reshape(xbins, ybins), axes
 
 
+def histogram2d_opt(batch_grad, param, bins, range, check_input=False):
+    """Compute a two-dimensional histogram."""
+    xbins, ybins = bins
+    (xmin, xmax), (ymin, ymax) = range
+
+    if check_input:
+        assert (
+            batch_grad.min() > xmin
+        ), f"batch_grad min too small: {batch_grad.min()} > {xmin}"
+        assert (
+            batch_grad.max() < xmax
+        ), f"batch_grad max too big: {batch_grad.max()} > {xmax}"
+
+        assert param.min() > ymin, f"param min too small: {param.min()} > {ymin}"
+        assert param.max() < ymax, f"param max too big: {param.max()} > {ymax}"
+
+    xbin_width = (xmax - xmin) / xbins
+    ybin_width = (ymax - ymin) / ybins
+
+    idx = ybins * ((batch_grad - xmin) / xbin_width).long()
+    idx += ((param - ymin) / ybin_width).long()
+
+    # one_shape = tuple([1 for _ in idx.shape])
+    # expand_shape = tuple(idx.shape)
+    # ones = torch.ones(one_shape, dtype=int, device=idx.device).expand(*expand_shape)
+    ones = torch.ones(idx.shape, dtype=int, device=idx.device)
+    hist = torch.zeros(xbins * ybins, dtype=int, device=idx.device)
+    hist.put_(idx, ones, accumulate=True)
+
+    axes = (
+        torch.linspace(xmin, xmax, steps=xbins + 1, device=idx.device),
+        torch.linspace(ymin, ymax, steps=ybins + 1, device=idx.device),
+    )
+
+    return hist.reshape(xbins, ybins), axes
+
+
 def transform_grad_batch_abs_max(batch_grad):
     """Compute maximum value of absolute individual gradients.
 
