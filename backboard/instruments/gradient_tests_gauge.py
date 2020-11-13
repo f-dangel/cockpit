@@ -104,12 +104,6 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
     ax_all.add_artist(
         plt.Circle((0, 1), norm_test_radii[-1], color=self.primary_color, alpha=0.6)
     )
-    ax_all.plot(
-        [-1, -1],
-        [1, 1 + norm_test_radii[-1]],
-        color=self.primary_color,
-        linewidth=6,
-    )
 
     ax_norm.fill_between(
         steps_array, norm_test_radii, color=self.primary_color, alpha=0.6
@@ -129,12 +123,6 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
         color=self.secondary_color,
         fill=False,
     )
-    ax_all.plot(
-        [-1, -1],
-        [1 - inner_product_test_widths[-1], 1],
-        color=self.secondary_color,
-        linewidth=6,
-    )
 
     ax_inner.fill_between(
         steps_array, inner_product_test_widths, color=self.secondary_color, alpha=0.6
@@ -153,12 +141,6 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
         orthogonality_test_widths[-1],
         color=self.tertiary_color,
         fill=False,
-    )
-    ax_all.plot(
-        [0, orthogonality_test_widths[-1]],
-        [2, 2],
-        color=self.tertiary_color,
-        linewidth=6,
     )
 
     ax_ortho.plot(orthogonality_test_widths, steps_array, color=self.tertiary_color)
