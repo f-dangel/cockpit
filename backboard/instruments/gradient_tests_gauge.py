@@ -54,11 +54,13 @@ def _format(self, ax_all, ax_norm, ax_inner, ax_ortho):
     w = 1
     ax_all.yaxis.tick_right()
     ax_all.set_xlim([-w, w])
-    ax_all.set_ylim([1 - w, 1 + w])
+    ax_all.set_xscale("symlog", linthresh=0.1)
+    ax_all.set_ylim([0 - w, 0 + w])
+    ax_all.set_yscale("symlog", linthresh=0.1)
 
     ax_all.set_axisbelow(True)
     ax_all.grid(ls="--")
-    ax_all.plot(0, 1, color="black", marker="+", markersize=18, markeredgewidth=4)
+    ax_all.plot(0, 0, color="black", marker="+", markersize=18, markeredgewidth=4)
     ax_all.set_facecolor(self.bg_color_instruments)
 
     ax_norm.set_ylabel("norm")
@@ -99,10 +101,10 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
 
     # plot norm test
     ax_all.add_artist(
-        plt.Circle((0, 1), norm_test_radii[-1], color=self.primary_color, fill=False)
+        plt.Circle((0, 0), norm_test_radii[-1], color=self.primary_color, fill=False)
     )
     ax_all.add_artist(
-        plt.Circle((0, 1), norm_test_radii[-1], color=self.primary_color, alpha=0.6)
+        plt.Circle((0, 0), norm_test_radii[-1], color=self.primary_color, alpha=0.6)
     )
 
     ax_norm.fill_between(
@@ -112,14 +114,14 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
 
     # plot inner product test
     ax_all.axhspan(
-        1 - inner_product_test_widths[-1],
-        1 + inner_product_test_widths[-1],
+        -inner_product_test_widths[-1],
+        inner_product_test_widths[-1],
         color=self.secondary_color,
         alpha=0.6,
     )
     ax_all.axhspan(
-        1 - inner_product_test_widths[-1],
-        1 + inner_product_test_widths[-1],
+        -inner_product_test_widths[-1],
+        inner_product_test_widths[-1],
         color=self.secondary_color,
         fill=False,
     )
