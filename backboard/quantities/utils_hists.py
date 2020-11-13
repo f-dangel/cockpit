@@ -200,7 +200,7 @@ def histogram2d(sample, bins, range, check_input=False):
     idx = ybins * ((sample[0] - xmin) / xbin_width).long()
     idx += ((sample[1] - ymin) / ybin_width).long()
 
-    one_shape = tuple([1 for _ in idx.shape])
+    one_shape = tuple(1 for _ in idx.shape)
     expand_shape = tuple(idx.shape)
     ones = torch.ones(one_shape, dtype=int, device=idx.device).expand(*expand_shape)
 
@@ -237,7 +237,7 @@ def histogram2d_opt(batch_grad, param, bins, range, check_input=False):
     idx = ybins * ((batch_grad - xmin) / xbin_width).long()
     idx += ((param - ymin) / ybin_width).long()
 
-    one_shape = tuple([1 for _ in idx.shape])
+    one_shape = tuple(1 for _ in idx.shape)
     expand_shape = tuple(idx.shape)
     ones = torch.ones(one_shape, dtype=int, device=idx.device).expand(*expand_shape)
 
