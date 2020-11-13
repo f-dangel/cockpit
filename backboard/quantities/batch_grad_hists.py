@@ -4,11 +4,13 @@ import warnings
 
 import numpy
 import torch
+from numpy import histogram2d as numpy_histogram2d
 
 from backboard.context import get_batch_size
 from backboard.quantities.quantity import SingleStepQuantity
 from backboard.quantities.utils_hists import (
     histogram2d,
+    histogram2d_opt,
     histogramdd,
     transform_grad_batch_abs_max,
     transform_grad_batch_min_max,
@@ -223,8 +225,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         min_yrange=1e-6,
         ybins=50,
         save_memory=True,
-        use_numpy=False,
-        use_third_party=False,
+        which="histogram2d",
         adapt_schedule=None,
         adapt_policy="abs_max",
         verbose=False,
@@ -247,12 +248,17 @@ class BatchGradHistogram2d(SingleStepQuantity):
             min_yrange (float): Lower bound for limit difference along y axis.
             ybins (int): Number of bins in y-direction
             save_memory (bool): Sacrifice binning runtime for less memory.
-            use_numpy (bool): Whether to use the ``numpy`` implementation for histo-
-                grams. Alternatively, use a ``torch`` implementation.
-            use_third_party (bool): Only active is ``use_numpy`` is ``False``. If
-                ``True``, use the open-source ``histogramdd`` implementation which is
-                under review for being merged into PyTorch. Else, use own
-                implementation.
+            which (str): Which histogram function should be used. Performance varies
+                strongly among different methods, and also depend on the data being
+                histogram-ed. Choices:
+                - ``'numpy'``: Load to CPU and use ``numpy`` implementation.
+                - ``'histogramdd'``: Use torch implementation that is currently under
+                  review for being merged.
+                - ``histogram2d``: Use custom torch implementation which uses ``put_``
+                  instead of ``bincount``.
+                - ``histogram2d_opt``: Use custom optimized torch implementation which
+                  works without expanding the parameter values and saves some memory.
+                  Will be unaffected by ``save_memory``.
             adapt_schedule (callable): Function that maps ``global_step`` to a boolean
                 that indicates if the limits should be updated. If ``None``, adapt
                 every time the histogram is recomputed.
@@ -284,8 +290,17 @@ class BatchGradHistogram2d(SingleStepQuantity):
         self._min_yrange = min_yrange
         self._ybins = ybins
         self._save_memory = save_memory
-        self._use_numpy = use_numpy
-        self._use_third_party = use_third_party
+
+        numpy.histogram2d.__name__ = "numpy_histogram2d"
+        self.histogram_functions = {
+            "numpy": numpy_histogram2d,
+            "histogram2d": histogram2d,
+            "histogram2d_opt": histogram2d_opt,
+            "histogramdd": histogramdd,
+        }
+        assert which in self.histogram_functions.keys(), f"Invalid method {which}"
+
+        self._which = which
         self._xpad = xpad
         self._ypad = ypad
         self._keep_individual = keep_individual
@@ -438,7 +453,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         ymin, ymax = self._ymin, self._ymax
 
         # PyTorch implementation has different comparison conventions
-        if not self._use_numpy:
+        if not self._which == "numpy":
             xedges, yedges = self._get_current_bin_edges()
             xbin_size, ybin_size = xedges[1] - xedges[0], yedges[1] - yedges[0]
             xepsilon, yepsilon = xbin_size / 2, ybin_size / 2
@@ -468,24 +483,20 @@ class BatchGradHistogram2d(SingleStepQuantity):
 
         batch_size = batch_grad_clamped.shape[0]
 
-        if self._use_numpy:
+        if self._which == "numpy":
             batch_grad_clamped = batch_grad_clamped.cpu().numpy()
             param_clamped = param_clamped.cpu().numpy()
             hist = hist.cpu().numpy()
 
         hist_bins = (self._xbins, self._ybins)
         hist_range = ((self._xmin, self._xmax), (self._ymin, self._ymax))
+        hist_func = self.histogram_functions[self._which]
 
-        if self._use_numpy:
-            hist_func = numpy.histogram2d
-        else:
-            if self._use_third_party:
-                hist_func = histogramdd
-            else:
-                hist_func = histogram2d
+        if self._verbose:
+            print(f"Using hist_func: {hist_func.__name__}")
 
         for n in range(batch_size):
-            if self._use_numpy:
+            if self._which == "numpy":
                 args = (batch_grad_clamped[n], param_clamped)
             else:
                 args = (torch.stack((batch_grad_clamped[n], param_clamped)),)
@@ -493,8 +504,23 @@ class BatchGradHistogram2d(SingleStepQuantity):
             h = hist_func(*args, bins=hist_bins, range=hist_range)[0]
             hist += h
 
-        if self._use_numpy:
+        if self._which == "numpy":
             hist = torch.from_numpy(hist)
+
+        return hist
+
+    def __hist_own_opt(self, batch_grad_clamped, param_clamped):
+        """Custom optimized (individual gradient, parameter) 2d histogram."""
+        hist_bins = (self._xbins, self._ybins)
+        hist_range = ((self._xmin, self._xmax), (self._ymin, self._ymax))
+        hist_func = self.histogram_functions[self._which]
+
+        if self._verbose:
+            print(f"Using hist_func: {hist_func.__name__}")
+
+        hist = hist_func(
+            batch_grad_clamped, param_clamped, bins=hist_bins, range=hist_range
+        )[0]
 
         return hist
 
@@ -511,26 +537,23 @@ class BatchGradHistogram2d(SingleStepQuantity):
         param_clamped = param_clamped.unsqueeze(0).expand(*expand_arg).flatten()
         batch_grad_clamped = batch_grad_clamped.flatten()
 
-        if self._use_numpy:
-            batch_grad_clamped = batch_grad_clamped.cpu().numpy()
-            param_clamped = param_clamped.cpu().numpy()
-
         hist_bins = (self._xbins, self._ybins)
         hist_range = ((self._xmin, self._xmax), (self._ymin, self._ymax))
+        hist_func = self.histogram_functions[self._which]
 
-        if self._use_numpy:
+        if self._verbose:
+            print(f"Using hist_func: {hist_func.__name__}")
+
+        if self._which == "numpy":
+            batch_grad_clamped = batch_grad_clamped.cpu().numpy()
+            param_clamped = param_clamped.cpu().numpy()
             args = (batch_grad_clamped, param_clamped)
-            hist_func = numpy.histogram2d
         else:
             args = (torch.stack((batch_grad_clamped, param_clamped)),)
-            if self._use_third_party:
-                hist_func = histogramdd
-            else:
-                hist_func = histogram2d
 
         hist = hist_func(*args, bins=hist_bins, range=hist_range)[0]
 
-        if self._use_numpy:
+        if self._which == "numpy":
             hist = torch.from_numpy(hist)
 
         return hist
@@ -550,6 +573,8 @@ class BatchGradHistogram2d(SingleStepQuantity):
             batch_grad.data, batch_grad._param_weakref().data
         )
 
+        if self._which == "histogram2d_opt":
+            return self.__hist_own_opt(batch_grad_clamped, param_clamped)
         if self._save_memory:
             hist = self.__hist_save_mem(batch_grad_clamped, param_clamped)
         else:
