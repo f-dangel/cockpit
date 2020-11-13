@@ -104,11 +104,11 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
         plt.Circle((0, 0), norm_test_radii[-1], color=self.primary_color, fill=False)
     )
     ax_all.add_artist(
-        plt.Circle((0, 0), norm_test_radii[-1], color=self.primary_color, alpha=0.6)
+        plt.Circle((0, 0), norm_test_radii[-1], color=self.primary_color, alpha=0.5)
     )
 
     ax_norm.fill_between(
-        steps_array, norm_test_radii, color=self.primary_color, alpha=0.6
+        steps_array, norm_test_radii, color=self.primary_color, alpha=0.5
     )
     ax_norm.plot(steps_array, norm_test_radii, color=self.primary_color)
 
@@ -117,7 +117,7 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
         -inner_product_test_widths[-1],
         inner_product_test_widths[-1],
         color=self.secondary_color,
-        alpha=0.6,
+        alpha=0.5,
     )
     ax_all.axhspan(
         -inner_product_test_widths[-1],
@@ -127,7 +127,7 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
     )
 
     ax_inner.fill_between(
-        steps_array, inner_product_test_widths, color=self.secondary_color, alpha=0.6
+        steps_array, inner_product_test_widths, color=self.secondary_color, alpha=0.5
     )
     ax_inner.plot(steps_array, inner_product_test_widths, color=self.secondary_color)
 
@@ -136,7 +136,7 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
         -orthogonality_test_widths[-1],
         orthogonality_test_widths[-1],
         color=self.tertiary_color,
-        alpha=0.8,
+        alpha=0.5,
     )
     ax_all.axvspan(
         -orthogonality_test_widths[-1],
@@ -157,5 +157,5 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
     codes[0] = mpl.path.Path.MOVETO
 
     path = mpl.path.Path(ortho_vertices, codes)
-    patch = mpl.patches.PathPatch(path, facecolor=self.tertiary_color, alpha=0.6, lw=0)
+    patch = mpl.patches.PathPatch(path, facecolor=self.tertiary_color, alpha=0.5, lw=0)
     ax_ortho.add_patch(patch)
