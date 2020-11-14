@@ -51,7 +51,7 @@ def _format(self, ax_all, ax_norm, ax_inner, ax_ortho):
     iter_scale = "symlog" if self.show_log_iter else "linear"
 
     # area around cross
-    w = 1
+    w = 2
     ax_all.yaxis.tick_right()
     ax_all.set_xlim([-w, w])
     ax_all.set_xscale("symlog", linthresh=0.1)
