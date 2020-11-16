@@ -34,7 +34,7 @@ def distance_gauge(self, fig, gridspec):
     )
     self.tracking_data["update_size_all"] = self.tracking_data.update_size.map(
         lambda x: _root_sum_of_squares(x) if type(x) == list else x
-    ).cumsum()
+    )
 
     plot_args = {
         "x": "iteration",
@@ -62,10 +62,10 @@ def distance_gauge(self, fig, gridspec):
         "data": self.tracking_data,
         "y_scale": "linear",
         "x_scale": "symlog" if self.show_log_iter else "linear",
-        "cmap": self.cmap,
+        "cmap": self.cmap.reversed(),
         "EMA": "y",
         "EMA_alpha": self.EMA_alpha,
-        "EMA_cmap": self.cmap2,
+        "EMA_cmap": self.cmap2.reversed(),
         "xlim": "tight",
         "ylim": None,
         "marker": ",",
