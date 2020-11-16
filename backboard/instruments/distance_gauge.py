@@ -19,7 +19,7 @@ def distance_gauge(self, fig, gridspec):
     title = "Distance"
 
     # Check if the required data is available, else skip this instrument
-    requires = ["d2init"]
+    requires = ["d2init", "update_size"]
     plot_possible = check_data(self.tracking_data, requires)
     if not plot_possible:
         warnings.warn(
