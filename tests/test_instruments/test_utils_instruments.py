@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import pytest
 
-from backboard.instruments.utils_instruments import _compute_plot_limits
+from cockpit.instruments.utils_instruments import _compute_plot_limits
 
 
 # Test Plot Limits

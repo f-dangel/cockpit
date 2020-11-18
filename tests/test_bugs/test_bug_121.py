@@ -2,9 +2,9 @@
 
 from torch.optim import SGD
 
-from backboard.cockpit import configured_quantities
-from backboard.runners.scheduled_runner import ScheduleCockpitRunner
-from backboard.utils import fix_deepobs_data_dir
+from cockpit.cockpit import configured_quantities
+from cockpit.runners.scheduled_runner import ScheduleCockpitRunner
+from cockpit.utils import fix_deepobs_data_dir
 from tests.utils import hotfix_deepobs_argparse
 
 optimizer_class = SGD

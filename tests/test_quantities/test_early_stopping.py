@@ -1,10 +1,10 @@
-"""Tests for `backboard.quantities.early_stopping`."""
+"""Tests for `cockpit.quantities.early_stopping`."""
 
 import pytest
 
-from backboard.context import get_batch_size
-from backboard.quantities import EarlyStopping
 from backpack import extensions
+from cockpit.context import get_batch_size
+from cockpit.quantities import EarlyStopping
 from tests.test_quantities.utils import compare_quantities, get_output_sgd_test_runner
 
 TESTPROBLEMS = [

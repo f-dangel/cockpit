@@ -1,10 +1,10 @@
-"""Tests for ``backboard.cockpit.py``."""
+"""Tests for ``cockpit.cockpit.py``."""
 
 import pytest
 
-from backboard import quantities
-from backboard.cockpit import Cockpit, configured_quantities
 from backpack.extensions import BatchGrad, BatchGradTransforms, DiagGGNExact
+from cockpit import quantities
+from cockpit.cockpit import Cockpit, configured_quantities
 from deepobs.pytorch.testproblems import quadratic_deep
 from tests.utils import set_up_problem
 

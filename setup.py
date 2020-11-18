@@ -20,7 +20,7 @@ def _extract_version():
 # META
 ##############################################################################
 AUTHORS = "F. Schneider, F. Dangel"
-NAME = "backboard-for-pytorch"
+NAME = "cockpit"
 PACKAGES = find_packages()
 
 DESCRIPTION = r"""A Cockpit for Training Neural Networks."""
@@ -37,7 +37,7 @@ monitor quantities during training with the goal of both informing the machine
 learning engineer about the state of training, and to identify useful rules for
 when and how to change the optimization strategy if training stagnates."""
 
-VERSIONFILE = "backboard/_version.py"
+VERSIONFILE = "cockpit/_version.py"
 VERSION = _extract_version()
 URL = "https://github.com/f-dangel/backboard"
 LICENSE = "MIT"
@@ -46,9 +46,6 @@ LICENSE = "MIT"
 ##############################################################################
 REQUIREMENTS_FILE = "requirements.txt"
 REQUIREMENTS_PATH = path.join(path.abspath(__file__), REQUIREMENTS_FILE)
-
-# with open(REQUIREMENTS_FILE) as f:
-#    requirements = f.read().splitlines()
 
 setup(
     author=AUTHORS,

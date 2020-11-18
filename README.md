@@ -1,4 +1,4 @@
-# Project BackBoard - A Cockpit for Deep Learning
+# Cockpit - A Practical Debugging Tool for Training Deep Neural Networks
 
 Idea: Use BackPACK to monitor quantities during training to tell the "pilot"
 (person sitting in front of the computer performing neural network training)
@@ -8,7 +8,7 @@ what the "cockpit status of the airplane" is like.
 
 ## Table of Contents
 
-- [Project BackBoard - A Cockpit for Deep Learning](#project-backboard---a-cockpit-for-deep-learning)
+- [Cockpit - A Practical Debugging Tool for Training Deep Neural Networks](#cockpit---a-practical-debugging-tool-for-training-deep-neural-networks)
   - [Table of Contents](#table-of-contents)
   - [Installation](#installation)
     - [Install Pre-Commit Hooks](#install-pre-commit-hooks)
@@ -25,7 +25,7 @@ what the "cockpit status of the airplane" is like.
 
 ## Installation
 
-Set up a `conda` environment named `backboard`
+Set up a `conda` environment named `cockpit`
   
 ```bash
 conda env create -f .conda_env.yml
@@ -34,7 +34,7 @@ conda env create -f .conda_env.yml
 and activate it by running
   
 ```bash
-conda activate backboard
+conda activate cockpit
 ```
 
 ### Install Pre-Commit Hooks
@@ -62,7 +62,7 @@ For example to train any DeepOBS problem using SGD with CockpitTracking:
 """Run SGD on the Quadratic with multiple LRs."""
 
 from torch.optim import SGD
-from backboard.runners.scheduled_runner import ScheduleCockpitRunner
+from cockpit.runners.scheduled_runner import ScheduleCockpitRunner
 
 optimizer_class = SGD
 hyperparams = {"lr": {"type": float}}
@@ -92,7 +92,7 @@ You can run `python exp/00_Quadratic_Example.py` for an example of this.
 The cockpit plotter illustrates the cockpit from a given log (tracking) file.
 
 ```python
-from backboard import CockpitPlotter
+from cockpit import CockpitPlotter
 
 log_file = "/log" # Path to the json log file (without the .json!)
 
@@ -132,17 +132,17 @@ The choice of instruments is defined in the `plot` method of the CockpitPlotter.
 
 In order to track an additional quantity there are three steps you need to take:
 
-1. Create a subclass of [`Quantity`](backboard/quantities/quantity.py). This crucially includes the information how to [compute this quantity](https://github.com/f-dangel/backboard/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/backboard/quantities/quantity.py#L55), which [`BackPACK` extensions are needed](https://github.com/f-dangel/backboard/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/backboard/quantities/quantity.py#L44), and whether [access to the forward pass' computation graph is needed](https://github.com/f-dangel/backboard/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/backboard/quantities/quantity.py#L32). Note that all these functions should be defined with respect to the `track_interval`, i.e. that the compute function only computes the quantity when we hit the tracking rate.
-2. Add your class to the [`__init__.py` of the quantities](backboard/quantities/\_\_init\_\_.py).
-3. Add it to the [*default* quantites](https://github.com/f-dangel/backboard/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/backboard/cockpit.py#L195) tracked by the Cockpit.
+1. Create a subclass of [`Quantity`](cockpit/quantities/quantity.py). This crucially includes the information how to [compute this quantity](https://github.com/f-dangel/cockpit/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/cockpit/quantities/quantity.py#L55), which [`BackPACK` extensions are needed](https://github.com/f-dangel/cockpit/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/cockpit/quantities/quantity.py#L44), and whether [access to the forward pass' computation graph is needed](https://github.com/f-dangel/cockpit/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/cockpit/quantities/quantity.py#L32). Note that all these functions should be defined with respect to the `track_interval`, i.e. that the compute function only computes the quantity when we hit the tracking rate.
+2. Add your class to the [`__init__.py` of the quantities](cockpit/quantities/\_\_init\_\_.py).
+3. Add it to the [*default* quantites](https://github.com/f-dangel/cockpit/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/cockpit/cockpit.py#L195) tracked by the Cockpit.
 
 ### Adding a Novel Instrument
 
 If you want to create a novel instrument (using tracked quantities), here are the steps you need to take:
 
-1. Create the plotting function for this instrument in [instruments](backboard/instruments). The instrument will be plotted in a single `gridspec` element.
-2. Add your class to the [`__init__.py` of the instruments](backboard/instruments/\_\_init\_\_.py).
-3. Add it to the [instruments in the plot method of the CockpitPlotter](https://github.com/f-dangel/backboard/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/backboard/cockpit_plotter.py#L31)
+1. Create the plotting function for this instrument in [instruments](cockpit/instruments). The instrument will be plotted in a single `gridspec` element.
+2. Add your class to the [`__init__.py` of the instruments](cockpit/instruments/\_\_init\_\_.py).
+3. Add it to the [instruments in the plot method of the CockpitPlotter](https://github.com/f-dangel/cockpit/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/cockpit/cockpit_plotter.py#L31)
 
 ## API Reference
 

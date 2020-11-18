@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from backboard.quantities.alpha import (
+from cockpit.quantities.alpha import (
     AlphaExpensive,
     AlphaOptimized,
     _fit_quadratic,

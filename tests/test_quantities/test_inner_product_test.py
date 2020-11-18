@@ -1,4 +1,4 @@
-"""Tests for ``backboard.quantities.inner_product_test.py``.
+"""Tests for ``cockpit.quantities.inner_product_test.py``.
 
 Note: The inner product test seems to always pass in the first iterations
 on mnist_logreg and fmnist_2c2d. Also, it suggests extremely small batch size.
@@ -13,8 +13,7 @@ Note: Similar to the norm test, the two tested ways to compute the inner product
 
 import pytest
 
-from backboard.quantities.inner_product_test import InnerProductTest
-
+from cockpit.quantities.inner_product_test import InnerProductTest
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -44,7 +43,7 @@ def test_inner_product_test_math(
     Note: This test does not check if the value itself makes sense/is correct.
     """
     set_deepobs_seed(0)
-    from backboard.utils import fix_deepobs_data_dir
+    from cockpit.utils import fix_deepobs_data_dir
 
     fix_deepobs_data_dir()
     hotfix_deepobs_argparse()

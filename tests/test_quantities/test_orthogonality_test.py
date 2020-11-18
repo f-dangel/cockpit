@@ -1,4 +1,4 @@
-"""Tests for ``backboard.quantities.orthogonality_test.py``.
+"""Tests for ``cockpit.quantities.orthogonality_test.py``.
 
 Note: The orthogonality test seems to always pass in the first iterations
 on mnist_logreg and fmnist_2c2d. Also, it suggests extremely small batch size.
@@ -13,8 +13,7 @@ Note: Similar to the norm test, the two tested ways to compute the orthogonality
 
 import pytest
 
-from backboard.quantities.orthogonality_test import OrthogonalityTest
-
+from cockpit.quantities.orthogonality_test import OrthogonalityTest
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -44,7 +43,7 @@ def test_orthogonality_test_math(
     Note: This test does not check if the value itself makes sense/is correct.
     """
     set_deepobs_seed(0)
-    from backboard.utils import fix_deepobs_data_dir
+    from cockpit.utils import fix_deepobs_data_dir
 
     fix_deepobs_data_dir()
     hotfix_deepobs_argparse()

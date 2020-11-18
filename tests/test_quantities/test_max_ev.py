@@ -1,8 +1,8 @@
-"""Tests for ``backboard.quantities.hessian_eigenvalues``."""
+"""Tests for ``cockpit.quantities.hessian_eigenvalues``."""
 
 import pytest
 
-from backboard.quantities.max_ev import MaxEV
+from cockpit.quantities.max_ev import MaxEV
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -29,7 +29,7 @@ def test_integration_maximum_hessian_eigenvalue(
     Note: This test only verifies that the computation passes.
     """
     set_deepobs_seed(0)
-    from backboard.utils import fix_deepobs_data_dir
+    from cockpit.utils import fix_deepobs_data_dir
 
     fix_deepobs_data_dir()
     hotfix_deepobs_argparse()

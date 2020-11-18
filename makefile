@@ -27,7 +27,7 @@ help:
 	@echo "darglint-check"
 	@echo "        Run darglint on the project"
 	@echo "install"
-	@echo "        Install backboard and dependencies"
+	@echo "        Install cockpit and dependencies"
 	@echo "install-dev"
 	@echo "        Install all development tools"
 	@echo "install-lint"
@@ -37,17 +37,17 @@ help:
 	@echo "install-docs"
 	@echo "        Install only the tools to build/view the docs (included in install-dev)"
 	@echo "conda-env"
-	@echo "        Create conda environment 'backboard' with dev setup"
+	@echo "        Create conda environment 'cockpit' with dev setup"
 	@echo "build-docs"
 	@echo "        Build the docs"
 
 ###
 # Test coverage
 test:
-	@pytest -vx --cov=backboard tests
+	@pytest -vx --cov=cockpit tests
 
 test-light:
-	@pytest -vx --cov=backboard tests
+	@pytest -vx --cov=cockpit tests
 
 ###
 # Linter and autoformatter
@@ -69,7 +69,7 @@ pydocstyle-check:
 	@pydocstyle --count .
 
 darglint-check:
-	@darglint --verbosity 2 backboard
+	@darglint --verbosity 2 cockpit
 
 isort:
 	@isort --apply
@@ -109,8 +109,8 @@ install-dev: install-devtools
 	@echo "Install dependencies..."
 	@pip install -r requirements.txt
 	@echo "Uninstall existing version of backpack..."
-	@pip uninstall backboard
-	@echo "Install backboard in editable mode..."
+	@pip uninstall cockpit
+	@echo "Install cockpit in editable mode..."
 	@pip install -e .
 	@echo "Install pre-commit hooks..."
 	@pre-commit install

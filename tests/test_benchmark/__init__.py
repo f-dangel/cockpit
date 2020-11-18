@@ -1,1 +1,1 @@
-"""Tests for ``backboard.benchmark``."""
+"""Tests for ``cockpit.benchmark``."""
