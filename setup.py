@@ -4,6 +4,29 @@ from os import path
 
 from setuptools import find_packages, setup
 
+
+# UTILS
+##############################################################################
+def _extract_version():
+    """Extract version number from _version.py file."""
+    verstr = "unknown"
+    try:
+        verstrline = open(VERSIONFILE, "rt").read()
+    except EnvironmentError:
+        pass  # Okay, there is no version file.
+    else:
+        VSRE = r"^verstr = ['\"]([^'\"]*)['\"]"
+        mo = re.search(VSRE, verstrline, re.M)
+        if mo:
+            verstr = mo.group(1)
+        else:
+            print("unable to find version in %s" % (VERSIONFILE,))
+            raise RuntimeError(
+                "if %s.py exists, it is required to be well-formed" % (VERSIONFILE,)
+            )
+    return verstr
+
+
 # META
 ##############################################################################
 AUTHORS = "F. Schneider, F. Dangel"
@@ -24,7 +47,8 @@ monitor quantities during training with the goal of both informing the machine
 learning engineer about the state of training, and to identify useful rules for
 when and how to change the optimization strategy if training stagnates."""
 
-VERSION = "0.0.1"
+VERSIONFILE = "backboard/_version.py"
+VERSION = _extract_version()
 URL = "https://github.com/f-dangel/backboard"
 LICENSE = "MIT"
 
