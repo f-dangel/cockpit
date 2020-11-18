@@ -103,7 +103,7 @@ install-docs:
 
 install-devtools:
 	@echo "Install dev tools..."
-	@pip install -r requirements-dev.txt
+	@pip install -r requirements/requirements-dev.txt
 
 install-dev: install-devtools
 	@echo "Install dependencies..."
