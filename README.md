@@ -1,5 +1,5 @@
 <!-- PROJECT SHIELDS -->
-[![Python 3.5+](https://img.shields.io/badge/python-3.5+-blue.svg?style=flat-square)](https://www.python.org/downloads/release/python-350/)
+[![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg?style=flat-square)](https://www.python.org/downloads/release/python-350/)
 [![License: MIT](https://img.shields.io/github/license/fsschneider/deepobs?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/psf/black)
 
@@ -26,6 +26,7 @@
   <a href="#citation">Citation</a>
 </p>
 
+---
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
