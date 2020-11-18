@@ -1,5 +1,6 @@
 """Setup file for the Cockpit."""
 
+import re
 from os import path
 
 from setuptools import find_packages, setup
@@ -8,23 +9,12 @@ from setuptools import find_packages, setup
 # UTILS
 ##############################################################################
 def _extract_version():
-    """Extract version number from _version.py file."""
-    verstr = "unknown"
-    try:
-        verstrline = open(VERSIONFILE, "rt").read()
-    except EnvironmentError:
-        pass  # Okay, there is no version file.
-    else:
-        VSRE = r"^verstr = ['\"]([^'\"]*)['\"]"
-        mo = re.search(VSRE, verstrline, re.M)
-        if mo:
-            verstr = mo.group(1)
-        else:
-            print("unable to find version in %s" % (VERSIONFILE,))
-            raise RuntimeError(
-                "if %s.py exists, it is required to be well-formed" % (VERSIONFILE,)
-            )
-    return verstr
+    with open(VERSIONFILE, "r") as f:
+        lines = f.readlines()
+        for line in lines:
+            if line.startswith("__version__"):
+                verstr = re.findall('"([^"]*)"', line)
+    return verstr[0]
 
 
 # META
