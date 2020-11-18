@@ -6,35 +6,26 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
-    <img src="docs/Banner..png" alt="Logo">
-  </a>
+<img src="docs/assets/Logo.png" alt="Logo">
 
   <h3 align="center">A Practical Debugging Tool for Training Deep Neural Networks</h3>
 
   <p align="center">
-    A debugger specialized for deep learning.
+    A better status screen for deep learning.
     <br />
     <a href="docs/_build/html/index.html"><strong>Explore the docs »</strong></a>
-    <br />
     <br />
   </p>
 </p>
 
+<p align="center">
+  <a href="#about-the-project">About The Project</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#tutorials">Tutorials</a> •
+  <a href="#license">License</a> •
+  <a href="#citation">Citation</a>
+</p>
 
-<!-- TABLE OF CONTENTS -->
-## Table of Contents <!-- omit in toc -->
-
-- [About The Project](#about-the-project)
-- [Getting Started](#getting-started)
-  - [Installation](#installation)
-- [Tutorials](#tutorials)
-  - [Using the Cockpit](#using-the-cockpit)
-  - [Using the Plotter](#using-the-plotter)
-  - [Adding Quantities](#adding-quantities)
-  - [Adding Instruments](#adding-instruments)
-- [License](#license)
-- [Citation](#citation)
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
