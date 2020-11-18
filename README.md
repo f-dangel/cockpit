@@ -6,7 +6,8 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-<img src="docs/assets/Logo.png" alt="Logo">
+<a href="#"><img src="docs/assets/Logo.png" alt="Logo"/></a>
+
 
   <h3 align="center">A Practical Debugging Tool for Training Deep Neural Networks</h3>
 
