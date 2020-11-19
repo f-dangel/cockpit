@@ -51,6 +51,28 @@ Cockpit uses [BackPACK](https://backpack.pt) in order to compute those quantitie
 
 ### Installation
 
+To install **Cockpit** simply run
+
+    pip install 'git+https://github.com/f-dangel/cockpit-paper.git'
+
+### Customize & Contribute
+
+If you plan to **customize Cockpit**, for example, by adding new quantities or your own visualizations, we suggest installing a local and modifiable version of Cockpit.
+
+    pip install -e 'git+https://github.com/f-dangel/cockpit-paper.git'
+
+If you plan to **contribute to Cockpit**, we suggest using our provided `conda` environment:
+
+    conda env create -f .conda_env.yml
+    conda activate cockpit
+
+which will create a `conda` environment called `cockpit`.    
+Clone this `repository`, install the package and all its (developer) requirements
+
+    git clone https://github.com/f-dangel/cockpit-paper.git
+    pip install -e .
+    pip install -r requirements/requirements-dev.txt
+
 <!-- TUTORIALS -->
 ## Tutorials
 
