@@ -35,7 +35,7 @@ def gradient_tests_gauge(self, fig, gridspec):
     ax.set_axis_off()
 
     # Gridspecs (inside gridspec)
-    gs = gridspec.subgridspec(3, 3, wspace=0, hspace=0)
+    gs = gridspec.subgridspec(3, 3, wspace=0.05, hspace=0.1)
 
     ax_all = fig.add_subplot(gs[1:, 1:])
     ax_norm = fig.add_subplot(gs[1, 0])
@@ -50,13 +50,17 @@ def _format(self, ax_all, ax_norm, ax_inner, ax_ortho):
     """Format axes of all subplots."""
     iter_scale = "symlog" if self.show_log_iter else "linear"
 
+    # area around cross
+    w = 2
     ax_all.yaxis.tick_right()
-    ax_all.set_xlim([-1, 1])
-    ax_all.set_ylim([0, 2])
+    ax_all.set_xlim([-w, w])
+    ax_all.set_xscale("symlog", linthresh=0.1)
+    ax_all.set_ylim([0 - w, 0 + w])
+    ax_all.set_yscale("symlog", linthresh=0.1)
 
     ax_all.set_axisbelow(True)
     ax_all.grid(ls="--")
-    ax_all.plot(0, 1, color="black", marker="+", markersize=18, markeredgewidth=4)
+    ax_all.plot(0, 0, color="black", marker="+", markersize=18, markeredgewidth=4)
     ax_all.set_facecolor(self.bg_color_instruments)
 
     ax_norm.set_ylabel("norm")
@@ -97,45 +101,33 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
 
     # plot norm test
     ax_all.add_artist(
-        plt.Circle((0, 1), norm_test_radii[-1], color=self.primary_color, fill=False)
+        plt.Circle((0, 0), norm_test_radii[-1], color=self.primary_color, fill=False)
     )
     ax_all.add_artist(
-        plt.Circle((0, 1), norm_test_radii[-1], color=self.primary_color, alpha=0.6)
-    )
-    ax_all.plot(
-        [-1, -1],
-        [1, 1 + norm_test_radii[-1]],
-        color=self.primary_color,
-        linewidth=6,
+        plt.Circle((0, 0), norm_test_radii[-1], color=self.primary_color, alpha=0.5)
     )
 
     ax_norm.fill_between(
-        steps_array, norm_test_radii, color=self.primary_color, alpha=0.6
+        steps_array, norm_test_radii, color=self.primary_color, alpha=0.5
     )
     ax_norm.plot(steps_array, norm_test_radii, color=self.primary_color)
 
     # plot inner product test
     ax_all.axhspan(
-        1 - inner_product_test_widths[-1],
-        1 + inner_product_test_widths[-1],
+        -inner_product_test_widths[-1],
+        inner_product_test_widths[-1],
         color=self.secondary_color,
-        alpha=0.6,
+        alpha=0.5,
     )
     ax_all.axhspan(
-        1 - inner_product_test_widths[-1],
-        1 + inner_product_test_widths[-1],
+        -inner_product_test_widths[-1],
+        inner_product_test_widths[-1],
         color=self.secondary_color,
         fill=False,
     )
-    ax_all.plot(
-        [-1, -1],
-        [1 - inner_product_test_widths[-1], 1],
-        color=self.secondary_color,
-        linewidth=6,
-    )
 
     ax_inner.fill_between(
-        steps_array, inner_product_test_widths, color=self.secondary_color, alpha=0.6
+        steps_array, inner_product_test_widths, color=self.secondary_color, alpha=0.5
     )
     ax_inner.plot(steps_array, inner_product_test_widths, color=self.secondary_color)
 
@@ -144,19 +136,13 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
         -orthogonality_test_widths[-1],
         orthogonality_test_widths[-1],
         color=self.tertiary_color,
-        alpha=0.8,
+        alpha=0.5,
     )
     ax_all.axvspan(
         -orthogonality_test_widths[-1],
         orthogonality_test_widths[-1],
         color=self.tertiary_color,
         fill=False,
-    )
-    ax_all.plot(
-        [0, orthogonality_test_widths[-1]],
-        [2, 2],
-        color=self.tertiary_color,
-        linewidth=6,
     )
 
     ax_ortho.plot(orthogonality_test_widths, steps_array, color=self.tertiary_color)
@@ -171,5 +157,5 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
     codes[0] = mpl.path.Path.MOVETO
 
     path = mpl.path.Path(ortho_vertices, codes)
-    patch = mpl.patches.PathPatch(path, facecolor=self.tertiary_color, alpha=0.6, lw=0)
+    patch = mpl.patches.PathPatch(path, facecolor=self.tertiary_color, alpha=0.5, lw=0)
     ax_ortho.add_patch(patch)

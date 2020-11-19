@@ -19,7 +19,7 @@ def distance_gauge(self, fig, gridspec):
     title = "Distance"
 
     # Check if the required data is available, else skip this instrument
-    requires = ["d2init"]
+    requires = ["d2init", "update_size"]
     plot_possible = check_data(self.tracking_data, requires)
     if not plot_possible:
         warnings.warn(
@@ -30,6 +30,9 @@ def distance_gauge(self, fig, gridspec):
 
     # Compute
     self.tracking_data["d2init_all"] = self.tracking_data.d2init.map(
+        lambda x: _root_sum_of_squares(x) if type(x) == list else x
+    )
+    self.tracking_data["update_size_all"] = self.tracking_data.update_size.map(
         lambda x: _root_sum_of_squares(x) if type(x) == list else x
     )
 
@@ -51,3 +54,20 @@ def distance_gauge(self, fig, gridspec):
     }
     ax = fig.add_subplot(gridspec)
     create_basic_plot(**plot_args, ax=ax)
+
+    ax2 = ax.twinx()
+    plot_args = {
+        "x": "iteration",
+        "y": "update_size_all",
+        "data": self.tracking_data,
+        "y_scale": "linear",
+        "x_scale": "symlog" if self.show_log_iter else "linear",
+        "cmap": self.cmap.reversed(),
+        "EMA": "y",
+        "EMA_alpha": self.EMA_alpha,
+        "EMA_cmap": self.cmap2.reversed(),
+        "xlim": "tight",
+        "ylim": None,
+        "marker": ",",
+    }
+    create_basic_plot(**plot_args, ax=ax2)

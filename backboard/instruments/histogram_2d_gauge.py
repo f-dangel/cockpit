@@ -84,9 +84,12 @@ def histogram_2d_gauge(
         ax_xmargin = fig.add_subplot(gs[1:, 2])
         ax_xmargin.set_xscale("log")
         ax_xmargin.get_yaxis().set_visible(False)
-        # TODO Use exactly the same y limits as ax_joint
+
         vals, mid_points, bin_size = _get_xmargin_histogram_data(
             self.tracking_data, idx=idx
+        )
+        ax_xmargin.set_ylim(
+            [mid_points[0] - bin_size / 2, mid_points[-1] + bin_size / 2]
         )
         ax_xmargin.barh(
             mid_points, vals, height=bin_size, color=self.primary_color, linewidth=0.1
@@ -95,9 +98,12 @@ def histogram_2d_gauge(
         ax_ymargin = fig.add_subplot(gs[0, :2])
         ax_ymargin.set_yscale("log")
         ax_ymargin.get_xaxis().set_visible(False)
-        # TODO Use exactly the same x limits as ax_joint
+
         vals, mid_points, bin_size = _get_ymargin_histogram_data(
             self.tracking_data, idx=idx
+        )
+        ax_ymargin.set_xlim(
+            [mid_points[0] - bin_size / 2, mid_points[-1] + bin_size / 2]
         )
         ax_ymargin.bar(
             mid_points,

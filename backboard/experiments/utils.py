@@ -64,7 +64,7 @@ def replace(module, trigger, make_new):
 def _set_plotting_params():
     """Set some consistent plotting settings and styles."""
     # Seaborn settings:
-    sns.set_style("darkgrid")
+    sns.set_style("whitegrid")
     sns.set_context("paper", font_scale=1.0)
 
     # Matplotlib settings (using tex font)
@@ -92,6 +92,13 @@ def _set_plotting_params():
         "figure.subplot.hspace": 0.3,
         # Less space around the plot
         "savefig.pad_inches": 0.0,
+        # dashed grid lines
+        "grid.linestyle": "dashed",
+        # width of grid lines
+        "grid.linewidth": 0.4,
+        # Show thin edge around each plot
+        "axes.edgecolor": "black",
+        "axes.linewidth": 0.4,
     }
     plt.rcParams.update(tex_fonts)
 
