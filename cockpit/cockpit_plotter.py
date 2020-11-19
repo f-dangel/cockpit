@@ -63,6 +63,7 @@ class CockpitPlotter:
         savename_append=None,
         block=False,
         show_log_iter=False,
+        discard=None,
     ):
         """Plot the cockpit for the current state of the log file.
 
@@ -77,6 +78,8 @@ class CockpitPlotter:
                 blocking or not. Defaults to False.
             show_log_iter (bool, optional): Whether the instruments should use
                 a log scale for the iterations. Defaults to False.
+            discard (int, optional): Global step after which information
+                should be discarded.
         """
         self._set_backend(show_plot)
 
@@ -86,7 +89,7 @@ class CockpitPlotter:
             self.fig = plt.figure("Primary screen", constrained_layout=False)
 
         # read in results
-        self._read_tracking_results()
+        self._read_tracking_results(discard=discard)
 
         # Plotting
         self.fig.clf()  # clear the cockpit figure to replace it
@@ -305,8 +308,13 @@ class CockpitPlotter:
         # Apply the settings
         mpl.rcParams["figure.figsize"] = [plot_scale * e for e in plot_size_default]
 
-    def _read_tracking_results(self):
-        """Read the tracking results from the JSON file into an internal DataFrame."""
+    def _read_tracking_results(self, discard=None):
+        """Read the tracking results from the JSON file into an internal DataFrame.
+
+        Args:
+            discard (int, optional): Global step after which information should be
+                discarded.
+        """
         with open(self.logpath) as f:
             data = json.load(f)
 
@@ -318,6 +326,9 @@ class CockpitPlotter:
         self.tracking_data = self.tracking_data.sort_index()
         # Rename index to 'iteration' and store it in seperate column
         self.tracking_data = self.tracking_data.rename_axis("iteration").reset_index()
+
+        if discard is not None:
+            self.tracking_data = self.tracking_data[self.tracking_data.index <= discard]
 
     def _save(self, savename_append=None, screen="primary"):
         """Save the (internal) figure to file.
