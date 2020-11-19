@@ -42,7 +42,7 @@ heuristics."""
 
 VERSIONFILE = "cockpit/_version.py"
 VERSION = _extract_version()
-URL = "https://github.com/f-dangel/backboard"
+URL = "https://github.com/f-dangel/cockpit-paper"
 LICENSE = "MIT"
 
 # DEPENDENCIES

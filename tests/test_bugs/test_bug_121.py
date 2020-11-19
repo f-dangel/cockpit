@@ -1,4 +1,4 @@
-"""Test for plotting bug (https://github.com/f-dangel/backboard/issues/121)."""
+"""Test for plotting bug (https://github.com/f-dangel/cockpit-paper/issues/121)."""
 
 from torch.optim import SGD
 
