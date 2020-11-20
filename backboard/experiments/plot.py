@@ -183,7 +183,7 @@ class TikzExport:
             r"xtick",
             r"yticklabels",
             r"xticklabels",
-            r"ymode",
+            # "ymode",
             r"log basis y",
         ]
 
