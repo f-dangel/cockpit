@@ -24,8 +24,8 @@
   <a href="#getting-started">Getting Started</a> •
   <a href="#tutorials">Tutorials</a> •
   <a href="#documentation">Docs</a> •
-  <a href="#license">License</a> •
-  <a href="#citation">Citation</a>
+  <a href="#license">License</a>
+  <!-- <a href="#citation">Citation</a> -->
 </p>
 
 ---
@@ -76,6 +76,65 @@ Clone this `repository`, install the package and all its (developer) requirement
 <!-- TUTORIALS -->
 ## Tutorials
 
+With two simple tutorials we will show how one can use **Cockpit** to monitor training. More tutorials and detailed explanations of the individual parts of Cockpit can be found in the [documentation](https://f-dangel.github.io/cockpit-paper/).
+
+### Using the Cockpit for general Training Loops
+
+This is a basic example, how you can use **Cockpit** to track quantities during a simple training loop using a CNN on MNIST. The full example (with more details) can be found in the [examples directory](examples/00_mnist.py) and can be directly run via
+
+    python examples/00_mnist.py
+
+Taking a given, standard training loop, there are only a few additional lines of code required to use the **Cockpit**. Let's go through them.
+
+After loading the MNIST data, building a network, defining the loss function and the optimizer, we initialize the Cockpit
+
+```python
+[...]
+cockpit = Cockpit([model, lossfunc], create_logpath(), track_interval=5)
+[...]
+```
+Here we have to pass the model and the lossfunction, so that they can be extend via [BackPACK](https://backpack.pt). We will also pass the path where we want the log file to be stored, as well as the `tracking_interval` which will dictate how  often we track.
+
+Once the training starts and we compute the forward pass, we also want to compute the individual losses, not only the mean loss.
+
+```python
+for _ in range(num_epochs):
+    for inputs, labels in iter(train_loader):
+        [...]
+        loss = lossfunc(outputs, labels)
+        with torch.no_grad():
+            individual_losses = individual_lossfunc(outputs, labels)
+        [...]
+```
+The individual lossfunction, however, is simply the regular lossfunction with the paramter `reduction="none"` instead of the default `reduction="mean"`.
+
+We surround the backward pass of the model with a `with cockpit():` statement, to make sure that the additional quantities are computed, if necessary:
+
+```python
+    [...]
+    with cockpit(iteration, info={
+                "batch_size": inputs.shape[0],
+                "individual_losses": individual_losses,
+            }):
+        loss.backward(create_graph=cockpit.create_graph)
+    
+    cockpit.track(iteration, loss)
+    [...]
+```
+After the backward pass is done, we can track all quantities if desired. Note, that it will only track if the current iteration hits the pre-defined `tracking_interval`, saving computation.
+
+Once the quantites are tracked, they can be written to the log file and visualized in a plot. In the example we do this every 10-th iteration:
+
+```python
+    [...]
+    if iteration % 10 == 0:
+        cockpit.write()
+        cockpit.plot()
+    [...]
+```
+
+Adding these lines to your training loop allows you to track and monitor the many quantites offered by Cockpit. There are many ways to customize this setup, for example, by only tracking parts of the network, tracking quantities at different rates (i.e. `tracking_intervals`), etc. These are described in the [documentation](https://f-dangel.github.io/cockpit-paper/).
+
 ### Using the Cockpit with DeepOBS
 
 It is very easy to use **Cockpit** together with [DeepOBS](https://deepobs.github.io/). DeepOBS is a benchmarking tool for optimization method and directly offers more than twenty test problems (i.e. data sets and deep networks) to train on.
@@ -109,11 +168,9 @@ runner.run(
 
 The output of this script is (among other files) a Cockpit log file ending in `__log.json` which holds all the tracke data. It can, for example, be read by the `CockpitPlotter` to visualize these quantities.
 
-A more detailed example of using Cockpit and DeepOBS can be found in the [examples directory](examples/)
+A more detailed example of using Cockpit and DeepOBS can be found in the [examples directory](examples/), which can be run with
 
-### Using the Cockpit for general Training Loops
-
-### Using the Plotter
+    python examples/01_deepobs_cockpit.py
 
 <!-- DOCUMENTATION -->
 ## Documentation
@@ -126,4 +183,4 @@ A more detailed documentation with the API can be found [here](https://f-dangel.
 Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
 
 <!-- CITATION -->
-## Citation
+

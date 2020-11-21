@@ -42,8 +42,9 @@ runner = ScheduleCockpitRunner(optimizer_class, hyperparams)
 runner.run(
     testproblem="quadratic_deep",
     l2_reg=0.0,  # necessary for backobs!
-    track_interval=1,
-    plot_interval=10,
+    track_interval=5,
+    plot_interval=5,
+    num_epochs=50,
     show_plots=True,
     save_plots=False,
     save_final_plot=True,
