@@ -307,11 +307,11 @@ TSWLatexianTemp*
 **/*events.out.tfevents.*
 
 # Paper
-tex/CVPR\ 2021/cockpit_paper.pdf
-tex/CVPR\ 2021/main.pdf
-tex/CVPR\ 2021/suppl.pdf
+tex/CVPR2021/cockpit_paper.pdf
+tex/CVPR2021/main.pdf
+tex/CVPR2021/suppl.pdf
 
-tex/CVPR\ 2021/rebuttal/cvpr_rebuttal.pdf
+tex/CVPR2021/rebuttal/cvpr_rebuttal.pdf
 
 # Test
 .coverage
