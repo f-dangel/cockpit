@@ -1,4 +1,4 @@
-"""Example Training Loop using Cockpit."""
+"""Example: Training Loop using Cockpit."""
 
 import torch
 from examples_utils import CNN, MNISTData, create_logpath, evaluate

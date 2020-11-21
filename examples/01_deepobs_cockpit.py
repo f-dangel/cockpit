@@ -1,4 +1,4 @@
-"""Run SGD on the Quadratic Test Problem of DeepOBS."""
+"""Example: Run SGD on the Quadratic Test Problem of DeepOBS."""
 
 from torch.optim import SGD
 
