@@ -115,14 +115,10 @@ A more detailed example of using Cockpit and DeepOBS can be found in the [exampl
 
 ### Using the Plotter
 
-### Adding Quantities
-
-### Adding Instruments
-
 <!-- DOCUMENTATION -->
 ## Documentation
 
-A more detailed documentation with the API can be found [here](https://f-dangel.github.io/cockpit-paper/)
+A more detailed documentation with the API can be found [here](https://f-dangel.github.io/cockpit-paper/). The documentation also provides tutorials on how to add additional and custom quantities as well as add novel instruments to Cockpit.
 
 <!-- LICENSE -->
 ## License
