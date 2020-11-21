@@ -7,5 +7,5 @@ dependencies:
   - python=3.7.6
   - pip:
     - -r requirements.txt
-    - -r requirements-dev.txt
+    - -r requirements/requirements-dev.txt
     - -e .
