@@ -76,7 +76,42 @@ Clone this `repository`, install the package and all its (developer) requirement
 <!-- TUTORIALS -->
 ## Tutorials
 
-### Using the Cockpit
+### Using the Cockpit with DeepOBS
+
+It is very easy to use **Cockpit** together with [DeepOBS](https://deepobs.github.io/). DeepOBS is a benchmarking tool for optimization method and directly offers more than twenty test problems (i.e. data sets and deep networks) to train on.
+
+If you want to use **Cockpit**, for example, to monitor your novel optimizer, you can simply use the runner provided with the Cockpit. The `ScheduleCockpitRunner` works analogously to other [DeepOBS Runners](https://deepobs.readthedocs.io/en/v1.2.0-beta0_a/api/pytorch/runner.html), with a minimal working example provided here:
+
+```python
+"""Run SGD on the Quadratic Problem of DeepOBS."""
+
+from torch.optim import SGD
+from backboard.runners.scheduled_runner import ScheduleCockpitRunner
+
+# Replace with your optimizer, in this case we use SGD
+optimizer_class = SGD
+hyperparams = {"lr": {"type": float}}
+
+def lr_schedule(num_epochs):
+    """Some Learning rate schedule."""
+    return lambda epoch: 0.95 ** epoch
+
+runner = ScheduleCockpitRunner(optimizer_class, hyperparams)
+
+# Fix training parameters, otherwise they can be passed via the command line
+runner.run(
+    testproblem="quadratic_deep",
+    track_interval=1,
+    plot_interval=10,
+    lr_schedule=lr_schedule,
+)
+```
+
+The output of this script is (among other files) a Cockpit log file ending in `__log.json` which holds all the tracke data. It can, for example, be read by the `CockpitPlotter` to visualize these quantities.
+
+A more detailed example of using Cockpit and DeepOBS can be found in the [examples directory](examples/)
+
+### Using the Cockpit for general Training Loops
 
 ### Using the Plotter
 
