@@ -1,4 +1,4 @@
-"""Utility function for tests of ``backboard.quantities``."""
+"""Utility function for tests of ``cockpit.quantities``."""
 
 import numpy
 
@@ -70,7 +70,7 @@ def compare_quantities(
 def get_output_sgd_test_runner(
     quantities, testproblem, num_epochs=1, batch_size=4, lr=0.01, momentum=0.0, seed=0
 ):
-    from backboard.utils import fix_deepobs_data_dir
+    from cockpit.utils import fix_deepobs_data_dir
 
     set_deepobs_seed(seed)
     fix_deepobs_data_dir()

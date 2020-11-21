@@ -1,69 +1,153 @@
-# Project BackBoard - A Cockpit for Deep Learning
+<!-- PROJECT SHIELDS -->
+[![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg?style=flat-square)](https://www.python.org/downloads/release/python-350/)
+[![License: MIT](https://img.shields.io/github/license/fsschneider/deepobs?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/psf/black)
 
-Idea: Use BackPACK to monitor quantities during training to tell the "pilot"
-(person sitting in front of the computer performing neural network training)
-what the "cockpit status of the airplane" is like.
+<!-- PROJECT LOGO -->
+<br />
+<p align="center">
+<a href="#"><img src="docs/assets/Logo.png" alt="Logo"/></a>
+
+
+  <h3 align="center">A Practical Debugging Tool for Training Deep Neural Networks</h3>
+
+  <p align="center">
+    A better status screen for deep learning.
+    <br />
+    <a href="https://f-dangel.github.io/cockpit-paper/"><strong>Explore the docs »</strong></a>
+    <br />
+  </p>
+</p>
+
+<p align="center">
+  <a href="#about-the-project">About The Project</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#tutorials">Tutorials</a> •
+  <a href="#documentation">Docs</a> •
+  <a href="#license">License</a>
+  <!-- <a href="#citation">Citation</a> -->
+</p>
 
 ---
 
-## Table of Contents
+<!-- ABOUT THE PROJECT -->
+## About The Project
 
-- [Project BackBoard - A Cockpit for Deep Learning](#project-backboard---a-cockpit-for-deep-learning)
-  - [Table of Contents](#table-of-contents)
-  - [Installation](#installation)
-    - [Install Pre-Commit Hooks](#install-pre-commit-hooks)
-  - [Usage](#usage)
-    - [Runner](#runner)
-    - [Cockpit Plotter](#cockpit-plotter)
-  - [Customizing the Cockpit](#customizing-the-cockpit)
-    - [Removing Existing Quantities](#removing-existing-quantities)
-    - [Changing Instruments](#changing-instruments)
-    - [Adding a Novel Quantity](#adding-a-novel-quantity)
-    - [Adding a Novel Instrument](#adding-a-novel-instrument)
-  - [API Reference](#api-reference)
-  - [License](#license)
+![CockpitAnimation](docs/assets/showcase.gif)
 
-## Installation
+**Motivation:** Currently, training a deep neural network is often a pain! Succesfully training such a network usually requires either years of intuition or expensive parameter searches and lots of trial and error. Traditional debugger provide only limited help: They can help diagnose *syntactical errors* but they do not help with *training bugs* such as ill-chosen learning rates.
 
-Set up a `conda` environment named `backboard`
-  
-```bash
-conda env create -f .conda_env.yml
-```
+**Cockpit** is a visual and statistical debugger specifically designed for deep learning! With it, you can:
 
-and activate it by running
-  
-```bash
-conda activate backboard
-```
+- **Track relevant diagnostics** that can tell you more about the state of the training process. The train/test loss might tell you *whether* your training is working or not, but not *why*. Statistical quantities, such as the *gradient norm*, *Hessian trace* and *histograms* over the network's gradient and parameters offer insight into the training process.
+- **Visualize them in real-time** to get a *status screen* of your training. Cockpit compresses and visualizes the most important quantities into *instruments* providing more insight into the training.
+- **Use these quantities** for novel and more sophisticated training algorithms or to build additional visualizations.
 
-### Install Pre-Commit Hooks
+Cockpit uses [BackPACK](https://backpack.pt) in order to compute those quantities efficiently. In fact, the above animation shows training of the [All-CNN-C network](https://arxiv.org/abs/1412.6806) on [CIFAR-100](https://www.cs.toronto.edu/~kriz/cifar.html).
 
-```bash
-pre-commit install
-```
 
-## Usage
+<!-- GETTING STARTED -->
+## Getting Started
 
-### Runner
+### Installation
 
-The `runners` can be used to train on a DeepOBS test problem and simultaneously
-track quantities to a log file.
+To install **Cockpit** simply run
 
-The output of the `runner` is among other things a `__log.json` log file that
-can be read by the `CockpitPlotter` to show the cockpit.
+    pip install 'git+https://github.com/f-dangel/cockpit-paper.git'
 
-The `runners` in this repo can be used like the
-[runners from DeepOBS](https://deepobs.readthedocs.io/en/v1.2.0-beta0_a/api/pytorch/runner.html).
+### Customize & Contribute
 
-For example to train any DeepOBS problem using SGD with CockpitTracking:
+If you plan to **customize Cockpit**, for example, by adding new quantities or your own visualizations, we suggest installing a local and modifiable version of Cockpit.
+
+    pip install -e 'git+https://github.com/f-dangel/cockpit-paper.git'
+
+If you plan to **contribute to Cockpit**, we suggest using our provided `conda` environment:
+
+    conda env create -f .conda_env.yml
+    conda activate cockpit
+
+which will create a `conda` environment called `cockpit`.    
+Clone this `repository`, install the package and all its (developer) requirements
+
+    git clone https://github.com/f-dangel/cockpit-paper.git
+    pip install -e .
+    pip install -r requirements/requirements-dev.txt
+
+<!-- TUTORIALS -->
+## Tutorials
+
+With two simple tutorials we will show how one can use **Cockpit** to monitor training. More tutorials and detailed explanations of the individual parts of Cockpit can be found in the [documentation](https://f-dangel.github.io/cockpit-paper/).
+
+### Using the Cockpit for general Training Loops
+
+This is a basic example, how you can use **Cockpit** to track quantities during a simple training loop using a CNN on MNIST. The full example (with more details) can be found in the [examples directory](examples/00_mnist.py) and can be directly run via
+
+    python examples/00_mnist.py
+
+Taking a given, standard training loop, there are only a few additional lines of code required to use the **Cockpit**. Let's go through them.
+
+After loading the MNIST data, building a network, defining the loss function and the optimizer, we initialize the Cockpit
 
 ```python
-"""Run SGD on the Quadratic with multiple LRs."""
+[...]
+cockpit = Cockpit([model, lossfunc], create_logpath(), track_interval=5)
+[...]
+```
+Here we have to pass the model and the lossfunction, so that they can be extend via [BackPACK](https://backpack.pt). We will also pass the path where we want the log file to be stored, as well as the `tracking_interval` which will dictate how  often we track.
+
+Once the training starts and we compute the forward pass, we also want to compute the individual losses, not only the mean loss.
+
+```python
+for _ in range(num_epochs):
+    for inputs, labels in iter(train_loader):
+        [...]
+        loss = lossfunc(outputs, labels)
+        with torch.no_grad():
+            individual_losses = individual_lossfunc(outputs, labels)
+        [...]
+```
+The individual lossfunction, however, is simply the regular lossfunction with the paramter `reduction="none"` instead of the default `reduction="mean"`.
+
+We surround the backward pass of the model with a `with cockpit():` statement, to make sure that the additional quantities are computed, if necessary:
+
+```python
+    [...]
+    with cockpit(iteration, info={
+                "batch_size": inputs.shape[0],
+                "individual_losses": individual_losses,
+            }):
+        loss.backward(create_graph=cockpit.create_graph)
+    
+    cockpit.track(iteration, loss)
+    [...]
+```
+After the backward pass is done, we can track all quantities if desired. Note, that it will only track if the current iteration hits the pre-defined `tracking_interval`, saving computation.
+
+Once the quantites are tracked, they can be written to the log file and visualized in a plot. In the example we do this every 10-th iteration:
+
+```python
+    [...]
+    if iteration % 10 == 0:
+        cockpit.write()
+        cockpit.plot()
+    [...]
+```
+
+Adding these lines to your training loop allows you to track and monitor the many quantites offered by Cockpit. There are many ways to customize this setup, for example, by only tracking parts of the network, tracking quantities at different rates (i.e. `tracking_intervals`), etc. These are described in the [documentation](https://f-dangel.github.io/cockpit-paper/).
+
+### Using the Cockpit with DeepOBS
+
+It is very easy to use **Cockpit** together with [DeepOBS](https://deepobs.github.io/). DeepOBS is a benchmarking tool for optimization method and directly offers more than twenty test problems (i.e. data sets and deep networks) to train on.
+
+If you want to use **Cockpit**, for example, to monitor your novel optimizer, you can simply use the runner provided with the Cockpit. The `ScheduleCockpitRunner` works analogously to other [DeepOBS Runners](https://deepobs.readthedocs.io/en/v1.2.0-beta0_a/api/pytorch/runner.html), with a minimal working example provided here:
+
+```python
+"""Run SGD on the Quadratic Problem of DeepOBS."""
 
 from torch.optim import SGD
 from backboard.runners.scheduled_runner import ScheduleCockpitRunner
 
+# Replace with your optimizer, in this case we use SGD
 optimizer_class = SGD
 hyperparams = {"lr": {"type": float}}
 
@@ -72,83 +156,31 @@ def lr_schedule(num_epochs):
     return lambda epoch: 0.95 ** epoch
 
 runner = ScheduleCockpitRunner(optimizer_class, hyperparams)
+
+# Fix training parameters, otherwise they can be passed via the command line
 runner.run(
-    # one can fix training parameters here, otherwise they have to be passed via CLI
     testproblem="quadratic_deep",
     track_interval=1,
     plot_interval=10,
-    show_plots=False,
-    save_plots=False,
-    save_final_plot=True,
-    save_animation=False,
     lr_schedule=lr_schedule,
 )
 ```
 
-You can run `python exp/00_Quadratic_Example.py` for an example of this.
+The output of this script is (among other files) a Cockpit log file ending in `__log.json` which holds all the tracke data. It can, for example, be read by the `CockpitPlotter` to visualize these quantities.
 
-### Cockpit Plotter
+A more detailed example of using Cockpit and DeepOBS can be found in the [examples directory](examples/), which can be run with
 
-The cockpit plotter illustrates the cockpit from a given log (tracking) file.
+    python examples/01_deepobs_cockpit.py
 
-```python
-from backboard import CockpitPlotter
+<!-- DOCUMENTATION -->
+## Documentation
 
-log_file = "/log" # Path to the json log file (without the .json!)
+A more detailed documentation with the API can be found [here](https://f-dangel.github.io/cockpit-paper/). The documentation also provides tutorials on how to add additional and custom quantities as well as add novel instruments to Cockpit.
 
-cockpit_plotter = CockpitPlotter(log_file)
-cockpit_plotter.plot()
-```
-
-This will result in a plot like this. The exact look of the cockpit
-(e.g. which instruments are shown) is defined in the cockpit plotter and can
-vary from version to version.
-
-![Cockpit](docs/sample_cockpit.png)
-
-And you can even create animated versions showing the Cockpit view over the course of training
-
-![CockpitAnimation](docs/cockpit_animation.gif)
-
-## Customizing the Cockpit
-
-You can customize the Cockpit in various ways, e.g. by deciding which quantities should be tracked (and how often) or which instruments are shown. You could also add new quantities or instruments if you want.
-
-### Removing Existing Quantities
-
-When initializing the Cockpit, you can pass a list of quantities. These will decide which quantities will be tracked during training (and how often). By default, the Cockpit will use all available quantities (excluding some redundant ones such as the two `TIC` variants).
-
-If you want to use a Cockpit with a custom list of quantities, just pass this to the Cockpit when initializing it. This can, for example, be helpful when debugging a single quantity or tracking multiple quantities is too expensive.
-
-If you want to exclude a quantity by default, you can do so in the `_collect_quantities` method of the Cockpit.
-
-### Changing Instruments
-
-The CockpitPlotter uses a default collection and positioning of instruments. Currently, it is not possible to change this behaviour manually without changing the code.
-
-The choice of instruments is defined in the `plot` method of the CockpitPlotter.
-
-### Adding a Novel Quantity
-
-In order to track an additional quantity there are three steps you need to take:
-
-1. Create a subclass of [`Quantity`](backboard/quantities/quantity.py). This crucially includes the information how to [compute this quantity](https://github.com/f-dangel/backboard/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/backboard/quantities/quantity.py#L55), which [`BackPACK` extensions are needed](https://github.com/f-dangel/backboard/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/backboard/quantities/quantity.py#L44), and whether [access to the forward pass' computation graph is needed](https://github.com/f-dangel/backboard/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/backboard/quantities/quantity.py#L32). Note that all these functions should be defined with respect to the `track_interval`, i.e. that the compute function only computes the quantity when we hit the tracking rate.
-2. Add your class to the [`__init__.py` of the quantities](backboard/quantities/\_\_init\_\_.py).
-3. Add it to the [*default* quantites](https://github.com/f-dangel/backboard/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/backboard/cockpit.py#L195) tracked by the Cockpit.
-
-### Adding a Novel Instrument
-
-If you want to create a novel instrument (using tracked quantities), here are the steps you need to take:
-
-1. Create the plotting function for this instrument in [instruments](backboard/instruments). The instrument will be plotted in a single `gridspec` element.
-2. Add your class to the [`__init__.py` of the instruments](backboard/instruments/\_\_init\_\_.py).
-3. Add it to the [instruments in the plot method of the CockpitPlotter](https://github.com/f-dangel/backboard/blob/bc8be0592bfc17cf714af8d661d9105fd6c1242a/backboard/cockpit_plotter.py#L31)
-
-## API Reference
-
-This is a rough sketch of what the API of the individual parts of the Cockpit look like and how they interact.
-![API Sketch](docs/cockpit_package_structure.png)
-
+<!-- LICENSE -->
 ## License
 
-[MIT](https://opensource.org/licenses/MIT)
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
+
+<!-- CITATION -->
+

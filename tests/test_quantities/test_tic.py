@@ -1,8 +1,8 @@
-"""Tests for ``backboard.quantities.tic.py``."""
+"""Tests for ``cockpit.quantities.tic.py``."""
 
 import pytest
 
-from backboard.quantities.tic import TICDiag, TICTrace
+from cockpit.quantities.tic import TICDiag, TICTrace
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -28,7 +28,7 @@ def test_tic_diag_precision(
     Note: This test does not check if the value itself makes sense/is correct.
     """
     set_deepobs_seed(0)
-    from backboard.utils import fix_deepobs_data_dir
+    from cockpit.utils import fix_deepobs_data_dir
 
     fix_deepobs_data_dir()
     hotfix_deepobs_argparse()
@@ -63,7 +63,7 @@ def test_tic_trace_precision(
     Note: This test does not check if the value itself makes sense/is correct.
     """
     set_deepobs_seed(0)
-    from backboard.utils import fix_deepobs_data_dir
+    from cockpit.utils import fix_deepobs_data_dir
 
     fix_deepobs_data_dir()
     hotfix_deepobs_argparse()

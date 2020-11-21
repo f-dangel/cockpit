@@ -1,4 +1,4 @@
-name: backboard
+name: cockpit
 channels:
   - pytorch
   - defaults

@@ -1,8 +1,8 @@
-"""Tests for ``backboard.quantities.time``."""
+"""Tests for ``cockpit.quantities.time``."""
 
 import pytest
 
-from backboard.quantities.time import Time
+from cockpit.quantities.time import Time
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -30,7 +30,7 @@ def test_integration_time(
     Note: This test only verifies that the computation passes.
     """
     set_deepobs_seed(0)
-    from backboard.utils import fix_deepobs_data_dir
+    from cockpit.utils import fix_deepobs_data_dir
 
     fix_deepobs_data_dir()
     hotfix_deepobs_argparse()

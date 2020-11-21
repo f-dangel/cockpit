@@ -1,10 +1,10 @@
-"""Tests for ``backboard.quantities.utils_hists.py``."""
+"""Tests for ``cockpit.quantities.utils_hists.py``."""
 
 import numpy
 import pytest
 import torch
 
-from backboard.quantities.utils_hists import histogram2d, histogramdd
+from cockpit.quantities.utils_hists import histogram2d, histogramdd
 
 DEVICES = ["cpu"]
 if torch.cuda.is_available():

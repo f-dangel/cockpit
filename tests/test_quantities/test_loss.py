@@ -1,8 +1,8 @@
-"""Tests for ``backboard.quantities.loss``."""
+"""Tests for ``cockpit.quantities.loss``."""
 
 import pytest
 
-from backboard.quantities.loss import Loss
+from cockpit.quantities.loss import Loss
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -29,7 +29,7 @@ def test_integration_loss(
     Note: This test only verifies that the computation passes.
     """
     set_deepobs_seed(0)
-    from backboard.utils import fix_deepobs_data_dir
+    from cockpit.utils import fix_deepobs_data_dir
 
     fix_deepobs_data_dir()
     hotfix_deepobs_argparse()

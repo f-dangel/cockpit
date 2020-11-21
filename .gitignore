@@ -307,15 +307,14 @@ TSWLatexianTemp*
 **/*events.out.tfevents.*
 
 # Paper
-tex/paper/backboard/main.pdf
-tex/paper/backboard/_region_*
-tex/paper/surfing_the_walls/main.pdf
+tex/CVPR\ 2021/cockpit_paper.pdf
+tex/CVPR\ 2021/main.pdf
+tex/CVPR\ 2021/suppl.pdf
 
-tex/paper/cockpit/cockpit_paper.pdf
+tex/CVPR\ 2021/rebuttal/cvpr_rebuttal.pdf
 
 # Test
 .coverage
 
 # local emacs variables
 !**/.dir-locals.el
-/tex/paper/cockpit/cvpr_rebuttal.pdf
