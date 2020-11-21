@@ -4,7 +4,7 @@ import warnings
 
 from torch.optim import SGD
 
-from backboard.runners.scheduled_runner import _ScheduleCockpitRunner
+from cockpit.runners.scheduled_runner import _ScheduleCockpitRunner
 
 
 class TestScheduleCockpitRunner(_ScheduleCockpitRunner):

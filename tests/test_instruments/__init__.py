@@ -1,1 +1,1 @@
-"""Tests for submodules of ``backboard.instruments``."""
+"""Tests for submodules of ``cockpit.instruments``."""

@@ -1,5 +1,0 @@
--r requirements/test.txt
--r requirements/lint.txt
--r requirements/docs.txt
--r requirements/exp.txt
-pre-commit

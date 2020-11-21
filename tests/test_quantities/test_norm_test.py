@@ -1,4 +1,4 @@
-"""Tests for ``backboard.quantities.norm_test.py``.
+"""Tests for ``cockpit.quantities.norm_test.py``.
 
 Note:
    Computing the sample variance in two different ways can lead to surprisingly
@@ -14,7 +14,7 @@ Note:
 
 import pytest
 
-from backboard.quantities.norm_test import NormTest
+from cockpit.quantities.norm_test import NormTest
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -42,7 +42,7 @@ def test_norm_test_math(testproblem, num_epochs=1, batch_size=3, lr=0.01, moment
     Note: This test does not check if the value itself makes sense/is correct.
     """
     set_deepobs_seed(0)
-    from backboard.utils import fix_deepobs_data_dir
+    from cockpit.utils import fix_deepobs_data_dir
 
     fix_deepobs_data_dir()
     hotfix_deepobs_argparse()

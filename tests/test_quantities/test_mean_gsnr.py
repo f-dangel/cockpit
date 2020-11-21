@@ -1,9 +1,8 @@
-"""Tests for ``backboard.quantities.mean_gsnr.py``."""
+"""Tests for ``cockpit.quantities.mean_gsnr.py``."""
 
 import pytest
 
-from backboard.quantities.mean_gsnr import MeanGSNR
-
+from cockpit.quantities.mean_gsnr import MeanGSNR
 from tests.test_quantities.test_runner import run_sgd_test_runner
 from tests.utils import hotfix_deepobs_argparse, set_deepobs_seed
 
@@ -35,7 +34,7 @@ def test_mean_gsnr_precision_and_nans(
     Note: This test does not check if the value itself makes sense/is correct.
     """
     set_deepobs_seed(0)
-    from backboard.utils import fix_deepobs_data_dir
+    from cockpit.utils import fix_deepobs_data_dir
 
     fix_deepobs_data_dir()
     hotfix_deepobs_argparse()

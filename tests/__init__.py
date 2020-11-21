@@ -1,1 +1,1 @@
-"""Tests for ``backboard``."""
+"""Tests for ``cockpit``."""

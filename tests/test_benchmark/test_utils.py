@@ -1,9 +1,9 @@
-"""Tests for ``backboard.benchmark.utils``."""
+"""Tests for ``cockpit.benchmark.utils``."""
 
 import pytest
 
-from backboard.benchmark.utils import get_train_size
-from backboard.utils import fix_deepobs_data_dir
+from cockpit.benchmark.utils import get_train_size
+from cockpit.utils import fix_deepobs_data_dir
 
 train_sizes = {
     "quadratic_deep": 1000,

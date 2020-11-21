@@ -1,1 +1,1 @@
-"""Tests for submodules of ``backboard.quantities``."""
+"""Tests for submodules of ``cockpit.quantities``."""
