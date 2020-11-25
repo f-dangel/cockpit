@@ -7,11 +7,11 @@ import warnings
 from collections import defaultdict
 
 from backobs import extend_with_access_unreduced_loss
-from backpack import backpack, backpack_deactivate_io, extend
+from backpack import backpack_deactivate_io, extend
 from backpack.extensions import BatchGradTransforms
 from cockpit import quantities
 from cockpit.cockpit_plotter import CockpitPlotter
-from cockpit.context import CockpitCTX
+from cockpit.context import BackwardCTX, get_loss
 from cockpit.quantities.utils_quantities import _update_dicts
 from deepobs.pytorch.testproblems.testproblem import TestProblem
 
@@ -168,33 +168,10 @@ class Cockpit:
             backpack.backpack: BackPACK with the appropriate extensions, or the
                 backpack_disable_io context.
         """
-        CockpitCTX.erase()
+        if info is None:
+            info = {}
 
-        if info is not None:
-            CockpitCTX.set(info, global_step)
-
-        ext = self._get_extensions(global_step)
-
-        # Collect if create graph is needed and set switch
-        self.create_graph = any(q.create_graph(global_step) for q in self.quantities)
-
-        # return context_manager
-        if ext:
-
-            def context_manager():
-                return backpack(*ext)
-
-        else:
-            context_manager = backpack_deactivate_io
-
-        if debug:
-            print(f"[DEBUG, step {global_step}]")
-            print(f" ↪Quantities  : {self.quantities}")
-            print(f" ↪Extensions  : {ext}")
-            print(f" ↪Create graph: {self.create_graph}")
-            print(f" ↪Context     : {context_manager}")
-
-        return context_manager()
+        return BackwardCTX(self, global_step, info, debug=debug)
 
     def _get_tracked_params(self):
         """Return list of parameters that are tracked by the cockpit."""
@@ -204,13 +181,13 @@ class Cockpit:
             model, _ = self.tproblem
             return [p for p in model.parameters() if p.requires_grad]
 
-    def track(self, global_step, batch_loss):
+    def track(self, global_step):
         """Tracking all quantities.
 
         Args:
             global_step (int): Current number of iteration.
-            batch_loss (torch.Tensor): The batch loss of the current iteration.
         """
+        batch_loss = get_loss(global_step)
         self.__warn_invalid_loss(batch_loss, global_step)
 
         params = self._get_tracked_params()
@@ -457,3 +434,6 @@ class Cockpit:
                 f"[Step {global_step}] Mini-batch loss is {batch_loss}."
                 + "This may break computation of quantities."
             )
+
+    def update_create_graph(self, global_step):
+        self.create_graph = any(q.create_graph(global_step) for q in self.quantities)

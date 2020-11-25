@@ -34,15 +34,13 @@ for _ in range(num_epochs):
             info={
                 "batch_size": inputs.shape[0],
                 "individual_losses": individual_losses,
+                "loss": loss,
             },
         ):
             # Backward pass
             loss.backward(
                 create_graph=cockpit.create_graph,
             )
-
-        # COCKPIT #
-        cockpit.track(iteration, loss)
 
         # Update step
         opt.step()

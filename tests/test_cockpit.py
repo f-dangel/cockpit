@@ -103,7 +103,7 @@ def test_process_multiple_batch_grad_transforms_empty():
     assert processed == extensions
 
 
-def test_automatic_call_track_fails():
+def test_automatic_call_track():
     """Make sure `track` is called automatically when a cockpit context is left."""
     model = torch.nn.Sequential(torch.nn.Linear(10, 2))
     loss_fn = torch.nn.MSELoss(reduction="mean")
@@ -119,11 +119,7 @@ def test_automatic_call_track_fails():
 
     loss = loss_fn(model(inputs), labels)
 
-    with cp(global_step):
+    with cp(global_step, info={"loss": loss}):
         loss.backward(create_graph=cp.create_graph)
 
-    # computation must be triggered manually
-    # cp.track(global_step, loss)
-
-    with pytest.raises(AssertionError):
-        assert global_step in q_time.output.keys()
+    assert global_step in q_time.output.keys()

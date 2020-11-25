@@ -173,15 +173,15 @@ class _ScheduleCockpitRunner(PTRunner):
                     info = {
                         "batch_size": self._extract_batch_size(batch_loss),
                         "individual_losses": self._extract_individual_losses(
-                            batch_loss
+                            batch_loss,
                         ),
+                        "loss": batch_loss,
                     }
 
                     # COCKPIT: Use necessary BackPACK extensions and track #
                     with cockpit(global_step, info=info):
                         batch_loss.backward(create_graph=cockpit.create_graph)
 
-                    cockpit.track(global_step, batch_loss)
                     cockpit.maybe_write_and_plot(
                         global_step,
                         training_params["show_plots"],
