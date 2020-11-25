@@ -154,6 +154,6 @@ def test_cockpit_with_backpack_extensions_fails():
         for param in model.parameters():
             assert hasattr(param, "diag_h")
 
-    # ... but are deleted when the context is left
+    # ... and are not deleted when specified by the user
     for param in model.parameters():
-        assert not hasattr(param, "diag_h")
+        assert hasattr(param, "diag_h")

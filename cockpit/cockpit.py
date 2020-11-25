@@ -193,11 +193,13 @@ class Cockpit:
             model, _ = self.tproblem
             return [p for p in model.parameters() if p.requires_grad]
 
-    def track(self, global_step):
+    def track(self, global_step, protected_savefields=()):
         """Tracking all quantities.
 
         Args:
             global_step (int): Current number of iteration.
+            protected_savefields ([str]): List of strings containing attribute names
+                of backpack extensions that will not be deleted after the backward pass
         """
         batch_loss = get_loss(global_step)
         self.__warn_invalid_loss(batch_loss, global_step)
@@ -211,7 +213,7 @@ class Cockpit:
         for q in before_cleanup:
             q.compute(global_step, params, batch_loss)
 
-        self._free_backpack_buffers(global_step)
+        self._free_backpack_buffers(global_step, protected_savefields)
         self._free_backpack_io()
 
         after_cleanup = [q for q in self.quantities if isinstance(q, quantities.MaxEV)]
@@ -219,8 +221,12 @@ class Cockpit:
             for q in after_cleanup:
                 q.compute(global_step, params, batch_loss)
 
-    def _free_backpack_buffers(self, global_step, verbose=False):
-        """Manually free quantities computed by BackPACK to save memory."""
+    def _free_backpack_buffers(self, global_step, protected_savefields, verbose=False):
+        """Manually free quantities computed by BackPACK to save memory.
+
+        protected_savefields ([str]): List of strings containing attribute names
+            of backpack extensions that will not be deleted after the backward pass
+        """
         if verbose:
             print("Freeing BackPACK buffers")
 
@@ -230,10 +236,13 @@ class Cockpit:
             for e in ext:
                 try:
                     field = e.savefield
-                    delattr(param, field)
+                    if field not in protected_savefields:
+                        delattr(param, field)
 
-                    if verbose:
-                        print(f"Deleting '{field}' from param of shape {param.shape}")
+                        if verbose:
+                            print(
+                                f"Deleting '{field}' from param of shape {param.shape}"
+                            )
                 except AttributeError:
                     pass
 

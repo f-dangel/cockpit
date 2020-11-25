@@ -47,6 +47,8 @@ class BackwardCTX:
         self.cp = cp
         self.global_step = global_step
 
+        self.protected_savefields = [e.savefield for e in custom_exts]
+
         # choose context
         ext = cp._get_extensions(global_step, custom_exts=custom_exts)
         if ext:
@@ -69,6 +71,6 @@ class BackwardCTX:
     def __exit__(self, type, value, traceback):
         self.ctx.__exit__(type, value, traceback)
 
-        self.cp.track(self.global_step)
+        self.cp.track(self.global_step, protected_savefields=self.protected_savefields)
 
         CockpitCTX.erase()
