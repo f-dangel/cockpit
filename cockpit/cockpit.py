@@ -9,6 +9,7 @@ from collections import defaultdict
 from backobs import extend_with_access_unreduced_loss
 from backpack import backpack_deactivate_io, extend
 from backpack.extensions import BatchGradTransforms
+from backpack.extensions.backprop_extension import BackpropExtension
 from cockpit import quantities
 from cockpit.cockpit_plotter import CockpitPlotter
 from cockpit.context import BackwardCTX, get_loss
@@ -143,9 +144,14 @@ class Cockpit:
                 self.logpath, secondary_screen=secondary_screen
             )
 
-    def _get_extensions(self, global_step):
-        """Collect BackPACK extensions required at current iteration."""
-        ext = []
+    def _get_extensions(self, global_step, custom_exts=()):
+        """Collect BackPACK extensions required at current iteration.
+
+        Args:
+            custom_exts (list or tuple): Custom BackPACK extensions that will be
+                computed on top.
+        """
+        ext = list(custom_exts)
         for q in self.quantities:
             ext += q.extensions(global_step)
 
@@ -154,11 +160,12 @@ class Cockpit:
 
         return ext
 
-    def __call__(self, global_step, info=None, debug=False):
+    def __call__(self, global_step, *exts, info=None, debug=False):
         """Returns the backpack extensions that should be used in this iteration.
 
         Args:
             global_step (int): Current number of iteration.
+            *exts: Custom BackPACK extensions that will be computed on top.
             info (dict): Dictionary that specifies additional information. Some
                 quantities require additional information that is overly difficult
                 to infer from a backward pass, like the individual losses.
@@ -168,10 +175,15 @@ class Cockpit:
             backpack.backpack: BackPACK with the appropriate extensions, or the
                 backpack_disable_io context.
         """
+        for e in exts:
+            assert isinstance(
+                e, BackpropExtension
+            ), f"*exts must be tuple of backpack extensions. Got {e}"
+
         if info is None:
             info = {}
 
-        return BackwardCTX(self, global_step, info, debug=debug)
+        return BackwardCTX(self, global_step, exts, info, debug=debug)
 
     def _get_tracked_params(self):
         """Return list of parameters that are tracked by the cockpit."""

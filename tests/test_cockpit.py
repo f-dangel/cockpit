@@ -5,7 +5,13 @@ import os
 import pytest
 import torch
 
-from backpack.extensions import BatchGrad, BatchGradTransforms, DiagGGNExact
+from backpack import extend
+from backpack.extensions import (
+    BatchGrad,
+    BatchGradTransforms,
+    DiagGGNExact,
+    DiagHessian,
+)
 from cockpit import quantities
 from cockpit.cockpit import Cockpit, configured_quantities
 from deepobs.pytorch.testproblems import quadratic_deep
@@ -123,3 +129,31 @@ def test_automatic_call_track():
         loss.backward(create_graph=cp.create_graph)
 
     assert global_step in q_time.output.keys()
+
+
+def test_cockpit_with_backpack_extensions_fails():
+    """Check if backpack quantities can be computed through cockpit."""
+    model = extend(torch.nn.Sequential(torch.nn.Linear(10, 2)))
+    loss_fn = extend(torch.nn.MSELoss(reduction="mean"))
+
+    q_time = quantities.TICDiag(track_interval=1)
+    cp = Cockpit([model, loss_fn], LOGPATH, plot=False, quantities=[q_time])
+
+    global_step = 0
+
+    batch_size = 3
+    inputs = torch.rand(batch_size, 10)
+    labels = torch.rand(batch_size, 2)
+
+    loss = loss_fn(model(inputs), labels)
+
+    with cp(global_step, DiagHessian(), info={"loss": loss, "batch_size": batch_size}):
+        loss.backward(create_graph=cp.create_graph)
+
+        # BackPACK buffers exist...
+        for param in model.parameters():
+            assert hasattr(param, "diag_h")
+
+    # ... but are deleted when the context is left
+    for param in model.parameters():
+        assert not hasattr(param, "diag_h")
