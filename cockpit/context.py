@@ -50,7 +50,7 @@ class BackwardCTX:
         # choose context
         ext = cp._get_extensions(global_step)
         if ext:
-            self.ctx = backpack(*ext)
+            self.ctx = backpack(*ext, debug=debug)
         else:
             self.ctx = backpack_deactivate_io()
 
