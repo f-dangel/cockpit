@@ -1,5 +1,7 @@
 """Tests for ``cockpit.cockpit.py``."""
 
+import os
+
 import pytest
 
 from backpack.extensions import BatchGrad, BatchGradTransforms, DiagGGNExact
@@ -8,11 +10,13 @@ from cockpit.cockpit import Cockpit, configured_quantities
 from deepobs.pytorch.testproblems import quadratic_deep
 from tests.utils import set_up_problem
 
+LOGPATH = os.path.expanduser("~/tmp/test_cockpit/")
+
 
 def set_up_cockpit_configuration(label):
     """Set up a dummy pre-configured cockpit."""
     tproblem = set_up_problem(quadratic_deep)
-    logpath = "~/tmp/test_cockpit/quadratic_deep/SGD/hyperparams/log"
+    logpath = os.path.join(LOGPATH, "quadratic_deep/SGD/hyperparams/log")
     quantities = configured_quantities(label)
 
     return Cockpit(tproblem, logpath, track_interval=1, quantities=quantities)
