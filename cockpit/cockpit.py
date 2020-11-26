@@ -1,19 +1,14 @@
 """Cockpit."""
 
-import inspect
 import json
-import os
-import warnings
 from collections import defaultdict
 
-from backobs import extend_with_access_unreduced_loss
-from backpack import backpack_deactivate_io, extend
+from backpack import backpack_deactivate_io
 from backpack.extensions import BatchGradTransforms
 from backpack.extensions.backprop_extension import BackpropExtension
 from cockpit import quantities
 from cockpit.context import BackwardCTX, get_loss
 from cockpit.quantities.utils_quantities import _update_dicts
-from deepobs.pytorch.testproblems.testproblem import TestProblem
 
 
 class Cockpit:

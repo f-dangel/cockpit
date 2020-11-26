@@ -2,7 +2,7 @@
 
 from torch.optim import SGD
 
-from cockpit.runners.scheduled_runner import ScheduleCockpitRunner
+from cockpit.deepobs.scheduled_runner import ScheduleCockpitRunner
 from cockpit.utils.configuration import configuration
 from cockpit.utils.schedules import linear
 
@@ -31,7 +31,6 @@ def lr_schedule(num_epochs):
     return lambda epoch: 1.0
 
 
-# TODO Reduce number of variables to control plotting
 # This Runner is included in Cockpit and works like other DeepOBS runners, see
 # https://deepobs.readthedocs.io/en/v1.2.0-beta0_a/api/pytorch/runner.html
 schedule = linear(20)

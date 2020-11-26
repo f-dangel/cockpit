@@ -7,8 +7,7 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from backobs import extend_with_access_unreduced_loss
 from cockpit import Cockpit
-from cockpit.benchmark.utils import _get_train_steps_per_epoch
-from cockpit.cockpit_plotter import CockpitPlotter
+from cockpit.plotter import CockpitPlotter
 from cockpit.utils import schedules
 from deepobs.pytorch.runners.runner import PTRunner
 
