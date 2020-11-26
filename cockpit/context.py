@@ -42,13 +42,15 @@ def get_loss(global_step):
 class BackwardCTX:
     """Context used by a ``Cockpit`` to handle computations in backward pass."""
 
-    def __init__(self, cp, global_step, info, debug=False):
+    def __init__(self, cp, global_step, custom_exts, info, debug=False):
         CockpitCTX.set(info, global_step)
         self.cp = cp
         self.global_step = global_step
 
+        self.protected_savefields = [e.savefield for e in custom_exts]
+
         # choose context
-        ext = cp._get_extensions(global_step)
+        ext = cp._get_extensions(global_step, custom_exts=custom_exts)
         if ext:
             self.ctx = backpack(*ext, debug=debug)
         else:
@@ -69,6 +71,6 @@ class BackwardCTX:
     def __exit__(self, type, value, traceback):
         self.ctx.__exit__(type, value, traceback)
 
-        self.cp.track(self.global_step)
+        self.cp.track(self.global_step, protected_savefields=self.protected_savefields)
 
         CockpitCTX.erase()

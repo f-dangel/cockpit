@@ -9,6 +9,7 @@ from collections import defaultdict
 from backobs import extend_with_access_unreduced_loss
 from backpack import backpack_deactivate_io, extend
 from backpack.extensions import BatchGradTransforms
+from backpack.extensions.backprop_extension import BackpropExtension
 from cockpit import quantities
 from cockpit.cockpit_plotter import CockpitPlotter
 from cockpit.context import BackwardCTX, get_loss
@@ -143,9 +144,14 @@ class Cockpit:
                 self.logpath, secondary_screen=secondary_screen
             )
 
-    def _get_extensions(self, global_step):
-        """Collect BackPACK extensions required at current iteration."""
-        ext = []
+    def _get_extensions(self, global_step, custom_exts=()):
+        """Collect BackPACK extensions required at current iteration.
+
+        Args:
+            custom_exts (list or tuple): Custom BackPACK extensions that will be
+                computed on top.
+        """
+        ext = list(custom_exts)
         for q in self.quantities:
             ext += q.extensions(global_step)
 
@@ -154,11 +160,12 @@ class Cockpit:
 
         return ext
 
-    def __call__(self, global_step, info=None, debug=False):
+    def __call__(self, global_step, *exts, info=None, debug=False):
         """Returns the backpack extensions that should be used in this iteration.
 
         Args:
             global_step (int): Current number of iteration.
+            *exts: Custom BackPACK extensions that will be computed on top.
             info (dict): Dictionary that specifies additional information. Some
                 quantities require additional information that is overly difficult
                 to infer from a backward pass, like the individual losses.
@@ -168,10 +175,15 @@ class Cockpit:
             backpack.backpack: BackPACK with the appropriate extensions, or the
                 backpack_disable_io context.
         """
+        for e in exts:
+            assert isinstance(
+                e, BackpropExtension
+            ), f"*exts must be tuple of backpack extensions. Got {e}"
+
         if info is None:
             info = {}
 
-        return BackwardCTX(self, global_step, info, debug=debug)
+        return BackwardCTX(self, global_step, exts, info, debug=debug)
 
     def _get_tracked_params(self):
         """Return list of parameters that are tracked by the cockpit."""
@@ -181,11 +193,13 @@ class Cockpit:
             model, _ = self.tproblem
             return [p for p in model.parameters() if p.requires_grad]
 
-    def track(self, global_step):
+    def track(self, global_step, protected_savefields=()):
         """Tracking all quantities.
 
         Args:
             global_step (int): Current number of iteration.
+            protected_savefields ([str]): List of strings containing attribute names
+                of backpack extensions that will not be deleted after the backward pass
         """
         batch_loss = get_loss(global_step)
         self.__warn_invalid_loss(batch_loss, global_step)
@@ -199,7 +213,7 @@ class Cockpit:
         for q in before_cleanup:
             q.compute(global_step, params, batch_loss)
 
-        self._free_backpack_buffers(global_step)
+        self._free_backpack_buffers(global_step, protected_savefields)
         self._free_backpack_io()
 
         after_cleanup = [q for q in self.quantities if isinstance(q, quantities.MaxEV)]
@@ -207,8 +221,12 @@ class Cockpit:
             for q in after_cleanup:
                 q.compute(global_step, params, batch_loss)
 
-    def _free_backpack_buffers(self, global_step, verbose=False):
-        """Manually free quantities computed by BackPACK to save memory."""
+    def _free_backpack_buffers(self, global_step, protected_savefields, verbose=False):
+        """Manually free quantities computed by BackPACK to save memory.
+
+        protected_savefields ([str]): List of strings containing attribute names
+            of backpack extensions that will not be deleted after the backward pass
+        """
         if verbose:
             print("Freeing BackPACK buffers")
 
@@ -218,10 +236,13 @@ class Cockpit:
             for e in ext:
                 try:
                     field = e.savefield
-                    delattr(param, field)
+                    if field not in protected_savefields:
+                        delattr(param, field)
 
-                    if verbose:
-                        print(f"Deleting '{field}' from param of shape {param.shape}")
+                        if verbose:
+                            print(
+                                f"Deleting '{field}' from param of shape {param.shape}"
+                            )
                 except AttributeError:
                     pass
 
