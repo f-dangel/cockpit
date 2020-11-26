@@ -67,7 +67,7 @@ If you plan to **contribute to Cockpit**, we suggest using our provided `conda` 
     conda env create -f .conda_env.yml
     conda activate cockpit
 
-which will create a `conda` environment called `cockpit`.    
+which will create a `conda` environment called `cockpit`.
 Clone this `repository`, install the package and all its (developer) requirements
 
     git clone https://github.com/f-dangel/cockpit-paper.git
@@ -118,11 +118,9 @@ We surround the backward pass of the model with a `with cockpit():` statement, t
                 "individual_losses": individual_losses,
             }):
         loss.backward(create_graph=cockpit.create_graph)
-    
-    cockpit.track(iteration, loss)
     [...]
 ```
-After the backward pass is done, we can track all quantities if desired. Note, that it will only track if the current iteration hits the pre-defined `tracking_interval`, saving computation.
+During the backward pass , computation for all requested quantities is triggered automatically. Note, that it will only track if the current iteration hits the pre-defined `tracking_interval`, saving computation.
 
 Once the quantites are tracked, they can be written to the log file and visualized in a plot. In the example we do this every 10-th iteration:
 
@@ -184,4 +182,3 @@ A more detailed documentation with the API can be found [here](https://f-dangel.
 Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
 
 <!-- CITATION -->
-

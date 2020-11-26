@@ -1,6 +1,9 @@
 """Tests for ``cockpit.cockpit.py``."""
 
+import os
+
 import pytest
+import torch
 
 from backpack.extensions import BatchGrad, BatchGradTransforms, DiagGGNExact
 from cockpit import quantities
@@ -8,11 +11,13 @@ from cockpit.cockpit import Cockpit, configured_quantities
 from deepobs.pytorch.testproblems import quadratic_deep
 from tests.utils import set_up_problem
 
+LOGPATH = os.path.expanduser("~/tmp/test_cockpit/")
+
 
 def set_up_cockpit_configuration(label):
     """Set up a dummy pre-configured cockpit."""
     tproblem = set_up_problem(quadratic_deep)
-    logpath = "~/tmp/test_cockpit/quadratic_deep/SGD/hyperparams/log"
+    logpath = os.path.join(LOGPATH, "quadratic_deep/SGD/hyperparams/log")
     quantities = configured_quantities(label)
 
     return Cockpit(tproblem, logpath, track_interval=1, quantities=quantities)
@@ -96,3 +101,25 @@ def test_process_multiple_batch_grad_transforms_empty():
     processed = Cockpit._process_multiple_batch_grad_transforms(extensions)
 
     assert processed == extensions
+
+
+def test_automatic_call_track():
+    """Make sure `track` is called automatically when a cockpit context is left."""
+    model = torch.nn.Sequential(torch.nn.Linear(10, 2))
+    loss_fn = torch.nn.MSELoss(reduction="mean")
+
+    q_time = quantities.Time(track_interval=1)
+    cp = Cockpit([model, loss_fn], LOGPATH, plot=False, quantities=[q_time])
+
+    global_step = 0
+
+    batch_size = 3
+    inputs = torch.rand(batch_size, 10)
+    labels = torch.rand(batch_size, 2)
+
+    loss = loss_fn(model(inputs), labels)
+
+    with cp(global_step, info={"loss": loss}):
+        loss.backward(create_graph=cp.create_graph)
+
+    assert global_step in q_time.output.keys()
