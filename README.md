@@ -127,7 +127,7 @@ Once the quantites are tracked, they can be written to the log file and visualiz
 ```python
     [...]
     if iteration % 10 == 0:
-        cockpit.write()
+        cockpit.write(logpath)
         cockpit.plot()
     [...]
 ```
@@ -143,8 +143,8 @@ If you want to use **Cockpit**, for example, to monitor your novel optimizer, yo
 ```python
 """Run SGD on the Quadratic Problem of DeepOBS."""
 
-from torch.optim import SGD
 from backboard.runners.scheduled_runner import ScheduleCockpitRunner
+from torch.optim import SGD
 
 # Replace with your optimizer, in this case we use SGD
 optimizer_class = SGD

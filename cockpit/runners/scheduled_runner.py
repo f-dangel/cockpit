@@ -85,7 +85,6 @@ class _ScheduleCockpitRunner(PTRunner):
         logpath = self._get_cockpit_logpath()
         cockpit = Cockpit(
             tproblem,
-            logpath,
             training_params["track_interval"],
             quantities=self._quantities,
             plot=self._enable_plotting,
@@ -148,7 +147,7 @@ class _ScheduleCockpitRunner(PTRunner):
             # Break from train loop after the last round of evaluation
             if epoch_count == num_epochs:
                 # COCKPIT: Write to file and optionally plot after last epoch #
-                cockpit.write()
+                cockpit.write(logpath)
                 cockpit.plot(
                     training_params["show_plots"],
                     training_params["save_final_plot"],
@@ -183,6 +182,7 @@ class _ScheduleCockpitRunner(PTRunner):
                         batch_loss.backward(create_graph=cockpit.create_graph)
 
                     cockpit.maybe_write_and_plot(
+                        logpath,
                         global_step,
                         training_params["show_plots"],
                         training_params["save_plots"],

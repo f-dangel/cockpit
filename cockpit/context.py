@@ -1,3 +1,5 @@
+import warnings
+
 from backpack import backpack, backpack_deactivate_io
 
 
@@ -36,7 +38,18 @@ def get_batch_size(global_step):
 
 def get_loss(global_step):
     """Return the mini-batch loss at the current iteration."""
-    return CockpitCTX.get("loss", global_step)
+    loss = CockpitCTX.get("loss", global_step)
+    __warn_invalid_loss(loss, global_step)
+    return loss
+
+
+def __warn_invalid_loss(batch_loss, global_step):
+    """Warn if the mini-batch loss has values that may break the computation."""
+    if batch_loss.isnan().any():
+        warnings.warn(
+            f"[Step {global_step}] Mini-batch loss is {batch_loss}."
+            + "This may break computation of quantities."
+        )
 
 
 class BackwardCTX:
@@ -55,9 +68,6 @@ class BackwardCTX:
             self.ctx = backpack(*ext, debug=debug)
         else:
             self.ctx = backpack_deactivate_io()
-
-        # update create graph
-        self.cp.update_create_graph(global_step)
 
         if debug:
             print(f"[DEBUG, step {global_step}]")

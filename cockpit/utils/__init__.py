@@ -1,7 +1,6 @@
-"""Utility functions for the cockpit."""
+"""Utility functions to configure cockpit."""
 
-import os
-
+# TODO Remove DeepOBS dependency
 from deepobs.config import set_data_dir
 
 

@@ -1,4 +1,4 @@
-"""Init for the two main parts of the Cockpit."""
+"""Define cockpit API."""
 
 
 from cockpit._version import __version__

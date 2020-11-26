@@ -4,6 +4,7 @@ import glob
 import json
 import os
 import warnings
+from collections import defaultdict
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -12,6 +13,7 @@ import seaborn as sns
 from PIL import Image
 
 from cockpit import instruments
+from cockpit.cockpit import Cockpit
 from cockpit.instruments import utils_plotting
 from deepobs import config
 
@@ -19,17 +21,13 @@ from deepobs import config
 class CockpitPlotter:
     """Cockpit Plotter Class."""
 
-    def __init__(self, logpath, secondary_screen=False):
+    def __init__(self, secondary_screen=False):
         """Initialize the cockpit plotter.
 
         Args:
-            logpath (str): Full path to the JSON logfile.
             secondary_screen (bool): Whether to plot other experimental quantities
                 on a secondary screen.
         """
-        # Split (and store) logpath up to indentify testproblem, data set, etc.
-        self.__dict__ = utils_plotting._split_logpath(logpath)
-
         self._mpl_default_backend = plt.get_backend()
         self._mpl_no_show_backend = "Agg"
 
@@ -38,6 +36,11 @@ class CockpitPlotter:
         # Set plotting parameters
         self._set_plotting_params()
         self._set_layout_params()
+
+    def __update_problem_info(self, logpath):
+        """Try extracting and storing info about model, optimizer, dataset from path."""
+        for key, value in utils_plotting._split_logpath(logpath).items():
+            setattr(self, key, value)
 
     def _set_layout_params(self):
         """Initialize parameters that define the plot layout."""
@@ -58,6 +61,7 @@ class CockpitPlotter:
 
     def plot(
         self,
+        source,
         show_plot=True,
         save_plot=False,
         savename_append=None,
@@ -68,6 +72,9 @@ class CockpitPlotter:
         """Plot the cockpit for the current state of the log file.
 
         Args:
+            source (Cockpit or str): ``Cockpit`` instance, or string containing the path
+                to a .json log produced with ``Cockpit.write``, where information will
+                be fetched from.
             show_plot (bool, optional): Whether the plot should be shown on
                 screen. Defaults to True.
             save_plot (bool, optional): Whether the plot should be saved to disk.
@@ -81,6 +88,8 @@ class CockpitPlotter:
             discard (int, optional): Global step after which information
                 should be discarded.
         """
+        problem_info_path = source if isinstance(source, str) else ""
+        self.__update_problem_info(problem_info_path)
         self._set_backend(show_plot)
 
         self.show_log_iter = show_log_iter
@@ -89,7 +98,7 @@ class CockpitPlotter:
             self.fig = plt.figure("Primary screen", constrained_layout=False)
 
         # read in results
-        self._read_tracking_results(discard=discard)
+        self._read_tracking_results(source, discard=discard)
 
         # Plotting
         self.fig.clf()  # clear the cockpit figure to replace it
@@ -240,6 +249,7 @@ class CockpitPlotter:
 
     def build_animation(
         self,
+        logpath,
         duration=200,
         loop=0,
     ):
@@ -259,13 +269,13 @@ class CockpitPlotter:
             screens.append("secondary")
 
         for screen in screens:
-            fp_out = os.path.splitext(self.logpath)[0] + f"__{screen}.gif"
-            self._animate(screen, fp_out, duration, loop)
+            fp_out = os.path.splitext(logpath)[0] + f"__{screen}.gif"
+            self._animate(logpath, screen, fp_out, duration, loop)
 
     def _animate(self, screen, fp_out, duration, loop):
         """Generate animation from paths to images and save."""
         # load frames
-        pattern = os.path.splitext(self.logpath)[0] + f"__{screen}__epoch__*.png"
+        pattern = os.path.splitext(logpath)[0] + f"__{screen}__epoch__*.png"
         frame_paths = sorted(glob.glob(pattern))
         frame, *frames = [Image.open(f) for f in frame_paths]
 
@@ -308,15 +318,25 @@ class CockpitPlotter:
         # Apply the settings
         mpl.rcParams["figure.figsize"] = [plot_scale * e for e in plot_size_default]
 
-    def _read_tracking_results(self, discard=None):
+    def _read_tracking_results(self, source, discard=None):
         """Read the tracking results from the JSON file into an internal DataFrame.
 
         Args:
+            source (Cockpit or str): ``Cockpit`` instance, or string containing the path
+                to a .json log produced with ``Cockpit.write``, where information will
+                be fetched from.
             discard (int, optional): Global step after which information should be
                 discarded.
         """
-        with open(self.logpath) as f:
-            data = json.load(f)
+        if isinstance(source, Cockpit):
+            source.update_output()
+            data = source.get_output()
+        elif isinstance(source, str):
+            with open(source) as f:
+                # defaultdict to be consistent with fetching from Cockpit
+                data = defaultdict(dict, json.load(f))
+        else:
+            raise ValueError(f"Source must be Cockpit or path to .json. Got {source}")
 
         # Read data into a DataFrame
         self.tracking_data = pd.DataFrame.from_dict(data, orient="index")
@@ -330,7 +350,7 @@ class CockpitPlotter:
         if discard is not None:
             self.tracking_data = self.tracking_data[self.tracking_data.index <= discard]
 
-    def _save(self, savename_append=None, screen="primary"):
+    def _save(self, logpath, savename_append=None, screen="primary"):
         """Save the (internal) figure to file.
 
         Args:
@@ -343,7 +363,7 @@ class CockpitPlotter:
             savename_append = ""
 
         file_path = (
-            os.path.splitext(self.logpath)[0]
+            os.path.splitext(logpath)[0]
             + f"__{screen}"
             + savename_append
             + self.save_format
