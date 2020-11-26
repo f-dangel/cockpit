@@ -1,7 +1,7 @@
 .PHONY: help
 .PHONY: black black-check flake8
 .PHONY: install install-dev install-devtools install-test install-lint install-docs
-.PHONY: test test-light
+.PHONY: test test-light examples
 .PHONY: conda-env
 .PHONY: black isort format
 .PHONY: black-check isort-check format-check
@@ -16,6 +16,8 @@ help:
 	@echo "        Run pytest on the project and report coverage"
 	@echo "test-light"
 	@echo "        Run pytest on 'small' tests and report coverage"
+	@echo "examples"
+	@echo "        Run examples"
 	@echo "black"
 	@echo "        Run black on the project"
 	@echo "black-check"
@@ -48,6 +50,12 @@ test:
 
 test-light:
 	@pytest -vx --cov=cockpit tests
+
+examples:
+	@cd examples && python new_api.py
+	@cd examples && python pytorch_mnist.py
+	@cd examples && python deepobs_quadratic_deep.py
+
 
 ###
 # Linter and autoformatter

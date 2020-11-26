@@ -87,9 +87,11 @@ def evaluate(model, lossfunc, test_loader):
     )
 
 
-def create_logpath():
+def create_logpath(suffix=""):
     """Creates a logpath for the example."""
     # Create data path
     curr_path = os.path.dirname(os.path.abspath(__file__))
-    res_path = os.path.join(curr_path, "results/mnist_convnet/SGD/example_run/run")
+    res_path = os.path.join(
+        curr_path, f"results/mnist_convnet/SGD/example_run/run{suffix}"
+    )
     return res_path

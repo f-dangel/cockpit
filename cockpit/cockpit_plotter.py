@@ -62,6 +62,7 @@ class CockpitPlotter:
     def plot(
         self,
         source,
+        savedir=None,
         show_plot=True,
         save_plot=False,
         savename_append=None,
@@ -145,10 +146,17 @@ class CockpitPlotter:
             plt.show(block=block)
             plt.pause(0.001)
         if save_plot:
-            self._save(savename_append, screen="primary")
+
+            if savedir is None:
+                if isinstance(source, str):
+                    savedir = source
+                else:
+                    raise ValueError("Please specify savedir when plotting a Cockpit.")
+
+            self._save(savedir, savename_append, screen="primary")
 
             if self._secondary_screen:
-                self._save(savename_append, screen="secondary")
+                self._save(savedir, savename_append, screen="secondary")
 
     def _plot_step(self, grid_spec):
         """Plot all instruments having to do with step size in the given gridspec.
@@ -272,14 +280,17 @@ class CockpitPlotter:
             fp_out = os.path.splitext(logpath)[0] + f"__{screen}.gif"
             self._animate(logpath, screen, fp_out, duration, loop)
 
-    def _animate(self, screen, fp_out, duration, loop):
+    def _animate(self, logpath, screen, fp_out, duration, loop):
         """Generate animation from paths to images and save."""
         # load frames
         pattern = os.path.splitext(logpath)[0] + f"__{screen}__epoch__*.png"
+
         frame_paths = sorted(glob.glob(pattern))
         frame, *frames = [Image.open(f) for f in frame_paths]
 
         # Collect images and create Animation
+        print(f"[cockpit|animate] Saving GIF in {fp_out}")
+
         frame.save(
             fp=fp_out,
             format="GIF",
@@ -370,11 +381,17 @@ class CockpitPlotter:
         )
 
         if screen == "primary":
-            self.fig.savefig(file_path)
+            fig = self.fig
         elif screen == "secondary":
-            self.secondary_fig.savefig(file_path)
+            fig = self.secondary_fig
         else:
             raise ValueError(f"screen must be 'primary' or 'secondar'y. Got {screen}")
+
+        print(f"[cockpit|plot] Saving figure in {file_path}")
+
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        fig.savefig(file_path)
 
     def _post_process_plot(self):
         """Process the plotting figure, by adding a title, legend, etc."""

@@ -1,5 +1,6 @@
 import os
 
+import torch
 import torchvision
 
 
@@ -28,7 +29,7 @@ def create_logpath(suffix=""):
 
     HERE = os.path.abspath(__file__)
     HEREDIR = os.path.dirname(HERE)
-    SAVEDIR = os.path.join(HEREDIR, "04_new_api")
+    SAVEDIR = os.path.join(HEREDIR, "new_api")
     os.makedirs(SAVEDIR, exist_ok=True)
     LOGPATH = os.path.join(SAVEDIR, f"cockpit_output{suffix}")
 

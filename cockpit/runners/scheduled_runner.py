@@ -5,8 +5,11 @@ import warnings
 
 from torch.optim.lr_scheduler import LambdaLR
 
+from backobs import extend_with_access_unreduced_loss
 from cockpit import Cockpit
 from cockpit.benchmark.utils import _get_train_steps_per_epoch
+from cockpit.cockpit_plotter import CockpitPlotter
+from cockpit.utils import schedules
 from deepobs.pytorch.runners.runner import PTRunner
 
 
@@ -83,16 +86,22 @@ class _ScheduleCockpitRunner(PTRunner):
 
         # COCKPIT: Initialize it #
         logpath = self._get_cockpit_logpath()
-        cockpit = Cockpit(
-            tproblem,
-            training_params["track_interval"],
-            quantities=self._quantities,
-            plot=self._enable_plotting,
-            plot_schedule=self._make_plot_schedule(
-                tproblem, training_params["plot_interval"]
-            ),
-            secondary_screen=self._secondary_screen,
-        )
+
+        # Integrate BackPACK
+        extend_with_access_unreduced_loss(tproblem)
+
+        trainable_params = [p for p in tproblem.net.parameters() if p.requires_grad]
+        cockpit = Cockpit(trainable_params, quantities=self._quantities)
+
+        plotter = CockpitPlotter(secondary_screen=self._secondary_screen)
+        if self._plot_schedule is not None:
+            plot_schedule = self._plot_schedule
+        else:
+            warnings.warn(
+                "You are using plot_interval, which will be deprecated. "
+                + "Use plot_schedule instead"
+            )
+            plot_schedule = schedules.linear(training_params["plot_interval"])
 
         # Lists to log train/test loss and accuracy.
         train_losses = []
@@ -146,14 +155,6 @@ class _ScheduleCockpitRunner(PTRunner):
 
             # Break from train loop after the last round of evaluation
             if epoch_count == num_epochs:
-                # COCKPIT: Write to file and optionally plot after last epoch #
-                cockpit.write(logpath)
-                cockpit.plot(
-                    training_params["show_plots"],
-                    training_params["save_final_plot"],
-                )
-                if training_params["save_animation"]:
-                    cockpit.build_animation()
                 break
 
             # Training #
@@ -179,18 +180,21 @@ class _ScheduleCockpitRunner(PTRunner):
 
                     # COCKPIT: Use necessary BackPACK extensions and track #
                     with cockpit(global_step, info=info):
-                        batch_loss.backward(create_graph=cockpit.create_graph)
+                        batch_loss.backward(
+                            create_graph=cockpit.create_graph(global_step)
+                        )
 
-                    cockpit.maybe_write_and_plot(
-                        logpath,
-                        global_step,
-                        training_params["show_plots"],
-                        training_params["save_plots"],
-                        savename_append="__epoch__"
-                        + str(epoch_count).zfill(len(str(num_epochs)))
-                        + "__global_step__"
-                        + str(global_step).zfill(6),
-                    )
+                    if plot_schedule(global_step):
+                        plotter.plot(
+                            cockpit,
+                            savedir=logpath,
+                            show_plot=training_params["show_plots"],
+                            save_plot=training_params["save_plots"],
+                            savename_append="__epoch__"
+                            + str(epoch_count).zfill(len(str(num_epochs)))
+                            + "__global_step__"
+                            + str(global_step).zfill(6),
+                        )
 
                     opt.step()
 
@@ -218,8 +222,23 @@ class _ScheduleCockpitRunner(PTRunner):
             # Next step in LR Schedule
             scheduler.step()
 
+        # COCKPIT: Write to file and optionally plot after last epoch #
+        cockpit.write(logpath)
+
+        if self._enable_plotting:
+            plotter.plot(
+                cockpit,
+                savedir=logpath,
+                show_plot=training_params["show_plots"],
+                save_plot=training_params["save_final_plot"],
+            )
+
+            if training_params["save_animation"]:
+                plotter.build_animation(logpath)
+
         if tb_log:
             summary_writer.close()
+
         # Put results into output dictionary.
         output = {
             "train_losses": train_losses,
@@ -302,27 +321,6 @@ class _ScheduleCockpitRunner(PTRunner):
     def _get_cockpit_logpath(self):
         """Return logpath for cockpit."""
         return os.path.join(self._run_directory, self._file_name + "__log")
-
-    def _make_plot_schedule(self, tproblem, plot_interval):
-        """Create the plotting schedule based on user input.
-
-        If ``ScheduleCockpitRunner`` was initialized with ``plot_schedule``,, use
-        this function. Otherwise, create a default schedule which plots every
-        ``plot_interval`` epochs.
-        """
-        if self._plot_schedule is None:
-            steps_per_epoch = _get_train_steps_per_epoch(tproblem)
-
-            def default_plot_schedule(global_step):
-                """Plot and write data at the end of every ``plot_interval`` epoch."""
-                epoch_count, remainder = divmod(global_step, steps_per_epoch)
-                end_of_epoch = remainder == steps_per_epoch - 1
-                return epoch_count % plot_interval == 0 and end_of_epoch
-
-            return default_plot_schedule
-
-        else:
-            return self._plot_schedule
 
     @staticmethod
     def _extract_batch_size(batch_loss):

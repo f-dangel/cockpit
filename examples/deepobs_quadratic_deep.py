@@ -3,6 +3,8 @@
 from torch.optim import SGD
 
 from cockpit.runners.scheduled_runner import ScheduleCockpitRunner
+from cockpit.utils.configuration import configuration
+from cockpit.utils.schedules import linear
 
 # In this example, we use SGD. Replace this with your custom optimizer to tes
 optimizer_class = SGD
@@ -29,9 +31,14 @@ def lr_schedule(num_epochs):
     return lambda epoch: 1.0
 
 
+# TODO Reduce number of variables to control plotting
 # This Runner is included in Cockpit and works like other DeepOBS runners, see
 # https://deepobs.readthedocs.io/en/v1.2.0-beta0_a/api/pytorch/runner.html
-runner = ScheduleCockpitRunner(optimizer_class, hyperparams)
+schedule = linear(20)
+quantities = configuration("full", track_schedule=schedule, verbose=True)
+runner = ScheduleCockpitRunner(
+    optimizer_class, hyperparams, quantities=quantities, plot_schedule=schedule
+)
 
 # Start the training.
 # We can fix several training parameters in this method, such as the testproblem
@@ -42,12 +49,10 @@ runner = ScheduleCockpitRunner(optimizer_class, hyperparams)
 runner.run(
     testproblem="quadratic_deep",
     l2_reg=0.0,  # necessary for backobs!
-    track_interval=5,
-    plot_interval=5,
-    num_epochs=50,
+    num_epochs=30,
     show_plots=True,
-    save_plots=False,
+    save_plots=True,
     save_final_plot=True,
-    save_animation=False,
+    save_animation=True,
     lr_schedule=lr_schedule,
 )

@@ -3,7 +3,7 @@
 import numpy
 
 
-def linear(interval, offset):
+def linear(interval, offset=0):
     """Create schedule that tracks at iterations ``{offset + n interval | n >= 0}``."""
 
     docstring = "Track at iterations {" + f"{offset} + n {interval} " + "| n >= 0}."

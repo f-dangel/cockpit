@@ -26,11 +26,12 @@ plotter = CockpitPlotter()
 logpath = utils.create_logpath()
 
 # training specification
-num_epochs, global_step = 2, 0
+max_steps, global_step = 5, 0
 
-for _ in range(num_epochs):
-    # draw a batch
+while True:
     for inputs, labels in iter(train_loader):
+        if global_step > max_steps:
+            break
         opt.zero_grad()
 
         # forward pass
@@ -59,4 +60,7 @@ for _ in range(num_epochs):
         # Visualize computed quantities, also works with a logpath
         plotter.plot(cockpit)
 
-    cockpit.write(logpath)
+    if global_step > max_steps:
+        break
+
+cockpit.write(logpath)
