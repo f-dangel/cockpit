@@ -214,7 +214,6 @@ class Cockpit:
             q.compute(global_step, params, batch_loss)
 
         self._free_backpack_buffers(global_step, protected_savefields)
-        self._free_backpack_io()
 
         after_cleanup = [q for q in self.quantities if isinstance(q, quantities.MaxEV)]
         with backpack_deactivate_io():
@@ -245,23 +244,6 @@ class Cockpit:
                             )
                 except AttributeError:
                     pass
-
-    def _free_backpack_io(self):
-        """Manually free module input/output used in BackPACK to save memory."""
-
-        def remove_net_io(module):
-            if self._has_children(module):
-                for mod in module.children():
-                    remove_net_io(mod)
-            else:
-                self._remove_module_io(module)
-
-        if isinstance(self.tproblem, TestProblem):
-            remove_net_io(self.tproblem.net)
-        else:
-            model, lossfunc = self.tproblem
-            remove_net_io(model)
-            remove_net_io(lossfunc)
 
     @staticmethod
     def _has_children(net):
