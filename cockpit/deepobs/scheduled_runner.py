@@ -19,6 +19,8 @@ class _ScheduleCockpitRunner(PTRunner):
     cockpit, as well as memory/runtime benchmarks and tests.
     """
 
+    # TODO Move arguments 'quantities', 'plot', 'plot_schedule', 'secondary_screen'
+    # to self.training
     def __init__(
         self,
         optimizer_class,
