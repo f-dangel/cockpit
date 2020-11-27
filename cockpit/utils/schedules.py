@@ -1,6 +1,6 @@
 """Convenient schedule functions."""
 
-import numpy
+import torch
 
 
 def linear(interval, offset=0):
@@ -19,15 +19,15 @@ def linear(interval, offset=0):
     return schedule
 
 
-def logarithmic(start, stop, num=300, base=10, init=True):
+def logarithmic(start, end, steps=300, base=10, init=True):
     """Create schedule that tracks linearly in logspace."""
 
     # TODO Compute match and avoid array lookup
-    scheduled_steps = numpy.logspace(start, stop, num=num, dtype=int)
+    scheduled_steps = torch.logspace(start, end, steps, base=base, dtype=int)
 
     if init:
-        zero = numpy.array([0], dtype=int)
-        scheduled_steps = numpy.concatenate((scheduled_steps, zero), dtype=int)
+        zero = torch.tensor([0], dtype=int)
+        scheduled_steps = torch.cat((scheduled_steps, zero)).int()
 
     def schedule(global_step):
         return global_step in scheduled_steps
