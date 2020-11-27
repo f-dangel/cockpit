@@ -3,7 +3,7 @@
 import torch
 from torchvision import datasets
 
-from cockpit.experiments.utils import register, replace
+from cockpit.deepobs.experiments.utils import register, replace
 from deepobs import config
 from deepobs.pytorch.datasets.cifar10 import cifar10
 from deepobs.pytorch.datasets.dataset import DataSet
