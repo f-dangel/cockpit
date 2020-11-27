@@ -94,4 +94,5 @@ def create_logpath(suffix=""):
     res_path = os.path.join(
         curr_path, f"results/mnist_convnet/SGD/example_run/run{suffix}"
     )
+    os.makedirs(os.path.dirname(res_path), exist_ok=True)
     return res_path
