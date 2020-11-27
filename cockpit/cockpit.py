@@ -1,6 +1,7 @@
 """Cockpit."""
 
 import json
+import os
 from collections import defaultdict
 
 from backpack import backpack_deactivate_io
@@ -229,6 +230,9 @@ class Cockpit:
         # Dump to file
         logpath_with_suffix = logpath + ".json"
         print(f"[cockpit] writing output to {logpath_with_suffix}")
+
+        os.makedirs(os.path.dirname(logpath_with_suffix), exist_ok=True)
+
         with open(logpath_with_suffix, "w") as json_file:
             json.dump(self.output, json_file, indent=4, sort_keys=True)
 
