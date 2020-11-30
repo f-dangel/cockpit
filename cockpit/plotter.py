@@ -15,6 +15,7 @@ from PIL import Image
 from cockpit import instruments
 from cockpit.cockpit import Cockpit
 from cockpit.instruments import utils_plotting
+
 # TODO Remove DeepOBS dependency
 from deepobs import config
 
