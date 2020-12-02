@@ -27,10 +27,16 @@ def train_small_mlp(
     use_backpack,
     batch_size=5,
     opt_cls=torch.optim.SGD,
-    opt_kwargs={"lr": 0.01},
+    opt_kwargs=None,
 ):
     """Train a small MLP with cockpit."""
     torch.manual_seed(0)
+
+    if opt_kwargs is None:
+        if opt_cls == torch.optim.SGD:
+            opt_kwargs = {"lr": 0.01}
+        else:
+            raise NotImplementedError
 
     # model
     model = make_small_mlp()

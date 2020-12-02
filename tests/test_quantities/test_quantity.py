@@ -3,7 +3,6 @@
 import pytest
 
 from cockpit import quantities
-from cockpit.quantities.distance import Distance
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.utils.schedules import linear
 from tests.test_quantities.utils import train_small_mlp
@@ -54,7 +53,7 @@ def test_correct_track_events_in_output(quantity_cls):
             shift = quantity_cls._start_end_difference
             return schedule(iteration) and iteration + shift < iterations
 
-    track_events = sorted([i for i in range(iterations) if is_track_event(i)])
-    output_events = sorted(list(quantity.output.keys()))
+    track_events = sorted(i for i in range(iterations) if is_track_event(i))
+    output_events = sorted(quantity.output.keys())
 
     assert output_events == track_events
