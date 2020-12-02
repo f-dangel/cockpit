@@ -46,10 +46,10 @@ help:
 ###
 # Test coverage
 test:
-	@pytest -vx --cov=cockpit tests
+	@pytest -vx --cov=cockpit --ignore=tests/test_deepobs tests
 
 test-light:
-	@pytest -vx --cov=cockpit tests
+	@pytest -vx --cov=cockpit --ignore=tests/test_deepobs tests
 
 examples:
 	@cd examples && python new_api.py
