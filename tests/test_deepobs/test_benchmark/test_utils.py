@@ -1,9 +1,9 @@
-"""Tests for ``cockpit.benchmark.utils``."""
+"""Tests for ``cockpit.deepobs.benchmark.utils``."""
 
 import pytest
 
-from cockpit.benchmark.utils import get_train_size
-from cockpit.utils import fix_deepobs_data_dir
+from cockpit.deepobs import fix_deepobs_data_dir
+from cockpit.deepobs.benchmark.utils import get_train_size
 
 train_sizes = {
     "quadratic_deep": 1000,
@@ -18,9 +18,9 @@ train_sizes = {
 }
 
 
-@pytest.mark.parametrize("tproblem_cls", list(train_sizes.keys()))
-def test_get_train_size(tproblem_cls):
+@pytest.mark.parametrize("problem_cls", list(train_sizes.keys()))
+def test_get_train_size(problem_cls):
     """Test function to determine number of samples in train set."""
     fix_deepobs_data_dir()
 
-    assert get_train_size(tproblem_cls) == train_sizes[tproblem_cls]
+    assert get_train_size(problem_cls) == train_sizes[problem_cls]
