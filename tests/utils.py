@@ -35,7 +35,7 @@ def report_nonclose_values(x, y, atol=1e-8, rtol=1e-5):
     x_numpy = x.data.cpu().numpy().flatten()
     y_numpy = y.data.cpu().numpy().flatten()
 
-    close = numpy.isclose(x_numpy, y_numpy, atol=atol, rtol=atol)
+    close = numpy.isclose(x_numpy, y_numpy, atol=atol, rtol=rtol)
     where_not_close = numpy.argwhere(numpy.logical_not(close))
     for idx in where_not_close:
         x, y = x_numpy[idx], y_numpy[idx]
