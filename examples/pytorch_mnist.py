@@ -1,4 +1,4 @@
-"""Example: Training Loop using Cockpit."""
+"""Slightly configured example: Training Loop using Cockpit."""
 
 import torch
 from examples_utils import CNN, MNISTData, create_logpath, evaluate
@@ -52,7 +52,7 @@ for _ in range(num_epochs):
         iteration += 1
 
         if iteration % 30 == 0:
-            print("** Iteration: ", iteration)
+            print("Iteration: ", iteration)
             cockpit.write(create_logpath())
             plotter.plot(create_logpath(suffix=".json"))
 

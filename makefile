@@ -52,9 +52,10 @@ test-light:
 	@pytest -vx --cov=cockpit --ignore=tests/test_deepobs tests
 
 examples:
-	@cd examples && python new_api.py
-	@cd examples && python pytorch_mnist.py
-	@cd examples && python deepobs_quadratic_deep.py
+	@cd examples && python pytorch_mnist_minimal.py
+	# @cd examples && python new_api.py
+	# @cd examples && python pytorch_mnist.py
+	# @cd examples && python deepobs_quadratic_deep.py
 
 
 ###
