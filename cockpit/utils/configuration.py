@@ -45,10 +45,8 @@ def quantities_cls_for_configuration(label):
         quantities.Distance,
         quantities.GradNorm,
         quantities.InnerProductTest,
-        quantities.Loss,
         quantities.NormTest,
         quantities.OrthogonalityTest,
-        quantities.Time,
     ]
     business = economy + [
         quantities.TICDiag,
