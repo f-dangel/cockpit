@@ -6,13 +6,14 @@ import torch
 def linear(interval, offset=0):
     """Create schedule that tracks at iterations ``{offset + n interval | n >= 0}``."""
 
-    docstring = "Track at iterations {" + f"{offset} + n {interval} " + "| n >= 0}."
+    docstring = "Track at iterations {" + f"{offset} + n * {interval} " + "| n >= 0}."
 
     def schedule(global_step):
-        if global_step < 0:
+        shifted = global_step - offset
+        if shifted < 0:
             return False
         else:
-            return (global_step - offset) % interval == 0
+            return shifted % interval == 0
 
     schedule.__doc__ = docstring
 
