@@ -1,2 +1,2 @@
-Basic usage example
+Use cases
 =========================

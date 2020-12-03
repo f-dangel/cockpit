@@ -1,7 +1,8 @@
 """
-Testing example
+Basic usage example
 ==============================
 
+In this snippet, you will
 Just a simple example.
 """
 
