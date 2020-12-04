@@ -16,46 +16,21 @@ class Quantity:
     2. They can ask for certain BackPACK extensions being computed.
     """
 
-    def __init__(
-        self, track_interval=1, track_offset=0, verbose=False, track_schedule=None
-    ):
+    def __init__(self, track_schedule, verbose=False):
         """Initialize the Quantity by storing the track interval.
 
         Crucially, it creates the output dictionary, that is meant to store all
         values that should be stored.
 
         Args:
-            track_interval (int, optional): Tracking rate. Defaults to 1.
-            offset (int, optional): Tracking offset. Defaults to 0.
+            track_schedule (callable): Function that maps the ``global_step``
+                to a boolean, which determines if the quantity should be computed.
             verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
-            track_schedule (callable, optional): Function that maps the ``global_step``
-                to a boolean. Can be used to specify custom schedules that don't track
-                equidistantly. If not specified, use ``track_interval`` and
-                ``track_offset``.
         """
-        self._track_interval = track_interval
-        # TODO Make offset work for quantities other than MaxEV
-        self._track_offset = track_offset
+        self._track_schedule = track_schedule
         self._verbose = verbose
+
         self.output = defaultdict(dict)
-
-        if track_schedule is None:
-
-            def default_track_schedule(global_step):
-                """Track with constant intervals for positive global steps."""
-                if global_step < 0:
-                    return False
-                else:
-                    return (
-                        global_step - self._track_offset
-                    ) % self._track_interval == 0
-
-            self._track_schedule = default_track_schedule
-        else:
-            warnings.warn(
-                "Using custom track schedule, ignore args 'track_[interval,offset]'"
-            )
-            self._track_schedule = track_schedule
 
     def create_graph(self, global_step):
         """Return whether access to the forward pass computation graph is needed.

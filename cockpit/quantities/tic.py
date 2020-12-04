@@ -33,14 +33,12 @@ class TIC(SingleStepQuantity):
 
     def __init__(
         self,
-        track_interval=1,
-        track_offset=0,
+        track_schedule,
+        verbose=False,
         curvature="diag_h",
         epsilon=1e-7,
         use_double=False,
-        verbose=False,
         check=False,
-        track_schedule=None,
     ):
         """Initialize TIC quantity.
 
@@ -51,7 +49,6 @@ class TIC(SingleStepQuantity):
             gated through the computation graph.
 
         Args:
-            track_interval (int): Tracking rate.
             curvature (string): Which diagonal curvature approximation should be used.
                 Options are "diag_h", "diag_ggn_exact", "diag_ggn_mc".
             epsilon (float): Stabilization constant. Defaults to 0.0.
@@ -61,12 +58,8 @@ class TIC(SingleStepQuantity):
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
         """
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
+        super().__init__(track_schedule, verbose=verbose)
+
         self._curvature = curvature
         self._epsilon = epsilon
         self._use_double = use_double

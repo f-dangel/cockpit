@@ -16,27 +16,15 @@ class CABS(SingleStepQuantity):
           Coupling adaptive batch sizes with learning rates (2017).
     """
 
-    def __init__(
-        self,
-        track_interval=1,
-        track_offset=0,
-        lr=1.0,
-        verbose=False,
-        track_schedule=None,
-    ):
+    def __init__(self, track_schedule, verbose=False, lr=1.0):
         """Initialize.
 
         Args:
-            track_interval (int): Tracking rate.
             lr (float): Learning rate. Defaults to 1.0.
             verbose (bool): Turns on verbose mode. Defaults to ``False``.
         """
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
+        super().__init__(track_schedule, verbose=verbose)
+
         self.set_lr(lr)
 
     def set_lr(self, lr):

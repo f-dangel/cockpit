@@ -18,15 +18,7 @@ class OrthogonalityTest(SingleStepQuantity):
         - https://arxiv.org/pdf/1710.11258.pdf
     """
 
-    def __init__(
-        self,
-        track_interval=1,
-        track_offset=0,
-        use_double=False,
-        verbose=False,
-        check=False,
-        track_schedule=None,
-    ):
+    def __init__(self, track_schedule, verbose=False, use_double=False, check=False):
         """Initialize.
 
         Note:
@@ -35,19 +27,13 @@ class OrthogonalityTest(SingleStepQuantity):
               BackPACK quantities and compare them. This is roughly 2x as expensive.
 
         Args:
-            track_interval (int): Tracking rate.
             use_double (bool): Whether to use doubles in computation. Defaults
                 to ``False``.
-            verbose (bool): Turns on verbose mode. Defaults to ``False``.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
         """
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
+        super().__init__(track_schedule, verbose=verbose)
+
         self._use_double = use_double
         self._check = check
 

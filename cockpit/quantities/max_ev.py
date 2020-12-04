@@ -15,14 +15,7 @@ from cockpit.quantities.quantity import SingleStepQuantity
 class MaxEV(SingleStepQuantity):
     """Maximum Hessian Eigenvalue Quantitiy Class."""
 
-    def __init__(
-        self,
-        track_interval=1,
-        track_offset=0,
-        verbose=False,
-        use_power=True,
-        track_schedule=None,
-    ):
+    def __init__(self, track_schedule, verbose=False, use_power=True):
         """Initialize maximum eigenvalue computation
 
         Args:
@@ -30,12 +23,8 @@ class MaxEV(SingleStepQuantity):
                 If ``True``, use ``scipy.sparse.linalg.eigsh`` for eigenvalue computa-
                 tion (requires transfers from GPU to CPU and ``torch`` to ``numpy``.)
         """
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
+        super().__init__(track_schedule, verbose=verbose)
+
         self._use_power = use_power
 
     def create_graph(self, global_step):

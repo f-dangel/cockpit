@@ -8,15 +8,9 @@ from cockpit.quantities.quantity import ByproductQuantity
 class Time(ByproductQuantity):
     """Time Quantity Class."""
 
-    def __init__(
-        self, track_interval=1, track_offset=0, verbose=False, track_schedule=None
-    ):
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
+    def __init__(self, track_schedule, verbose=False):
+        super().__init__(track_schedule, verbose=verbose)
+
         self._last = None
 
     def compute(self, global_step, params, batch_loss):
