@@ -1,6 +1,5 @@
 """Base class for a tracked quantity."""
 
-import warnings
 from collections import defaultdict
 
 import torch

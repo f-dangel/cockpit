@@ -4,7 +4,6 @@ import math
 
 import torch
 
-from backpack import extensions
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_transforms import BatchGradTransforms_BatchDotGrad
 
@@ -18,25 +17,6 @@ class OrthogonalityTest(SingleStepQuantity):
         - https://arxiv.org/pdf/1710.11258.pdf
     """
 
-    def __init__(self, track_schedule, verbose=False, use_double=False, check=False):
-        """Initialize.
-
-        Note:
-            - The computation of this quantity suffers from precision errors.
-              Enabling ``check`` will compute the quantity via two different
-              BackPACK quantities and compare them. This is roughly 2x as expensive.
-
-        Args:
-            use_double (bool): Whether to use doubles in computation. Defaults
-                to ``False``.
-            check (bool): If True, this quantity will be computed via two different
-                ways and compared. Defaults to ``False``.
-        """
-        super().__init__(track_schedule, verbose=verbose)
-
-        self._use_double = use_double
-        self._check = check
-
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
 
@@ -46,14 +26,11 @@ class OrthogonalityTest(SingleStepQuantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
+        ext = []
+
         if self.is_active(global_step):
-            ext = [BatchGradTransforms_BatchDotGrad()]
+            ext.append(BatchGradTransforms_BatchDotGrad())
 
-            if self._check:
-                ext.append(extensions.BatchGrad())
-
-        else:
-            ext = []
         return ext
 
     def compute(self, global_step, params, batch_loss):
@@ -74,11 +51,6 @@ class OrthogonalityTest(SingleStepQuantity):
                 )
 
             self.output[global_step]["orthogonality_test"] = orthogonality_test
-
-            if self._check:
-                self.__run_check(params, batch_loss)
-        else:
-            pass
 
     def _compute(self, params, batch_loss):
         """Return maximum ν for which the orthogonality test would pass.
@@ -137,9 +109,6 @@ class OrthogonalityTest(SingleStepQuantity):
             torch.Tensor: The sample variance of individual gradient orthogonal
                 projections on the mini-batch gradient.
         """
-        if self._use_double:
-            batch_dot = batch_dot.double()
-
         batch_l2_squared = batch_dot.diag()
         projections = batch_size * batch_dot.sum(1)
 
@@ -171,6 +140,7 @@ class OrthogonalityTest(SingleStepQuantity):
 
         return batch_size_nu
 
+    # TODO Move to tests
     def __run_check(self, params, batch_loss):
         """Run sanity checks to verify math rearrangements."""
 
@@ -184,11 +154,6 @@ class OrthogonalityTest(SingleStepQuantity):
             batch_size = batch_grad.size(0)
             grad = self._fetch_grad(params, aggregate=True)
             grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
-
-            if self._use_double:
-                batch_grad = batch_grad.double()
-                grad = grad.double()
-                grad_l2_squared = grad_l2_squared.double()
 
             batch_l2_squared = (batch_grad ** 2).sum(0)
             projections = torch.einsum("ni,i->n", batch_size * batch_grad, grad)

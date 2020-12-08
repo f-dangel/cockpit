@@ -2,7 +2,6 @@
 
 import torch
 
-from backpack import extensions
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_transforms import BatchGradTransforms_BatchL2Grad
 
@@ -16,20 +15,6 @@ class NormTest(SingleStepQuantity):
         - https://link.springer.com/content/pdf/10.1007/s10107-012-0572-5.pdf
     """
 
-    def __init__(self, track_schedule, verbose=False, use_double=False, check=False):
-        """Initialize.
-
-        Args:
-            use_double (bool): Whether to use doubles in computation. Defaults
-                to ``False``.
-            check (bool): If True, this quantity will be computed via two different
-                ways and compared. Defaults to ``False``.
-        """
-        super().__init__(track_schedule, verbose=verbose)
-
-        self._use_double = use_double
-        self._check = check
-
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
 
@@ -39,14 +24,10 @@ class NormTest(SingleStepQuantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
+        ext = []
+
         if self.is_active(global_step):
-            ext = [BatchGradTransforms_BatchL2Grad()]
-
-            if self._check:
-                ext.append(extensions.BatchGrad())
-
-        else:
-            ext = []
+            ext.append(BatchGradTransforms_BatchL2Grad())
 
         return ext
 
@@ -66,11 +47,6 @@ class NormTest(SingleStepQuantity):
                 print(f"[Step {global_step}] NormTest: {norm_test:.4f}")
 
             self.output[global_step]["norm_test"] = norm_test
-
-            if self._check:
-                self.__run_check(params, batch_loss)
-        else:
-            pass
 
     def _compute(self, params, batch_loss):
         """Return maximum θ for which the norm test would pass.
@@ -123,10 +99,6 @@ class NormTest(SingleStepQuantity):
         Returns:
             torch.Tensor: The sample variance ℓ₁ norm.
         """
-        if self._use_double:
-            batch_l2_squared = batch_l2_squared.double()
-            grad_l2_squared = grad_l2_squared.double()
-
         return (1 / (batch_size - 1)) * (
             batch_size ** 2 * batch_l2_squared.sum() - batch_size * grad_l2_squared
         )
@@ -151,6 +123,7 @@ class NormTest(SingleStepQuantity):
 
         return batch_size_theta
 
+    # TODO Move to tests
     def __run_check(self, params, batch_loss):
         """Run sanity checks to verify math rearrangements."""
 
@@ -163,10 +136,6 @@ class NormTest(SingleStepQuantity):
             batch_grad = self._fetch_batch_grad(params, aggregate=True)
             grad = self._fetch_grad(params, aggregate=True)
             batch_size = batch_grad.size(0)
-
-            if self._use_double:
-                batch_grad = batch_grad.double()
-                grad = grad.double()
 
             return (1 / (batch_size - 1)) * ((batch_size * batch_grad - grad) ** 2).sum(
                 0
