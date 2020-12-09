@@ -22,6 +22,7 @@ PROBLEMS = [
     quantities.NormTest,
     quantities.BatchGradHistogram1d,
     quantities.TICDiag,
+    quantities.TICTrace,
     quantities.Trace,
     quantities.MaxEV,
     quantities.BatchGradHistogram2d,
