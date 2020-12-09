@@ -44,26 +44,8 @@ class EarlyStopping(SingleStepQuantity):
 
         return ext
 
-    # TODO Rewrite to use parent class track method
-    def track(self, global_step, params, batch_loss):
-        """Evaluate the EB early stopping criterion.
-
-        Args:
-            global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-        """
-        if self.is_active(global_step):
-            stop_crit = self._compute(global_step, params, batch_loss).item()
-
-            if self._verbose:
-                print(f"[Step {global_step}] StoppingCriterion: {stop_crit:.4f}")
-
-            self.output[global_step]["early_stopping"] = stop_crit
-
     def _compute(self, global_step, params, batch_loss):
-        """Compute the criterion.
+        """Compute the EB early stopping criterion.
 
         Evaluates the left hand side of Equ. 7 in
 
@@ -71,6 +53,12 @@ class EarlyStopping(SingleStepQuantity):
           Early stopping without a validation set (2017).
 
         If this value exceeds 0, training should be stopped.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         B = get_batch_size(global_step)
 
