@@ -83,31 +83,13 @@ class TIC(SingleStepQuantity):
 class TICDiag(TIC):
     """TIC with diagonal curvature approximation for cheap inversion."""
 
-    # TODO Rewrite to use parent class track method
-    def track(self, global_step, params, batch_loss):
-        """Compute the TICDiag.
-
-        Args:
-            global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-
-        """
-        if self.is_active(global_step):
-            tic = self._compute(global_step, params, batch_loss).item()
-
-            if self._verbose:
-                print(f"[Step {global_step}] TICDiag: {tic:.4f}")
-
-            self.output[global_step]["tic_diag"] = tic
-
     def _compute(self, global_step, params, batch_loss):
         """Compute the TICDiag using a diagonal curvature approximation.
 
         Args:
             global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of parameters considered in the computation.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
@@ -152,31 +134,13 @@ class TICDiag(TIC):
 class TICTrace(TIC):
     """TIC approximation using the trace of curvature and gradient covariance."""
 
-    # TODO Rewrite to use parent class track method
-    def track(self, global_step, params, batch_loss):
-        """Compute TICTrace.
-
-        Args:
-            global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-
-        """
-        if self.is_active(global_step):
-            tic = self._compute(global_step, params, batch_loss).item()
-
-            if self._verbose:
-                print(f"[Step {global_step}] TICTrace: {tic:.4f}")
-
-            self.output[global_step]["tic_trace"] = tic
-
     def _compute(self, global_step, params, batch_loss):
         """Compute the TICTrace using a trace approximation.
 
         Args:
             global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of parameters considered in the computation.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
