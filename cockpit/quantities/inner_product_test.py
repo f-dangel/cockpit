@@ -32,28 +32,10 @@ class InnerProductTest(SingleStepQuantity):
 
         return ext
 
-    # TODO Rewrite to use parent class track method
-    def track(self, global_step, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Track the practical version of the inner product test.
 
-        Args:
-            global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-        """
-        if self.is_active(global_step):
-            inner_product_test = self._compute(params, batch_loss).item()
-
-            if self._verbose:
-                print(
-                    f"[Step {global_step}] InnerProductTest: {inner_product_test:.4f}"
-                )
-
-            self.output[global_step]["inner_product_test"] = inner_product_test
-
-    def _compute(self, params, batch_loss):
-        """Return maximum θ for which the inner product test would pass.
+        Return maximum θ for which the inner product test would pass.
 
         The inner product test is defined by Equation (2.6) in bollapragada2017adaptive.
 
