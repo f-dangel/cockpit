@@ -53,7 +53,8 @@ class Trace(SingleStepQuantity):
 
         return ext
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Evaluate the trace of the Hessian at the current point.
 
         Args:

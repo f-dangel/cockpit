@@ -128,14 +128,14 @@ class Cockpit:
         ]
 
         for q in before_cleanup:
-            q.compute(global_step, self.params, batch_loss)
+            q.track(global_step, self.params, batch_loss)
 
         self._free_backpack_buffers(global_step, protected_savefields)
 
         after_cleanup = [q for q in self.quantities if isinstance(q, quantities.MaxEV)]
         with backpack_deactivate_io():
             for q in after_cleanup:
-                q.compute(global_step, self.params, batch_loss)
+                q.track(global_step, self.params, batch_loss)
 
     def _free_backpack_buffers(self, global_step, protected_savefields, verbose=False):
         """Manually free quantities computed by BackPACK to save memory.

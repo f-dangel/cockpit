@@ -30,7 +30,8 @@ class _Alpha(Quantity):
         self._start_info = {}
         self._end_info = {}
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Evaluate the current parameter distances.
 
         We track both the distance to the initialization, as well as the size of

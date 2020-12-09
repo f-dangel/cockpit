@@ -7,7 +7,8 @@ from cockpit.quantities.utils_quantities import _root_sum_of_squares
 class GradNorm(ByproductQuantity):
     """Gradient Norm Quantitiy Class."""
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Evaluate the gradient norm at the current point.
 
         Args:

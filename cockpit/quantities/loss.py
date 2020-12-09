@@ -6,7 +6,8 @@ from cockpit.quantities.quantity import ByproductQuantity
 class Loss(ByproductQuantity):
     """Loss Quantity Class."""
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Track the loss at the current point.
 
         Args:

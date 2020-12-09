@@ -47,7 +47,8 @@ class CABS(SingleStepQuantity):
 
         return ext
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Evaluate CABS rule.
 
         Args:

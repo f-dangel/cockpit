@@ -98,7 +98,8 @@ class BatchGradHistogram1d(SingleStepQuantity):
 
         return ext
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Evaluate the trace of the Hessian at the current point.
 
         Args:
@@ -344,7 +345,8 @@ class BatchGradHistogram2d(SingleStepQuantity):
 
         return ext
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Compute the two-dimensional histogram at the current iteration.
 
         Args:

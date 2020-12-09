@@ -50,7 +50,8 @@ class MaxEV(SingleStepQuantity):
         """
         return []
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Compute the larges Hessian eigenvalue.
 
         Args:

@@ -83,7 +83,8 @@ class TIC(SingleStepQuantity):
 class TICDiag(TIC):
     """TIC with diagonal curvature approximation for cheap inversion."""
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Compute the TICDiag.
 
         Args:
@@ -151,7 +152,8 @@ class TICDiag(TIC):
 class TICTrace(TIC):
     """TIC approximation using the trace of curvature and gradient covariance."""
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Compute TICTrace.
 
         Args:

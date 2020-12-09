@@ -6,7 +6,8 @@ from cockpit.quantities.quantity import ByproductQuantity
 class Parameters(ByproductQuantity):
     """Parameter Quantitiy Class."""
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Store the current parameter.
 
         Args:

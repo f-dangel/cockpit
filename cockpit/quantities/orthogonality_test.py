@@ -33,7 +33,8 @@ class OrthogonalityTest(SingleStepQuantity):
 
         return ext
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Track the practical version of the norm test.
 
         Args:

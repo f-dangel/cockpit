@@ -13,7 +13,8 @@ class Time(ByproductQuantity):
 
         self._last = None
 
-    def compute(self, global_step, params, batch_loss):
+    # TODO Rewrite to use parent class track method
+    def track(self, global_step, params, batch_loss):
         """Track the time at the current point.
 
         Args:
