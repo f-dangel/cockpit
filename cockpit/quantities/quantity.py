@@ -72,7 +72,7 @@ class Quantity:
                 if self._verbose:
                     print(
                         f"{self._verbose_prefix(global_step)}:"
-                        + f" Storing iteration {iteration}, value {result}"
+                        + f" Store iteration {iteration}, value {result}"
                     )
 
                 self._save(iteration, result)
@@ -121,6 +121,19 @@ class Quantity:
                 quantities whose values are computed in later iterations).
         """
         raise NotImplementedError
+
+    def get_output(self):
+        """Return a dictionary that stores the results.
+
+        Keys correspond to the iteration and values represent the computational result.
+
+        Example:
+            >>> quantity = quantities.MaxEV()
+            >>> # information tracked at iteration 3
+            >>> global_step = 3
+            >>> global_step_output = quantity.get_output()[global_step]
+        """
+        return self.output
 
     @staticmethod
     def _fetch_grad(params, aggregate=False):

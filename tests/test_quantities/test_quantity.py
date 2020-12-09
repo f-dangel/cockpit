@@ -55,6 +55,6 @@ def test_correct_track_events_in_output(quantity_cls):
             return schedule(iteration) and iteration + shift < iterations
 
     track_events = sorted(i for i in range(iterations) if is_track_event(i))
-    output_events = sorted(quantity.output.keys())
+    output_events = sorted(quantity.get_output().keys())
 
     assert output_events == track_events
