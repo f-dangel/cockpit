@@ -34,7 +34,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-![CockpitAnimation](docs/assets/showcase.gif)
+![CockpitAnimation](docs/rtd/assets/showcase.gif)
 
 **Motivation:** Currently, training a deep neural network is often a pain! Succesfully training such a network usually requires either years of intuition or expensive parameter searches and lots of trial and error. Traditional debugger provide only limited help: They can help diagnose *syntactical errors* but they do not help with *training bugs* such as ill-chosen learning rates.
 
