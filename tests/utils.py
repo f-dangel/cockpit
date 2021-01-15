@@ -1,17 +1,10 @@
 """Utility functions for running tests."""
 
-import random
 import sys
 
 import numpy
-import torch
 
-
-def set_deepobs_seed(seed=0):
-    """Set all seeds used by DeepOBS."""
-    random.seed(seed)
-    numpy.random.seed(seed)
-    torch.manual_seed(seed)
+from cockpit.deepobs import set_deepobs_seed
 
 
 def hotfix_deepobs_argparse():
@@ -25,17 +18,18 @@ def hotfix_deepobs_argparse():
 def report_nonclose_values(x, y, atol=1e-8, rtol=1e-5):
     """Report non-close values.
 
-    Note: ``numpy.allclose`` and ``torch.allclose`` don't always
-    seem to match when using the same parameters for ``atol`` and
-    ``rtol``. Maybe related to data types, but I could not find
-    a helpful reference.
-    Therefore it may happen that nonclose values are reported,
-    while the tests pass at the same time.
+    Note:
+        ``numpy.allclose`` and ``torch.allclose`` don't always
+        seem to match when using the same parameters for ``atol`` and
+        ``rtol``. Maybe related to data types, but I could not find
+        a helpful reference.
+        Therefore it may happen that nonclose values are reported,
+        while the tests pass at the same time.
     """
     x_numpy = x.data.cpu().numpy().flatten()
     y_numpy = y.data.cpu().numpy().flatten()
 
-    close = numpy.isclose(x_numpy, y_numpy, atol=atol, rtol=atol)
+    close = numpy.isclose(x_numpy, y_numpy, atol=atol, rtol=rtol)
     where_not_close = numpy.argwhere(numpy.logical_not(close))
     for idx in where_not_close:
         x, y = x_numpy[idx], y_numpy[idx]

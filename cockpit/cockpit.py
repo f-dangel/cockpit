@@ -1,148 +1,76 @@
 """Cockpit."""
 
-import inspect
 import json
 import os
-import warnings
 from collections import defaultdict
 
-from backobs import extend_with_access_unreduced_loss
-from backpack import backpack_deactivate_io, extend
+from backpack import backpack_deactivate_io
 from backpack.extensions import BatchGradTransforms
 from backpack.extensions.backprop_extension import BackpropExtension
 from cockpit import quantities
-from cockpit.cockpit_plotter import CockpitPlotter
 from cockpit.context import BackwardCTX, get_loss
 from cockpit.quantities.utils_quantities import _update_dicts
-from deepobs.pytorch.testproblems.testproblem import TestProblem
-
-
-def configured_quantities(label):
-    """Return the quantities for a cockpit ticket.
-
-    Args:
-        label (str): String specifying the configuration type.
-            Possible configurations are (from least to most expensive)
-
-            - ``'economy'``: no quantities that require 2nd-order information.
-            - ``'business'``: all default quantities except maximum Hessian eigenvalue.
-            - ``'full'``: quantities required to fill all plots.
-
-    Returns:
-        [Quantity]: A list of quantity classes used in the specified configuration.
-
-    Raises:
-        KeyError: If ``label`` is an unknown configuration.
-    """
-    economy = [
-        quantities.AlphaOptimized,
-        quantities.BatchGradHistogram1d,
-        quantities.Distance,
-        quantities.GradNorm,
-        quantities.InnerProductTest,
-        quantities.Loss,
-        quantities.NormTest,
-        quantities.OrthogonalityTest,
-        quantities.Time,
-    ]
-    business = economy + [
-        quantities.TICDiag,
-        quantities.Trace,
-    ]
-    full = business + [
-        quantities.MaxEV,
-        quantities.BatchGradHistogram2d,
-    ]
-
-    configs = {
-        "full": full,
-        "business": business,
-        "economy": economy,
-    }
-
-    return configs[label]
 
 
 class Cockpit:
     """Cockpit class."""
 
-    default_quantities = [
-        # quantities.AlphaExpensive,
-        quantities.AlphaOptimized,
-        quantities.BatchGradHistogram1d,
-        quantities.BatchGradHistogram2d,
-        quantities.Distance,
-        quantities.GradNorm,
-        quantities.InnerProductTest,
-        quantities.Loss,
-        quantities.MaxEV,
-        quantities.MeanGSNR,
-        quantities.NormTest,
-        quantities.OrthogonalityTest,
-        quantities.TICDiag,
-        # quantities.TICTrace,
-        quantities.Trace,
-        quantities.Time,
-    ]
-
-    def __init__(
-        self,
-        tproblem,
-        logpath,
-        track_interval=1,
-        quantities=None,
-        plot=True,
-        plot_schedule=None,
-        secondary_screen=False,
-    ):
-        """Initialize the Cockpit.
+    def __init__(self, params, quantities=None):
+        """Initialize a cockpit.
 
         Args:
-            tproblem (deepobs.pytorch.testproblem): A DeepOBS testproblem.
-                Alternatively, it ccould also be a general Pytorch Net.
-            logpath (str): Path to the log file.
-            track_interval (int, optional): Tracking rate.
-                Defaults to 1 meaning every iteration is tracked.
-            quantities (list, optional): List of quantities (classes or instances)
-                that should be tracked. Defaults to None, which would use all
-                implemented ones.
-            plot (bool, optional): Whether results should be plotted.
-            plot_schedule (callable): Function that maps an iteration to a boolean
-                which determines if a plot should be created and tracked data output
-                should be written.
-            secondary_screen (bool): Whether to plot other experimental quantities
-                on a secondary screen.
-        """
-        # Store all parameters as attributes
-        self.tproblem = tproblem
-        self.logpath = logpath
-        self.track_interval = track_interval
-        self.quantities = quantities
+            params (iterable): List or sequence of parameters on which the quantities
+                will be evaluated. Every parameter must have ``require_grad = True``,
+                otherwise the computation cannot be executed.
+            quantities (list, optional): List of ``Quantity`` (instances) that will
+                be tracked. Defaults to None, which will use no quantities.
 
-        self.create_graph = False
+        Returns:
+            None
+        """
+        # check parameters
+        self.params = list(params)
+        for p in self.params:
+            if not p.requires_grad:
+                raise ValueError(f"Got parameter with requires_grad=False: {p}")
+
+        # initialize output
         self.output = defaultdict(dict)
 
-        # Collect quantities
-        self.quantities = self._collect_quantities(quantities, track_interval)
+        # add quantities to cockpit
+        if quantities is None:
+            quantities = []
 
-        # Extend testproblem
-        if isinstance(tproblem, TestProblem):
-            extend_with_access_unreduced_loss(tproblem, detach=True)
-        else:
-            model, lossfunc = tproblem
-            extend(model)
-            extend(lossfunc)
+        self.quantities = []
+        for q in quantities:
+            self.add(q)
 
-        # Prepare logpath
-        self._prepare_logpath(logpath)
+    def add(self, quantity):
+        """Add quantity to tracked quantities.
 
-        # Create a Cockpit Plotter instance
-        self._plot_schedule = plot_schedule
-        self._enable_plotting = plot
-        if self._enable_plotting:
-            self.cockpit_plotter = CockpitPlotter(
-                self.logpath, secondary_screen=secondary_screen
+        Args:
+            quantity (Quantity): The quantity to be added.
+
+        Returns:
+            None
+        """
+        if not isinstance(quantity, quantities.Quantity):
+            raise ValueError(
+                f"Added quantities must be instances of Quantity. Got {quantity}"
             )
+        else:
+            self.quantities.append(quantity)
+
+    def create_graph(self, global_step):
+        """Return if computation graph should be kept for computing quantities.
+
+        Args:
+            global_step (int): Current number of iteration.
+
+        Returns:
+            bool: ``True`` if computation graph should be kept, else ``False``.
+        """
+        return any(q.create_graph(global_step) for q in self.quantities)
 
     def _get_extensions(self, global_step, custom_exts=()):
         """Collect BackPACK extensions required at current iteration.
@@ -185,14 +113,6 @@ class Cockpit:
 
         return BackwardCTX(self, global_step, exts, info, debug=debug)
 
-    def _get_tracked_params(self):
-        """Return list of parameters that are tracked by the cockpit."""
-        if isinstance(self.tproblem, TestProblem):
-            return [p for p in self.tproblem.net.parameters() if p.requires_grad]
-        else:
-            model, _ = self.tproblem
-            return [p for p in model.parameters() if p.requires_grad]
-
     def track(self, global_step, protected_savefields=()):
         """Tracking all quantities.
 
@@ -202,24 +122,20 @@ class Cockpit:
                 of backpack extensions that will not be deleted after the backward pass
         """
         batch_loss = get_loss(global_step)
-        self.__warn_invalid_loss(batch_loss, global_step)
-
-        params = self._get_tracked_params()
 
         before_cleanup = [
             q for q in self.quantities if not isinstance(q, quantities.MaxEV)
         ]
 
         for q in before_cleanup:
-            q.compute(global_step, params, batch_loss)
+            q.compute(global_step, self.params, batch_loss)
 
         self._free_backpack_buffers(global_step, protected_savefields)
-        self._free_backpack_io()
 
         after_cleanup = [q for q in self.quantities if isinstance(q, quantities.MaxEV)]
         with backpack_deactivate_io():
             for q in after_cleanup:
-                q.compute(global_step, params, batch_loss)
+                q.compute(global_step, self.params, batch_loss)
 
     def _free_backpack_buffers(self, global_step, protected_savefields, verbose=False):
         """Manually free quantities computed by BackPACK to save memory.
@@ -232,7 +148,7 @@ class Cockpit:
 
         ext = self._get_extensions(global_step)
 
-        for param in self._get_tracked_params():
+        for param in self.params:
             for e in ext:
                 try:
                     field = e.savefield
@@ -245,23 +161,6 @@ class Cockpit:
                             )
                 except AttributeError:
                     pass
-
-    def _free_backpack_io(self):
-        """Manually free module input/output used in BackPACK to save memory."""
-
-        def remove_net_io(module):
-            if self._has_children(module):
-                for mod in module.children():
-                    remove_net_io(mod)
-            else:
-                self._remove_module_io(module)
-
-        if isinstance(self.tproblem, TestProblem):
-            remove_net_io(self.tproblem.net)
-        else:
-            model, lossfunc = self.tproblem
-            remove_net_io(model)
-            remove_net_io(lossfunc)
 
     @staticmethod
     def _has_children(net):
@@ -317,69 +216,34 @@ class Cockpit:
 
         self.output[global_step]["learning_rate"] = learning_rate
 
-    def maybe_write_and_plot(self, global_step, *args, **kwargs):
-        """Write and plot data if necessary.
+    def write(self, logpath):
+        """Write tracked quantities to a json file.
 
-        The callable `plot_schedule` triggers plotting/writing.
+        Args:
+            logpath (str): Path to a log file without the ``.json`` suffix.
+
+        Returns:
+            None
         """
-        if self._plot_schedule(global_step):
-            self.write()
-            self.plot(*args, **kwargs)
+        self.update_output()
 
-    def plot(self, *args, **kwargs):
-        """Plot the Cockpit with the current state of the log file."""
-        if self._enable_plotting:
-            self.cockpit_plotter.plot(*args, **kwargs)
+        # Dump to file
+        logpath_with_suffix = logpath + ".json"
+        print(f"[cockpit] writing output to {logpath_with_suffix}")
 
-    def write(self):
-        """Write the tracked Quantities of the Cockpit to file."""
+        os.makedirs(os.path.dirname(logpath_with_suffix), exist_ok=True)
+
+        with open(logpath_with_suffix, "w") as json_file:
+            json.dump(self.output, json_file, indent=4, sort_keys=True)
+
+    def update_output(self):
+        """Fetch outputs from tracked quantities into ``self.output``."""
         # Update the cockpit with the outputs from the individual quantities
         for q in self.quantities:
             _update_dicts(self.output, q.output)
 
-        # Dump to file
-        with open(self.logpath + ".json", "w") as json_file:
-            json.dump(self.output, json_file, indent=4, sort_keys=True)
-        print("Cockpit-Log written...")
-
-    def build_animation(self, *args, **kwargs):
-        """Build an animation from the stored images during training."""
-        self.cockpit_plotter.build_animation(*args, **kwargs)
-
-    @staticmethod
-    def _prepare_logpath(logpath):
-        """Prepare the logpath by creating it if necessary.
-
-        Args:
-            logpath (str): The path where the logs should be stored
-        """
-        logdir, logfile = os.path.split(logpath)
-        os.makedirs(logdir, exist_ok=True)
-
-    @classmethod
-    def _collect_quantities(cls, cockpit_quantities, track_interval):
-        """Collect all quantities that should be used for tracking.
-
-        Args:
-            quantities (list, None) A list of quantities (classes or instances)
-                that should be tracked. Can also be None, in this case all
-                implemented quantities are being returned.
-            track_interval (int, optional): Tracking rate.
-
-        Returns:
-            list: List of quantities (classes) that should be used for tracking.
-        """
-        if cockpit_quantities is None:
-            cockpit_quantities = cls.default_quantities
-
-        quants = []
-        for q in cockpit_quantities:
-            if inspect.isclass(q):
-                quants.append(q(track_interval))
-            else:
-                quants.append(q)
-
-        return quants
+    def get_output(self):
+        return self.output
 
     def _process_duplicate_extensions(self, ext):
         """Remove duplicate BackPACK extensions.
@@ -446,15 +310,3 @@ class Cockpit:
                 combined_transforms[key] = functions[0]
 
         return BatchGradTransforms(combined_transforms)
-
-    @staticmethod
-    def __warn_invalid_loss(batch_loss, global_step):
-        """Warn if the mini-batch loss has values that may break the computation."""
-        if batch_loss.isnan().any():
-            warnings.warn(
-                f"[Step {global_step}] Mini-batch loss is {batch_loss}."
-                + "This may break computation of quantities."
-            )
-
-    def update_create_graph(self, global_step):
-        self.create_graph = any(q.create_graph(global_step) for q in self.quantities)

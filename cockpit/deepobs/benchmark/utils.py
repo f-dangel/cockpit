@@ -1,5 +1,7 @@
 """Utility functions for cockpit benchmark."""
 
+from functools import lru_cache
+
 from deepobs.pytorch.testproblems import (
     cifar10_3c3d,
     cifar100_3c3d,
@@ -13,6 +15,7 @@ from deepobs.pytorch.testproblems import (
 )
 
 
+@lru_cache()
 def get_train_size(testproblem):
     """Return number of samples in training set."""
     tproblem_cls_from_str = {

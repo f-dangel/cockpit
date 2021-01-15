@@ -5,10 +5,10 @@ from collections import defaultdict
 import pandas
 from torch.optim import SGD
 
-from cockpit.benchmark.utils import get_train_size
-from cockpit.cockpit_plotter import CockpitPlotter
+from cockpit.deepobs.benchmark.utils import get_train_size
+from cockpit.deepobs.scheduled_runner import _ScheduleCockpitRunner
+from cockpit.plotter import CockpitPlotter
 from cockpit.quantities import Time
-from cockpit.runners.scheduled_runner import _ScheduleCockpitRunner
 from deepobs.pytorch.config import set_default_device
 
 
@@ -111,8 +111,8 @@ def _read_tracking_data(runner):
 
     Abuses the CockpitPlotter to read data
     """
-    plotter = CockpitPlotter(runner._get_cockpit_logpath())
-    plotter._read_tracking_results()
+    plotter = CockpitPlotter()
+    plotter._read_tracking_results(runner._get_cockpit_logpath() + ".json")
     return plotter.tracking_data
 
 

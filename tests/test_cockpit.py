@@ -1,6 +1,4 @@
-"""Tests for ``cockpit.cockpit.py``."""
-
-import os
+"""Tests for ``cockpit.cockpit``."""
 
 import pytest
 import torch
@@ -13,48 +11,7 @@ from backpack.extensions import (
     DiagHessian,
 )
 from cockpit import quantities
-from cockpit.cockpit import Cockpit, configured_quantities
-from deepobs.pytorch.testproblems import quadratic_deep
-from tests.utils import set_up_problem
-
-LOGPATH = os.path.expanduser("~/tmp/test_cockpit/")
-
-
-def set_up_cockpit_configuration(label):
-    """Set up a dummy pre-configured cockpit."""
-    tproblem = set_up_problem(quadratic_deep)
-    logpath = os.path.join(LOGPATH, "quadratic_deep/SGD/hyperparams/log")
-    quantities = configured_quantities(label)
-
-    return Cockpit(tproblem, logpath, track_interval=1, quantities=quantities)
-
-
-@pytest.mark.parametrize("label", ["full", "business", "economy"])
-def test_cockpit_configuration(label):
-    """Check cockpit quantities."""
-    cockpit = set_up_cockpit_configuration(label)
-
-    full_quantity_cls = configured_quantities("full")
-    not_present = {
-        "full": (),
-        "business": (
-            quantities.MaxEV,
-            quantities.BatchGradHistogram2d,
-        ),
-        "economy": (
-            quantities.MaxEV,
-            quantities.TICDiag,
-            quantities.TICTrace,
-            quantities.Trace,
-            quantities.BatchGradHistogram2d,
-        ),
-    }[label]
-
-    for q_cls in full_quantity_cls:
-        if q_cls in not_present:
-            assert not any(isinstance(q, q_cls) for q in cockpit.quantities)
-        else:
-            assert len([q for q in cockpit.quantities if isinstance(q, q_cls)]) == 1
+from cockpit.cockpit import Cockpit
 
 
 def test_merge_batch_grad_transforms():
@@ -111,11 +68,12 @@ def test_process_multiple_batch_grad_transforms_empty():
 
 def test_automatic_call_track():
     """Make sure `track` is called automatically when a cockpit context is left."""
+    torch.manual_seed(0)
     model = torch.nn.Sequential(torch.nn.Linear(10, 2))
     loss_fn = torch.nn.MSELoss(reduction="mean")
 
     q_time = quantities.Time(track_interval=1)
-    cp = Cockpit([model, loss_fn], LOGPATH, plot=False, quantities=[q_time])
+    cp = Cockpit(model.parameters(), quantities=[q_time])
 
     global_step = 0
 
@@ -126,18 +84,23 @@ def test_automatic_call_track():
     loss = loss_fn(model(inputs), labels)
 
     with cp(global_step, info={"loss": loss}):
-        loss.backward(create_graph=cp.create_graph)
+        loss.backward(create_graph=cp.create_graph(global_step))
 
+        # cp.track should not have been called yet...
+        # assert global_step not in q_time.output.keys()
+
+    # ...but after the context is left
     assert global_step in q_time.output.keys()
 
 
-def test_cockpit_with_backpack_extensions_fails():
-    """Check if backpack quantities can be computed through cockpit."""
+def test_with_backpack_extensions():
+    """Check if backpack quantities can be computed inside cockpit."""
+    torch.manual_seed(0)
     model = extend(torch.nn.Sequential(torch.nn.Linear(10, 2)))
     loss_fn = extend(torch.nn.MSELoss(reduction="mean"))
 
     q_time = quantities.TICDiag(track_interval=1)
-    cp = Cockpit([model, loss_fn], LOGPATH, plot=False, quantities=[q_time])
+    cp = Cockpit(model.parameters(), quantities=[q_time])
 
     global_step = 0
 
@@ -148,12 +111,18 @@ def test_cockpit_with_backpack_extensions_fails():
     loss = loss_fn(model(inputs), labels)
 
     with cp(global_step, DiagHessian(), info={"loss": loss, "batch_size": batch_size}):
-        loss.backward(create_graph=cp.create_graph)
+        loss.backward(create_graph=cp.create_graph(global_step))
 
         # BackPACK buffers exist...
         for param in model.parameters():
+            # required by TICDiag and user
             assert hasattr(param, "diag_h")
+            # required by TICDiag only
+            assert hasattr(param, "grad_batch_transforms")
+            assert "sum_grad_squared" in param.grad_batch_transforms
 
     # ... and are not deleted when specified by the user
     for param in model.parameters():
         assert hasattr(param, "diag_h")
+        # not protected by user
+        assert not hasattr(param, "grad_batch_transforms")

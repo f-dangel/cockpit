@@ -1,18 +1,25 @@
-"""Example: Training Loop using Cockpit."""
+"""Slightly configured example: Training Loop using Cockpit."""
 
 import torch
 from examples_utils import CNN, MNISTData, create_logpath, evaluate
 
-from cockpit import Cockpit
+from backpack import extend
+from cockpit import Cockpit, CockpitPlotter
+from cockpit.utils import schedules
+from cockpit.utils.configuration import configuration
 
 train_loader, test_loader = MNISTData()
-model = CNN()
-lossfunc = torch.nn.CrossEntropyLoss(reduction="mean")
+model = extend(CNN())
+lossfunc = extend(torch.nn.CrossEntropyLoss(reduction="mean"))
 individual_lossfunc = torch.nn.CrossEntropyLoss(reduction="none")
 opt = torch.optim.SGD(model.parameters(), lr=1e-2)
 
 # COCKPIT #
-cockpit = Cockpit([model, lossfunc], create_logpath(), track_interval=5)
+cockpit = Cockpit(
+    model.parameters(),
+    quantities=configuration("full", track_schedule=schedules.linear(interval=30)),
+)
+plotter = CockpitPlotter()
 
 num_epochs = 1
 iteration = 0
@@ -38,17 +45,15 @@ for _ in range(num_epochs):
             },
         ):
             # Backward pass
-            loss.backward(
-                create_graph=cockpit.create_graph,
-            )
+            loss.backward(create_graph=cockpit.create_graph(iteration))
 
         # Update step
         opt.step()
         iteration += 1
 
-        if iteration % 10 == 0:
-            print("** Iteration: ", iteration)
-            cockpit.write()
-            cockpit.plot()
+        if iteration % 30 == 0:
+            print("Iteration: ", iteration)
+            cockpit.write(create_logpath())
+            plotter.plot(create_logpath(suffix=".json"))
 
     evaluate(model, lossfunc, test_loader)
