@@ -243,6 +243,7 @@ class Cockpit:
             _update_dicts(self.output, q.output)
 
     def get_output(self):
+        self.update_output()
         return self.output
 
     def _process_duplicate_extensions(self, ext):

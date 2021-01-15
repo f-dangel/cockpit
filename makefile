@@ -132,4 +132,4 @@ conda-env:
 ###
 # Documentation
 build-docs:
-	@cd docs_src/rtd && make html
+	@cd docs/rtd && make html
