@@ -25,22 +25,19 @@ class BatchGradHistogram1d(SingleStepQuantity):
 
     def __init__(
         self,
-        track_interval=1,
-        track_offset=0,
+        track_schedule,
+        verbose=False,
         xmin=-2,
         xmax=2,
         bins=100,
         adapt_schedule=None,
         pad=0.2,
-        verbose=False,
         check=False,
-        track_schedule=None,
         remove_outliers=False,
     ):
         """Initialize the 1D Histogram of individual gradient elements.
 
         Args:
-            track_interval (int): Tracking rate.
             xmin (float): Lower clipping bound for individual gradients in histogram.
             xmax (float): Upper clipping bound for individual gradients in histogram.
             bins (int): Number of bins
@@ -48,18 +45,13 @@ class BatchGradHistogram1d(SingleStepQuantity):
                 that indicates if the limits should be updated. If ``None``, adapt
                 only at step 0.
             pad (float): Relative padding added to the limits
-            verbose (bool): Turns on verbose mode. Defaults to ``False``.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
             remove_outliers (bool): Whether outliers should be removed. If ``False``,
                 they show up in the edge bins.
         """
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
+        super().__init__(track_schedule, verbose=verbose)
+
         self._xmin = xmin
         self._xmax = xmax
         self._bins = bins
@@ -214,8 +206,8 @@ class BatchGradHistogram2d(SingleStepQuantity):
 
     def __init__(
         self,
-        track_interval=1,
-        track_offset=0,
+        track_schedule,
+        verbose=False,
         xmin=-1,
         xmax=1,
         min_xrange=1e-6,
@@ -228,17 +220,14 @@ class BatchGradHistogram2d(SingleStepQuantity):
         which="histogram2d",
         adapt_schedule=None,
         adapt_policy="abs_max",
-        verbose=False,
         xpad=0.2,
         ypad=0.2,
         check=False,
-        track_schedule=None,
         keep_individual=False,
     ):
         """Initialize the 2D Histogram of individual gradient elements over parameters.
 
         Args:
-            track_interval (int): Tracking rate.
             xmin (float): Lower clipping bound for individual gradients in histogram.
             xmax (float): Upper clipping bound for individual gradients in histogram.
             min_xrange (float): Lower bound for limit difference along x axis.
@@ -268,19 +257,14 @@ class BatchGradHistogram2d(SingleStepQuantity):
                   maximum absolute value (+ padding).
                 - "min_max": Sets interval range between minimum and maximum value
                   (+ padding).
-            verbose (bool): Turns on verbose mode. Defaults to ``False``.
             xpad (float): Relative padding added to the x limits.
             ypad (float): Relative padding added to the y limits.
             check (bool): If True, this quantity will be computed via two different
                 ways and compared. Defaults to ``False``.
             keep_individual (bool): Whether to keep individual parameter histograms.
         """
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
+        super().__init__(track_schedule, verbose=verbose)
+
         self._xmin = xmin
         self._xmax = xmax
         self._min_xrange = min_xrange

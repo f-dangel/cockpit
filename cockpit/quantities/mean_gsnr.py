@@ -2,7 +2,6 @@
 
 import torch
 
-from backpack import extensions
 from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_quantities import (
@@ -13,6 +12,7 @@ from cockpit.quantities.utils_quantities import (
 )
 from cockpit.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
 
+# TODO Move to tests
 ATOL = 1e-5
 RTOL = 5e-4
 
@@ -29,36 +29,15 @@ class MeanGSNR(SingleStepQuantity):
         (2020)
     """
 
-    def __init__(
-        self,
-        track_interval=1,
-        track_offset=0,
-        epsilon=1e-5,
-        use_double=False,
-        verbose=False,
-        check=False,
-        track_schedule=None,
-    ):
+    def __init__(self, track_schedule, verbose=False, epsilon=1e-5):
         """Initialize.
 
         Args:
-            track_interval (int): Tracking rate.
-            epsilon (float): Stabilization constant. Defaults to 0.0.
-            use_double (bool): Whether to use doubles in computation. Defaults
-                to ``False``.
-            verbose (bool): Turns on verbose mode. Defaults to ``False``.
-            check (bool): If True, this quantity will be computed via two different
-                ways and compared. Defaults to ``False``.
+            epsilon (float): Stabilization constant. Defaults to 1e-5.
         """
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
+        super().__init__(track_schedule, verbose=verbose)
+
         self._epsilon = epsilon
-        self._use_double = use_double
-        self._check = check
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -73,9 +52,6 @@ class MeanGSNR(SingleStepQuantity):
 
         if self.is_active(global_step):
             ext.append(BatchGradTransforms_SumGradSquared())
-
-            if self._check:
-                ext.append(extensions.BatchGrad())
 
         return ext
 
@@ -95,9 +71,6 @@ class MeanGSNR(SingleStepQuantity):
                 print(f"[Step {global_step}] MeanGSNR: {mean_gsnr:.4f}")
 
             self.output[global_step]["mean_gsnr"] = mean_gsnr
-
-            if self._check:
-                self.__run_check(global_step, params, batch_loss)
 
     def _compute(self, global_step, params, batch_loss):
         """Return maximum θ for which the norm test would pass.
@@ -119,16 +92,10 @@ class MeanGSNR(SingleStepQuantity):
             params ([torch.Tensor]): List of parameters considered in the computation.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if self._use_double:
-            grad_squared = self._fetch_grad(params, aggregate=True).double() ** 2
-            sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
-                params, aggregate=True
-            ).double()
-        else:
-            grad_squared = self._fetch_grad(params, aggregate=True) ** 2
-            sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
-                params, aggregate=True
-            )
+        grad_squared = self._fetch_grad(params, aggregate=True) ** 2
+        sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
+            params, aggregate=True
+        )
 
         batch_size = get_batch_size(global_step)
 
@@ -136,6 +103,7 @@ class MeanGSNR(SingleStepQuantity):
             batch_size * sum_grad_squared - grad_squared + self._epsilon
         )
 
+    # TODO Move to tests
     def __run_check(self, global_step, params, batch_loss):
         """Check if variance is non-negative and hence GSNR is not NaN."""
 
@@ -146,10 +114,6 @@ class MeanGSNR(SingleStepQuantity):
             the prose between Equation (1) and (2).
             """
             batch_grad = self._fetch_batch_grad(params, aggregate=True)
-
-            if self._use_double:
-                batch_grad = batch_grad.double()
-
             batch_size = get_batch_size(global_step)
 
             rescaled_batch_grad = batch_size * batch_grad

@@ -13,14 +13,7 @@ class Trace(SingleStepQuantity):
         "diag_ggn_mc": extensions.DiagGGNMC,
     }
 
-    def __init__(
-        self,
-        track_interval=1,
-        track_offset=0,
-        curvature="diag_h",
-        verbose=False,
-        track_schedule=None,
-    ):
+    def __init__(self, track_schedule, verbose=False, curvature="diag_h"):
         """Initialize the trace quantity.
 
         Crucially, it creates the output dictionary, that is meant to store all
@@ -33,22 +26,11 @@ class Trace(SingleStepQuantity):
             gated through the computation graph.
 
         Args:
-            track_interval (int, optional): Tracking rate. Defaults to 1.
-            offset (int, optional): Tracking offset. Defaults to 0.
             curvature (string): Which diagonal curvature approximation should be used.
                 Options are "diag_h", "diag_ggn_exact", "diag_ggn_mc".
-            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
-            track_schedule (callable, optional): Function that maps the ``global_step``
-                to a boolean. Can be used to specify custom schedules that don't track
-                equidistantly. If not specified, use ``track_interval`` and
-                ``track_offset``.
         """
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
+        super().__init__(track_schedule, verbose=verbose)
+
         self._curvature = curvature
 
     def extensions(self, global_step):

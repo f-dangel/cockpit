@@ -21,15 +21,8 @@ class _Alpha(Quantity):
     _positions = ["start", "end"]
     _start_end_difference = 1
 
-    def __init__(
-        self, track_interval=1, track_offset=0, verbose=False, track_schedule=None
-    ):
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
+    def __init__(self, track_schedule, verbose=False):
+        super().__init__(track_schedule, verbose=verbose)
         self.clear_info()
 
     def clear_info(self):

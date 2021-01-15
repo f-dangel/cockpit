@@ -2,7 +2,6 @@
 
 import torch
 
-from backpack import extensions
 from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_transforms import BatchGradTransforms_BatchDotGrad
@@ -17,39 +16,6 @@ class InnerProductTest(SingleStepQuantity):
         - https://arxiv.org/pdf/1710.11258.pdf
     """
 
-    def __init__(
-        self,
-        track_interval=1,
-        track_offset=0,
-        use_double=False,
-        verbose=False,
-        check=False,
-        track_schedule=None,
-    ):
-        """Initialize.
-
-        Args:
-            track_interval (int): Tracking rate.
-            use_double (bool): Whether to use doubles in computation. Defaults
-                to ``False``.
-            verbose (bool): Turns on verbose mode. Defaults to ``False``.
-            check (bool): If True, this quantity will be computed via two different
-                ways and compared. Defaults to ``False``.
-
-        Note:
-            - The computation of this quantity suffers from precision errors.
-              Enabling ``check`` will compute the quantity via two different
-              BackPACK quantities and compare them. This is roughly 2x as expensive.
-        """
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
-        self._use_double = use_double
-        self._check = check
-
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
 
@@ -59,14 +25,11 @@ class InnerProductTest(SingleStepQuantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
+        ext = []
+
         if self.is_active(global_step):
-            ext = [BatchGradTransforms_BatchDotGrad()]
+            ext.append(BatchGradTransforms_BatchDotGrad())
 
-            if self._check:
-                ext.append(extensions.BatchGrad())
-
-        else:
-            ext = []
         return ext
 
     def compute(self, global_step, params, batch_loss):
@@ -87,11 +50,6 @@ class InnerProductTest(SingleStepQuantity):
                 )
 
             self.output[global_step]["inner_product_test"] = inner_product_test
-
-            if self._check:
-                self.__run_check(global_step, params, batch_loss)
-        else:
-            pass
 
     def _compute(self, params, batch_loss):
         """Return maximum θ for which the inner product test would pass.
@@ -144,9 +102,6 @@ class InnerProductTest(SingleStepQuantity):
             torch.Tensor: The sample variance of individual gradient projections on the
                 mini-batch gradient.
         """
-        if self._use_double:
-            batch_dot = batch_dot.double()
-
         projections = batch_size * batch_dot.sum(1)
 
         return (1 / (batch_size - 1)) * (
@@ -175,6 +130,7 @@ class InnerProductTest(SingleStepQuantity):
 
         return batch_size_theta
 
+    # TODO Move to tests
     def __run_check(self, global_step, params, batch_loss):
         """Run sanity checks to verify math rearrangements."""
 
@@ -188,11 +144,6 @@ class InnerProductTest(SingleStepQuantity):
             batch_size = get_batch_size(global_step)
             grad = self._fetch_grad(params, aggregate=True)
             grad_l2_squared = self._fetch_grad_l2_squared(params, aggregate=True)
-
-            if self._use_double:
-                batch_grad = batch_grad.double()
-                grad = grad.double()
-                grad_l2_squared = grad_l2_squared.double()
 
             projections = torch.einsum("ni,i->n", batch_size * batch_grad, grad)
 

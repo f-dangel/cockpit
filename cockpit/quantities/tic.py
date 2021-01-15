@@ -12,6 +12,7 @@ from cockpit.quantities.utils_quantities import (
 )
 from cockpit.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
 
+# TODO Move to tests
 ATOL = 1e-5
 RTOL = 5e-4
 
@@ -33,14 +34,10 @@ class TIC(SingleStepQuantity):
 
     def __init__(
         self,
-        track_interval=1,
-        track_offset=0,
+        track_schedule,
+        verbose=False,
         curvature="diag_h",
         epsilon=1e-7,
-        use_double=False,
-        verbose=False,
-        check=False,
-        track_schedule=None,
     ):
         """Initialize TIC quantity.
 
@@ -51,26 +48,14 @@ class TIC(SingleStepQuantity):
             gated through the computation graph.
 
         Args:
-            track_interval (int): Tracking rate.
             curvature (string): Which diagonal curvature approximation should be used.
                 Options are "diag_h", "diag_ggn_exact", "diag_ggn_mc".
-            epsilon (float): Stabilization constant. Defaults to 0.0.
-            use_double (bool): Whether to use doubles in computation. Defaults
-                to ``False``.
-            verbose (bool): Turns on verbose mode. Defaults to ``False``.
-            check (bool): If True, this quantity will be computed via two different
-                ways and compared. Defaults to ``False``.
+            epsilon (float): Stabilization constant. Defaults to 1e-7.
         """
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
+        super().__init__(track_schedule, verbose=verbose)
+
         self._curvature = curvature
         self._epsilon = epsilon
-        self._use_double = use_double
-        self._check = check
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -81,20 +66,16 @@ class TIC(SingleStepQuantity):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
+        ext = []
+
         if self.is_active(global_step):
             try:
-                ext = [self.extensions_from_str[self._curvature]()]
+                ext.append(self.extensions_from_str[self._curvature]())
             except KeyError as e:
                 available = list(self.extensions_from_str.keys())
                 raise KeyError(f"{str(e)}. Available: {available}")
 
-            if self._check:
-                ext.append(extensions.BatchGrad())
-
             ext.append(BatchGradTransforms_SumGradSquared())
-
-        else:
-            ext = []
 
         return ext
 
@@ -120,9 +101,6 @@ class TICDiag(TIC):
 
             self.output[global_step]["tic_diag"] = tic
 
-            if self._check:
-                self.__run_check(global_step, params, batch_loss)
-
     def _compute(self, global_step, params, batch_loss):
         """Compute the TICDiag using a diagonal curvature approximation.
 
@@ -135,15 +113,11 @@ class TICDiag(TIC):
             params, aggregate=True
         )
         curvature = self._fetch_diag_curvature(params, self._curvature, aggregate=True)
-
-        if self._use_double:
-            sum_grad_squared = sum_grad_squared.double()
-            curvature = curvature.double()
-
         batch_size = get_batch_size(global_step)
 
         return (batch_size * sum_grad_squared / (curvature + self._epsilon)).sum()
 
+    # TODO Move to tests
     def __run_check(self, global_step, params, batch_loss):
         """Run sanity checks for TICDiag."""
 
@@ -153,10 +127,6 @@ class TICDiag(TIC):
             curvature = self._fetch_diag_curvature(
                 params, self._curvature, aggregate=True
             )
-
-            if self._use_double:
-                batch_grad = batch_grad.double()
-                curvature = curvature.double()
 
             curv_stable = curvature + self._epsilon
             if has_zeros(curv_stable):
@@ -199,9 +169,6 @@ class TICTrace(TIC):
 
             self.output[global_step]["tic_trace"] = tic
 
-            if self._check:
-                self.__run_check(global_step, params, batch_loss)
-
     def _compute(self, global_step, params, batch_loss):
         """Compute the TICTrace using a trace approximation.
 
@@ -214,15 +181,11 @@ class TICTrace(TIC):
             params, aggregate=True
         )
         curvature = self._fetch_diag_curvature(params, self._curvature, aggregate=True)
-
-        if self._use_double:
-            sum_grad_squared = sum_grad_squared.double()
-            curvature = curvature.double()
-
         batch_size = get_batch_size(global_step)
 
         return batch_size * sum_grad_squared.sum() / (curvature.sum() + self._epsilon)
 
+    # TODO Move to tests
     def __run_check(self, global_step, params, batch_loss):
         """Run sanity checks for TICTrace."""
 
@@ -232,10 +195,6 @@ class TICTrace(TIC):
             curvature = self._fetch_diag_curvature(
                 params, self._curvature, aggregate=True
             )
-
-            if self._use_double:
-                batch_grad = batch_grad.double()
-                curvature = curvature.double()
 
             curv_trace_stable = curvature.sum() + self._epsilon
             if has_zeros(curv_trace_stable):

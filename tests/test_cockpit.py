@@ -12,6 +12,7 @@ from backpack.extensions import (
 )
 from cockpit import quantities
 from cockpit.cockpit import Cockpit
+from cockpit.utils.schedules import linear
 
 
 def test_merge_batch_grad_transforms():
@@ -72,7 +73,7 @@ def test_automatic_call_track():
     model = torch.nn.Sequential(torch.nn.Linear(10, 2))
     loss_fn = torch.nn.MSELoss(reduction="mean")
 
-    q_time = quantities.Time(track_interval=1)
+    q_time = quantities.Time(track_schedule=linear(1))
     cp = Cockpit(model.parameters(), quantities=[q_time])
 
     global_step = 0
@@ -99,7 +100,7 @@ def test_with_backpack_extensions():
     model = extend(torch.nn.Sequential(torch.nn.Linear(10, 2)))
     loss_fn = extend(torch.nn.MSELoss(reduction="mean"))
 
-    q_time = quantities.TICDiag(track_interval=1)
+    q_time = quantities.TICDiag(track_schedule=linear(1))
     cp = Cockpit(model.parameters(), quantities=[q_time])
 
     global_step = 0

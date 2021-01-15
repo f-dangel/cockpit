@@ -16,27 +16,15 @@ class EarlyStopping(SingleStepQuantity):
           Early stopping without a validation set (2017).
     """
 
-    def __init__(
-        self,
-        track_interval=1,
-        track_offset=0,
-        epsilon=1e-5,
-        verbose=False,
-        track_schedule=None,
-    ):
+    def __init__(self, track_schedule, verbose=False, epsilon=1e-5):
         """Initialize.
 
         Args:
-            track_interval (int): Tracking rate.
             epsilon (float): Stabilization constant. Defaults to 0.0.
             verbose (bool): Turns on verbose mode. Defaults to ``False``.
         """
-        super().__init__(
-            track_interval=track_interval,
-            track_offset=track_offset,
-            verbose=verbose,
-            track_schedule=track_schedule,
-        )
+        super().__init__(track_schedule, verbose=verbose)
+
         self._epsilon = epsilon
         warnings.warn("StoppingCriterion only applies to SGD without momentum.")
 
