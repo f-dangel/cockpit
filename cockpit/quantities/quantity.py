@@ -13,6 +13,13 @@ class Quantity:
        This may be useful if their computation requires differentiating through
        the mini-batch loss.
     2. They can ask for certain BackPACK extensions being computed.
+
+    New `Quantity` objects can be defined by inheriting from this class and
+    implementing the `extensions` and `track` methods.
+
+    Instead of writing your own `track` function, this base class already decouples
+    storing and computing results using the `should_compute` and `compute` methods.
+    You may therefore implement the latter two instead of overwriting `track`.
     """
 
     def __init__(self, track_schedule, verbose=False):
