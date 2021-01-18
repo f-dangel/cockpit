@@ -37,7 +37,7 @@ class MaxEV(SingleStepQuantity):
             bool: ``True`` if the computation graph shall not be deleted,
                 else ``False``.
         """
-        return self.is_active(global_step)
+        return self.should_compute(global_step)
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.

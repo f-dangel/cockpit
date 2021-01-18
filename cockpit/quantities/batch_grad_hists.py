@@ -82,7 +82,7 @@ class BatchGradHistogram1d(SingleStepQuantity):
         """
         ext = []
 
-        if self.is_active(global_step):
+        if self.should_compute(global_step):
             ext.append(
                 extensions.BatchGradTransforms(
                     transforms={"hist_1d": self._compute_histogram}
@@ -108,7 +108,7 @@ class BatchGradHistogram1d(SingleStepQuantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if self.is_active(global_step):
+        if self.should_compute(global_step):
             edges = self._get_current_bin_edges()
             hist = sum(p.grad_batch_transforms["hist_1d"] for p in params)
 
@@ -314,7 +314,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
         """
         ext = []
 
-        if self.is_active(global_step):
+        if self.should_compute(global_step):
             ext.append(
                 extensions.BatchGradTransforms(
                     transforms={"hist_2d": self._compute_histogram}
@@ -355,7 +355,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if self.is_active(global_step):
+        if self.should_compute(global_step):
             self._compute_aggregated(global_step, params, batch_loss)
 
             if self._keep_individual:

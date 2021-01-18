@@ -363,9 +363,6 @@ class SingleStepQuantity(Quantity):
     """Quantity that only accessed information at one point in time."""
 
     def should_compute(self, global_step):
-        return self._track_schedule(global_step)
-
-    def is_active(self, global_step):
         """Return if quantity needs to perform actions at current iteration."""
         return self._track_schedule(global_step)
 

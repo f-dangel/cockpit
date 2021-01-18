@@ -44,7 +44,7 @@ class Trace(SingleStepQuantity):
         """
         ext = []
 
-        if self.is_active(global_step):
+        if self.should_compute(global_step):
             try:
                 ext.append(self.extensions_from_str[self._curvature]())
             except KeyError as e:

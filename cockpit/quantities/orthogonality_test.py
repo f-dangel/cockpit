@@ -28,7 +28,7 @@ class OrthogonalityTest(SingleStepQuantity):
         """
         ext = []
 
-        if self.is_active(global_step):
+        if self.should_compute(global_step):
             ext.append(BatchGradTransforms_BatchDotGrad())
 
         return ext

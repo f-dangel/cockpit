@@ -34,7 +34,7 @@ class CABSExpensive(CABS):
             list: (Potentially empty) list with required BackPACK quantities.
         """
         ext = []
-        if self.is_active(global_step):
+        if self.should_compute(global_step):
             ext.append(extensions.BatchGrad())
 
         return ext

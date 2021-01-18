@@ -33,7 +33,7 @@ class EarlyStoppingExpensive(EarlyStopping):
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
-        if self.is_active(global_step):
+        if self.should_compute(global_step):
             ext = [extensions.BatchGrad()]
         else:
             ext = []
