@@ -54,7 +54,9 @@ class InnerProductTest(SingleStepQuantity):
             batch_size, batch_dot, grad_l2_squared
         )
 
-        return self._compute_theta_max(batch_size, var_projection, grad_l2_squared)
+        return self._compute_theta_max(
+            batch_size, var_projection, grad_l2_squared
+        ).item()
 
     def _compute_theta_max(self, batch_size, var_projection, grad_l2_squared):
         """Return maximum θ for which the inner product test would pass.

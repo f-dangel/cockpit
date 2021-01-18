@@ -57,7 +57,7 @@ class OrthogonalityTest(SingleStepQuantity):
 
         return self._compute_nu_max(
             batch_size, var_orthogonal_projection, grad_l2_squared
-        )
+        ).item()
 
     def _compute_nu_max(self, batch_size, var_orthogonal_projection, grad_l2_squared):
         """Return maximum ν for which the orthogonality test would pass.

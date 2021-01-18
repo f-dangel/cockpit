@@ -98,7 +98,9 @@ class TICDiag(TIC):
         curvature = self._fetch_diag_curvature(params, self._curvature, aggregate=True)
         batch_size = get_batch_size(global_step)
 
-        return (batch_size * sum_grad_squared / (curvature + self._epsilon)).sum()
+        return (
+            (batch_size * sum_grad_squared / (curvature + self._epsilon)).sum().item()
+        )
 
     # TODO Move to tests
     def __run_check(self, global_step, params, batch_loss):
@@ -149,7 +151,9 @@ class TICTrace(TIC):
         curvature = self._fetch_diag_curvature(params, self._curvature, aggregate=True)
         batch_size = get_batch_size(global_step)
 
-        return batch_size * sum_grad_squared.sum() / (curvature.sum() + self._epsilon)
+        return (
+            batch_size * sum_grad_squared.sum() / (curvature.sum() + self._epsilon)
+        ).item()
 
     # TODO Move to tests
     def __run_check(self, global_step, params, batch_loss):
