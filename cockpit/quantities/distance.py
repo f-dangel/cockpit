@@ -1,102 +1,64 @@
-"""Class for tracking the Paramter Distances."""
+"""Classes for tracking the Parameter Distances."""
 
-from cockpit.quantities.quantity import Quantity
-from cockpit.quantities.utils_quantities import _root_sum_of_squares
+from cockpit.quantities.quantity import Quantity, SingleStepQuantity
 
 
-class Distance(Quantity):
-    """Parameter Distance Quantitiy Class."""
+class UpdateSize(Quantity):
+    """Update size Quantity Class."""
 
-    _positions = ["start", "end"]
     _start_end_difference = 1
 
     def extensions(self, global_step):
-        """Return list of BackPACK extensions required for the computation.
-
-        Args:
-            global_step (int): The current iteration number.
-
-        Returns:
-            list: (Potentially empty) list with required BackPACK quantities.
-        """
         return []
 
-    # TODO Rewrite to use parent class track method
-    def track(self, global_step, params, batch_loss):
-        """Evaluate the current parameter distances.
+    def should_compute(self, global_step):
+        return self._is_start(global_step) or self._is_end(global_step)
 
-        We track both the distance to the initialization, as well as the size of
-        the last parameter update.
+    def _is_start(self, global_step):
+        """Return whether current iteration is start of update size computation."""
+        return self._track_schedule(global_step)
 
-        Args:
-            global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-        """
-        self._compute_d2init(global_step, params, batch_loss)
-        self._compute_update_size(global_step, params, batch_loss)
+    def _is_end(self, global_step):
+        """Return whether current iteration is end of update size computation."""
+        return self._track_schedule(global_step - self._start_end_difference)
 
-    def _compute_d2init(self, global_step, params, batch_loss):
-        """Evaluate the parameter distances to its initialization.
+    def compute(self, global_step, params, batch_loss):
+        update_size = None
 
-        Args:
-            global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-        """
-        # Store initial parameters
-        if global_step == 0:
-            self.parameter_init = [p.data.clone().detach() for p in params]
-
-        if self._track_schedule(global_step):
-            d2init = [
-                (init - p).norm(2).item()
-                for init, p in zip(self.parameter_init, params)
-                if p.requires_grad
-            ]
-            self.output[global_step]["d2init"] = d2init
-
-            if self._verbose:
-                print(
-                    f"[Step {global_step}] D2Init: {_root_sum_of_squares(d2init):.4f}"
-                )
-
-    def _compute_update_size(self, global_step, params, batch_loss):
-        """Evaluate the size of the last parameter update.
-
-        Args:
-            global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-        """
-        if self._is_position(global_step, "end"):
+        if self._is_end(global_step):
             update_size = [
                 (old_p - p).norm(2).item() for old_p, p in zip(self.old_params, params)
             ]
-            self.output[global_step - self._start_end_difference][
-                "update_size"
-            ] = update_size
-
-            if self._verbose:
-                print(
-                    f"[Step {global_step}] Update size:"
-                    + f" {_root_sum_of_squares(update_size):.4f}"
-                )
             del self.old_params
 
-        if self._is_position(global_step, "start"):
+        if self._is_start(global_step):
             self.old_params = [p.data.clone().detach() for p in params]
 
-    def _is_position(self, global_step, pos):
-        """Return whether current iteration is start/end of update size computation."""
-        if pos == "start":
-            step = global_step
-        elif pos == "end":
-            step = global_step - self._start_end_difference
-        else:
-            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
+        return global_step - self._start_end_difference, update_size
 
-        return self._track_schedule(step)
+
+class Distance(SingleStepQuantity):
+    """Distance to initialization Quantity Class."""
+
+    def extensions(self, global_step):
+        return []
+
+    def should_compute(self, global_step):
+        return global_step == 0 or self._track_schedule(global_step)
+
+    def _compute(self, global_step, params, batch_loss):
+        """Evaluate the update size."""
+        distance = None
+
+        # Store initial parameters
+        if global_step == 0:
+            self.params_init = [p.data.clone().detach() for p in params]
+
+        if self._track_schedule(global_step):
+            distance = [
+                (init - p).norm(2).item()
+                for init, p in zip(self.params_init, params)
+                if p.requires_grad
+            ]
+
+        return distance
