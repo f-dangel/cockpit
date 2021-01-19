@@ -44,7 +44,7 @@ class Trace(SingleStepQuantity):
         """
         ext = []
 
-        if self.is_active(global_step):
+        if self.should_compute(global_step):
             try:
                 ext.append(self.extensions_from_str[self._curvature]())
             except KeyError as e:
@@ -53,7 +53,7 @@ class Trace(SingleStepQuantity):
 
         return ext
 
-    def compute(self, global_step, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Evaluate the trace of the Hessian at the current point.
 
         Args:
@@ -62,15 +62,9 @@ class Trace(SingleStepQuantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if self.is_active(global_step):
-            trace = [
-                diag_c.sum().item()
-                for diag_c in self._fetch_diag_curvature(
-                    params, self._curvature, aggregate=False
-                )
-            ]
-
-            if self._verbose:
-                print(f"[Step {global_step}] Trace: {sum(trace):.4f}")
-
-            self.output[global_step]["trace"] = trace
+        return [
+            diag_c.sum().item()
+            for diag_c in self._fetch_diag_curvature(
+                params, self._curvature, aggregate=False
+            )
+        ]

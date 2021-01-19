@@ -9,7 +9,6 @@ from backpack.extensions import BatchGradTransforms
 from backpack.extensions.backprop_extension import BackpropExtension
 from cockpit import quantities
 from cockpit.context import BackwardCTX, get_loss
-from cockpit.quantities.utils_quantities import _update_dicts
 
 
 class Cockpit:
@@ -128,14 +127,14 @@ class Cockpit:
         ]
 
         for q in before_cleanup:
-            q.compute(global_step, self.params, batch_loss)
+            q.track(global_step, self.params, batch_loss)
 
         self._free_backpack_buffers(global_step, protected_savefields)
 
         after_cleanup = [q for q in self.quantities if isinstance(q, quantities.MaxEV)]
         with backpack_deactivate_io():
             for q in after_cleanup:
-                q.compute(global_step, self.params, batch_loss)
+                q.track(global_step, self.params, batch_loss)
 
     def _free_backpack_buffers(self, global_step, protected_savefields, verbose=False):
         """Manually free quantities computed by BackPACK to save memory.
@@ -240,9 +239,26 @@ class Cockpit:
         """Fetch outputs from tracked quantities into ``self.output``."""
         # Update the cockpit with the outputs from the individual quantities
         for q in self.quantities:
-            _update_dicts(self.output, q.output)
+            key = q.__class__.__name__
+
+            for iteration, value in q.get_output().items():
+                self.output[iteration][key] = value
 
     def get_output(self):
+        """Return a nested dictionary that stores the results of all tracked quantities.
+
+        First key corresponds to the iteration, second key is the quantity class name,
+        values represent the computational result of the quantity at that iteration.
+
+        Example:
+            >>> cockpit = Cockpit(...)
+            >>> # information tracked at iteration 3
+            >>> global_step = 3
+            >>> global_step_output = cockpit.get_output()[global_step]
+            >>> # information tracked at iteration 3 by Hessian max eigenvalue quantity
+            >>> key = "MaxEV"
+            >>> max_ev_global_step_output = cockpit.output[global_step][key]
+        """
         self.update_output()
         return self.output
 

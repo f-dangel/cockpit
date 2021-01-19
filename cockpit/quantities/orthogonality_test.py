@@ -28,32 +28,15 @@ class OrthogonalityTest(SingleStepQuantity):
         """
         ext = []
 
-        if self.is_active(global_step):
+        if self.should_compute(global_step):
             ext.append(BatchGradTransforms_BatchDotGrad())
 
         return ext
 
-    def compute(self, global_step, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Track the practical version of the norm test.
 
-        Args:
-            global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-        """
-        if self.is_active(global_step):
-            orthogonality_test = self._compute(params, batch_loss).item()
-
-            if self._verbose:
-                print(
-                    f"[Step {global_step}] OrthogonalityTest: {orthogonality_test:.4f}"
-                )
-
-            self.output[global_step]["orthogonality_test"] = orthogonality_test
-
-    def _compute(self, params, batch_loss):
-        """Return maximum ν for which the orthogonality test would pass.
+        Return maximum ν for which the orthogonality test would pass.
 
         The orthogonality test is defined by Equation (3.3) in bollapragada2017adaptive.
 
@@ -74,7 +57,7 @@ class OrthogonalityTest(SingleStepQuantity):
 
         return self._compute_nu_max(
             batch_size, var_orthogonal_projection, grad_l2_squared
-        )
+        ).item()
 
     def _compute_nu_max(self, batch_size, var_orthogonal_projection, grad_l2_squared):
         """Return maximum ν for which the orthogonality test would pass.

@@ -13,7 +13,7 @@ from cockpit.quantities.quantity import SingleStepQuantity
 
 
 class MaxEV(SingleStepQuantity):
-    """Maximum Hessian Eigenvalue Quantitiy Class."""
+    """Maximum Hessian Eigenvalue Quantity Class."""
 
     def __init__(self, track_schedule, verbose=False, use_power=True):
         """Initialize maximum eigenvalue computation
@@ -37,7 +37,7 @@ class MaxEV(SingleStepQuantity):
             bool: ``True`` if the computation graph shall not be deleted,
                 else ``False``.
         """
-        return self.is_active(global_step)
+        return self.should_compute(global_step)
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -50,21 +50,8 @@ class MaxEV(SingleStepQuantity):
         """
         return []
 
-    def compute(self, global_step, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Compute the larges Hessian eigenvalue.
-
-        Args:
-            global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-        """
-        if self.is_active(global_step):
-            max_ev = np.float64(self._compute_max_ev(global_step, params, batch_loss))
-            self.output[global_step]["max_ev"] = max_ev
-
-    def _compute_max_ev(self, global_step, params, batch_loss):
-        """Helper Function to Compute the larges Hessian eigenvalue.
 
         Args:
             global_step (int): The current iteration number.
@@ -80,11 +67,7 @@ class MaxEV(SingleStepQuantity):
             max_ev = HVP.power_iteration().item()
         else:
             max_ev = eigsh(HVP, k=1, which="LA", return_eigenvectors=False)[0]
-
-        if self._verbose:
-            print(f"[Step {global_step}] MaxEV: {max_ev:.4f}")
-
-        return max_ev
+        return np.float64(max_ev)
 
 
 # Utility Function and Classes #

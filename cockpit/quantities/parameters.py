@@ -6,7 +6,7 @@ from cockpit.quantities.quantity import ByproductQuantity
 class Parameters(ByproductQuantity):
     """Parameter Quantitiy Class."""
 
-    def compute(self, global_step, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Store the current parameter.
 
         Args:
@@ -15,9 +15,4 @@ class Parameters(ByproductQuantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if self.is_active(global_step):
-            parameters = [p.data.tolist() for p in params]
-            self.output[global_step]["params"] = parameters
-
-            if self._verbose:
-                print(f"[Step {global_step}] Parameters: {parameters}")
+        return [p.data.tolist() for p in params]

@@ -22,7 +22,7 @@ def _check_timer(quantities, steps):
 
     timer = timers[0]
     for step in [0, steps]:
-        if not timer.is_active(step):
+        if not timer.should_compute(step):
             raise ValueError(f"Time quantity must track at step {step}")
 
 

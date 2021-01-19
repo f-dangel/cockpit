@@ -13,6 +13,13 @@ class Quantity:
        This may be useful if their computation requires differentiating through
        the mini-batch loss.
     2. They can ask for certain BackPACK extensions being computed.
+
+    New `Quantity` objects can be defined by inheriting from this class and
+    implementing the `extensions` and `track` methods.
+
+    Instead of writing your own `track` function, this base class already decouples
+    storing and computing results using the `should_compute` and `compute` methods.
+    You may therefore implement the latter two instead of overwriting `track`.
     """
 
     def __init__(self, track_schedule, verbose=False):
@@ -54,6 +61,58 @@ class Quantity:
         """
         raise NotImplementedError
 
+    def track(self, global_step, params, batch_loss):
+        """Perform scheduled computations and store result.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            None
+        """
+        if self.should_compute(global_step):
+            iteration, result = self.compute(global_step, params, batch_loss)
+            if result is not None:
+                if self._verbose:
+                    print(
+                        f"{self._verbose_prefix(global_step)}:"
+                        + f" Store iteration {iteration}, value {result}"
+                    )
+
+                self._save(iteration, result)
+        else:
+            if self._verbose:
+                print(f"{self._verbose_prefix(global_step)}: No computation scheduled")
+
+    def _verbose_prefix(self, global_step):
+        return f"[Step {global_step} | {self.__class__.__name__}]"
+
+    def should_compute(self, global_step):
+        """Return if computations need to be performed at a specific iteration.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            bool: Truth value whether computations need to be performed.
+        """
+        raise NotImplementedError
+
+    def _save(self, global_step, result):
+        """Store computation result.
+
+        Args:
+            global_step (int): The current iteration number.
+            result (arbitrary): The result to be stored.
+
+        Returns:
+            None
+        """
+        self.output[global_step] = result
+
     def compute(self, global_step, params, batch_loss):
         """Evaluate quantity at a step in training.
 
@@ -62,8 +121,26 @@ class Quantity:
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            (int, arbitrary): The second value is the result that will be stored at
+                the iteration indicated by the first entry (important for multi-step
+                quantities whose values are computed in later iterations).
         """
         raise NotImplementedError
+
+    def get_output(self):
+        """Return a dictionary that stores the results.
+
+        Keys correspond to the iteration and values represent the computational result.
+
+        Example:
+            >>> quantity = quantities.MaxEV()
+            >>> # information tracked at iteration 3
+            >>> global_step = 3
+            >>> global_step_output = quantity.get_output()[global_step]
+        """
+        return self.output
 
     @staticmethod
     def _fetch_grad(params, aggregate=False):
@@ -285,9 +362,15 @@ class Quantity:
 class SingleStepQuantity(Quantity):
     """Quantity that only accessed information at one point in time."""
 
-    def is_active(self, global_step):
+    def should_compute(self, global_step):
         """Return if quantity needs to perform actions at current iteration."""
         return self._track_schedule(global_step)
+
+    def compute(self, global_step, params, batch_loss):
+        return (global_step, self._compute(global_step, params, batch_loss))
+
+    def _compute(self, global_step, params, batch_loss):
+        raise NotImplementedError
 
 
 class ByproductQuantity(SingleStepQuantity):

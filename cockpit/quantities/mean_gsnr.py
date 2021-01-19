@@ -50,32 +50,13 @@ class MeanGSNR(SingleStepQuantity):
         """
         ext = []
 
-        if self.is_active(global_step):
+        if self.should_compute(global_step):
             ext.append(BatchGradTransforms_SumGradSquared())
 
         return ext
 
-    def compute(self, global_step, params, batch_loss):
-        """Track the mean GSNR.
-
-        Args:
-            global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-        """
-        if self.is_active(global_step):
-            mean_gsnr = self._compute(global_step, params, batch_loss).item()
-
-            if self._verbose:
-                print(f"[Step {global_step}] MeanGSNR: {mean_gsnr:.4f}")
-
-            self.output[global_step]["mean_gsnr"] = mean_gsnr
-
     def _compute(self, global_step, params, batch_loss):
-        """Return maximum θ for which the norm test would pass.
-
-        The norm test is defined by Equation (3.9) in byrd2012sample.
+        """Track the mean GSNR.
 
         Args:
             global_step (int): The current iteration number.
