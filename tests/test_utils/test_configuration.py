@@ -12,6 +12,7 @@ def test_quantities_cls_for_configuration(label):
     economy = [
         quantities.AlphaOptimized,
         quantities.GradNorm,
+        quantities.UpdateSize,
         quantities.Distance,
         quantities.InnerProductTest,
         quantities.OrthogonalityTest,

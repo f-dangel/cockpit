@@ -17,6 +17,7 @@ PROBLEMS = [
     quantities.AlphaOptimized,
     quantities.GradNorm,
     quantities.Distance,
+    quantities.UpdateSize,
     quantities.InnerProductTest,
     quantities.OrthogonalityTest,
     quantities.NormTest,
@@ -41,16 +42,9 @@ def test_correct_track_events_in_output(quantity_cls):
     train_small_mlp(iterations, [quantity], True)
 
     def is_track_event(iteration):
-        # TODO Refactor ``quantities.Distance`` into two quantities:
-        # 1) D2Init (SingleStepQuantity)
-        # 2) Distance (MultiStepQuantity)
-        # Currently, it can happen that ``d2init`` is already computed
-        # ``update_size`` is only computed at the next iteration. This
-        # leads to unexpected behavior in the output.
-        if isinstance(quantity, (SingleStepQuantity, quantities.Distance)):
+        if isinstance(quantity, SingleStepQuantity):
             return schedule(iteration)
         else:
-            # multi-step quantity
             shift = quantity_cls._start_end_difference
             return schedule(iteration) and iteration + shift < iterations
 

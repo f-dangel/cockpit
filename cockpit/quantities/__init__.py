@@ -6,7 +6,7 @@ from cockpit.quantities.batch_grad_hists import (
     BatchGradHistogram2d,
 )
 from cockpit.quantities.cabs import CABS
-from cockpit.quantities.distance import Distance
+from cockpit.quantities.distance import Distance, UpdateSize
 from cockpit.quantities.early_stopping import EarlyStopping
 from cockpit.quantities.grad_norm import GradNorm
 from cockpit.quantities.inner_product_test import InnerProductTest
@@ -25,6 +25,7 @@ __all__ = [
     "AlphaExpensive",
     "AlphaOptimized",
     "Distance",
+    "UpdateSize",
     "GradNorm",
     "InnerProductTest",
     "Loss",

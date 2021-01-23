@@ -43,6 +43,7 @@ def quantities_cls_for_configuration(label):
         quantities.AlphaOptimized,
         quantities.BatchGradHistogram1d,
         quantities.Distance,
+        quantities.UpdateSize,
         quantities.GradNorm,
         quantities.InnerProductTest,
         quantities.NormTest,
