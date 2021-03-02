@@ -1,6 +1,5 @@
 .PHONY: help
 .PHONY: black black-check flake8
-.PHONY: install install-dev install-devtools install-test install-lint install-docs
 .PHONY: test test-light examples
 .PHONY: conda-env
 .PHONY: black isort format
@@ -28,23 +27,12 @@ help:
 	@echo "        Run pydocstyle on the project"
 	@echo "darglint-check"
 	@echo "        Run darglint on the project"
-	@echo "install"
-	@echo "        Install cockpit and dependencies"
-	@echo "install-dev"
-	@echo "        Install all development tools"
-	@echo "install-lint"
-	@echo "        Install only the linter tools (included in install-dev)"
-	@echo "install-test"
-	@echo "        Install only the testing tools (included in install-dev)"
-	@echo "install-docs"
-	@echo "        Install only the tools to build/view the docs (included in install-dev)"
 	@echo "conda-env"
 	@echo "        Create conda environment 'cockpit' with dev setup"
 	@echo "build-docs"
 	@echo "        Build the docs"
 
-###
-# Test coverage
+### TESTING ###
 test:
 	@pytest -vx --cov=cockpit --ignore=tests/test_deepobs tests
 
@@ -58,8 +46,7 @@ examples:
 	# @cd examples && python deepobs_quadratic_deep.py
 
 
-###
-# Linter and autoformatter
+### LINTING & FORMATTING ###
 
 # Uses black.toml config instead of pyproject.toml to avoid pip issues. See
 # - https://github.com/psf/black/issues/683
@@ -93,43 +80,10 @@ format:
 
 format-check: black-check isort-check pydocstyle-check darglint-check
 
-
-###
-# Installation
-
-install:
-	@pip install -r requirements.txt
-	@pip install .
-
-install-lint:
-	@pip install -r requirements/lint.txt
-
-install-test:
-	@pip install -r requirements/test.txt
-
-install-docs:
-	@pip install -r requirements/docs.txt
-
-install-devtools:
-	@echo "Install dev tools..."
-	@pip install -r requirements/requirements-dev.txt
-
-install-dev: install-devtools
-	@echo "Install dependencies..."
-	@pip install -r requirements.txt
-	@echo "Uninstall existing version of backpack..."
-	@pip uninstall cockpit
-	@echo "Install cockpit in editable mode..."
-	@pip install -e .
-	@echo "Install pre-commit hooks..."
-	@pre-commit install
-
-###
-# Conda environment
+### CONDA ###
 conda-env:
 	@conda env create --file .conda_env.yml
 
-###
-# Documentation
+### DOC ###
 build-docs:
 	@cd docs/rtd && make html
