@@ -1,11 +1,20 @@
 name: cockpit
-channels:
-  - pytorch
-  - defaults
 dependencies:
   - pip=19.3.1
   - python=3.7.6
+  - conda-forge::black
+  - conda-forge::flake8
+  - conda-forge::flake8-bugbear
+  - conda-forge::flake8-comprehensions
+  - conda-forge::isort
+  - conda-forge::palettable
+  - conda-forge::pytest
+  - conda-forge::pytest-cov
+  - conda-forge::pytest-benchmark
+  - conda-forge::sphinx
+  - conda-forge::sphinx-gallery
+  - conda-forge::sphinx_rtd_theme
+  - conda-forge::tikzplotlib
   - pip:
-    - -r requirements.txt
-    - -r requirements/requirements-dev.txt
+    - memory-profiler
     - -e .
