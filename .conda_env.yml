@@ -17,4 +17,5 @@ dependencies:
   - conda-forge::tikzplotlib
   - pip:
     - memory-profiler
+    - pre-commit
     - -e .
