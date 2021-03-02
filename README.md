@@ -10,13 +10,11 @@
 </p>
 
 <p align="center">
-  <a href="#about-the-project">About The Project</a> •
   <a href="#installation">Installation</a> •
-  <a href="#tutorials">Tutorials</a> •
-  <a href="experiments/README.md">Experiments</a> •
   <a href="https://f-dangel.github.io/cockpit-paper/">Docs</a> •
-  <a href="#license">License</a>
-  <!-- <a href="#citation">Citation</a> -->
+  <a href="experiments/">Experiments</a> •
+  <a href="#license">License</a> •
+  <a href="#citation">Citation</a>
 </p>
 
 ![CI](https://github.com/f-dangel/cockpit-paper/actions/workflows/CI.yml/badge.svg)
