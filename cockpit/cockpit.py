@@ -7,6 +7,7 @@ from collections import defaultdict
 from backpack import backpack_deactivate_io
 from backpack.extensions import BatchGradTransforms
 from backpack.extensions.backprop_extension import BackpropExtension
+
 from cockpit import quantities
 from cockpit.context import BackwardCTX, get_loss
 

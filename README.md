@@ -36,10 +36,7 @@
 To install **Cockpit** simply run
 
 ```bash
-git clone https://github.com/ahthie7u/cockpit.git
-cd cockpit/
-pip install -r requirements.txt
-pip install .
+pip install 'git+https://github.com/f-dangel/cockpit-paper.git@v1_release'
 ```
 
 <!-- Documentation -->
