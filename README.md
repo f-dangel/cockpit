@@ -1,7 +1,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-<a href="#"><img src="docs/rtd/assets/Logo.png" alt="Logo"/></a>
+<a href="#"><img src="docs/source/_static/Banner.svg" alt="Logo"/></a>
   <h3 align="center">A Practical Debugging Tool for Training Deep Neural Networks</h3>
 
   <p align="center">
@@ -28,7 +28,7 @@
 
 ---
 
-![CockpitAnimation](docs/rtd/assets/showcase.gif)
+![CockpitAnimation](docs/source/_static/showcase.gif)
 
 <!-- Installation -->
 ## Installation

@@ -1,0 +1,66 @@
+Cockpit
+=======
+
+|CI Status| |License| |Code Style| |arXiv|
+
+----
+
+**Cockpit is a visual and statistical debugger specifically desigend for deep
+learning.** Training a deep neural network is often a pain! Succesfully training
+such a network usually requires either years of intuition or expensive parameter
+searches involving lots of trial and error. Traditional debuggers provide only
+limited help: They can find *syntactical errors* but not *training bugs* such as
+ill-chosen learning rates. **Cockpit** offers a closer, more meaningful look
+into the training process with multiple well-chosen *instruments*.
+
+----
+
+.. image:: ../source/_static/showcase.gif
+
+
+To install **Cockpit** simply run
+
+.. code:: bash
+
+  pip install 'git+https://github.com/f-dangel/cockpit-paper.git@v1_release'
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API Documentation
+
+   api/cockpit
+   api/plotter
+   api/quantities
+   api/instruments
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Other
+
+   GitHub Repository <https://github.com/f-dangel/cockpit-paper>
+   other/contributors
+   other/license
+
+
+Indices
+"""""""
+
+* :ref:`genindex`
+* :ref:`modindex`
+
+
+.. |CI Status| image:: https://github.com/f-dangel/cockpit-paper/actions/workflows/CI.yml/badge.svg
+    :target: https://github.com/f-dangel/cockpit-paper/actions/workflows/CI.yml
+    :alt: CI Status
+
+.. |License| image:: https://img.shields.io/badge/License-MIT-green.svg
+    :target: https://github.com/f-dangel/cockpit-paper/blob/master/LICENSE
+    :alt: License
+
+.. |Code Style| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+    :alt: Code Style
+
+.. |arXiv| image:: https://img.shields.io/static/v1?logo=arxiv&logoColor=white&label=Preprint&message=2102.06604&color=B31B1B
+    :target: https://arxiv.org/abs/2102.06604
+    :alt: arXiv

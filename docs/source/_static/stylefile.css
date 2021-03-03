@@ -1,0 +1,162 @@
+/* Stylefile shamelessly copied (with permission) from ProbNum (Jonathan Wenger et al.) */
+
+/* Color variables */
+:root {
+    --pn-green: #107d79;
+    --pn-lightgreen: #e9f4f4;
+    --pn-brightgreen: #16b3ad;
+    --pn-orange: #ff9933;
+    --pn-darkred: #820000;
+    --pn-darkgray: #333333;
+    --pn-lightgray: #f2f2f2;
+    --background-gray: #fcfcfc;
+  }
+  
+  /* Font */
+  body {
+      font-family: Roboto light, Helvetica, sans-serif;
+  }
+  
+  .rst-content .toctree-wrapper > p.caption, h1, h2, h3, h4, h5, h6, legend {
+      margin-top: 0;
+      font-weight: 700;
+      font-family: Open sans light, Helvetica, sans-serif;
+  }
+  
+  /* Content */
+  .wy-nav-content {
+    max-width: 1000px;
+  }
+  .wy-nav-content a:visited {
+      color: var(--pn-green);
+  }
+  
+  /* Sidebar */
+  
+  /* Logo area */
+  .wy-nav-top {
+      background: var(--pn-green);
+  }
+  .wy-nav-side {
+      background: var(--pn-darkgray);
+  }
+  /* Home button */
+  .wy-side-nav-search .wy-dropdown > a, .wy-side-nav-search > a {
+      color: var(--pn-darkgray);
+  }
+  /* Version number */
+  .wy-side-nav-search > div.version {
+      color: var(--pn-darkgray);
+  }
+  /* Sidebar headers */
+  .wy-menu-vertical header, .wy-menu-vertical p.caption {
+      color: var(--pn-brightgreen);
+  }
+  /* Sidebar links */
+  .wy-menu-vertical a:active {
+      background-color: var(--pn-green);
+  }
+  .wy-menu-vertical a:hover {
+      color: var(--pn-brightgreen);
+  }
+  
+  /* Hyperlinks */
+  a {
+      color: var(--pn-green);
+      text-decoration: none;
+  }
+  
+  a:hover {
+      color: var(--pn-green);
+      text-decoration: underline;
+  }
+  
+  /* API Documentation */
+  .rst-content code, .rst-content tt {
+      color: var(--pn-darkgray);
+  }
+  .rst-content .viewcode-link {
+      color: -var(--pn-green);
+  }
+  
+  /* Code block */
+  .highlight {
+      background: var(--pn-lightgray);
+  }
+  
+  /* Code inline */
+  .rst-content code.literal, .rst-content tt.literal{
+      color: var(--pn-green);
+      padding: 1px 2px;
+          background-color: var(--pn-lightgreen);
+          border-radius: 4px;
+  }
+  
+  /* Alert boxes (e.g. documentation "see also") */
+  html.writer-html4 .rst-content dl:not(.docutils) dl:not(.field-list) > dt, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) dl:not(.field-list) > dt {
+      border-left: 3px solid grey;
+      background: #fff0;
+      color: #555;
+  }
+  
+  /* Footnotes */
+  html.writer-html5 .rst-content dl.footnote > dd {
+      margin: 0 0 0;
+  }
+  
+  /* Block quotes */
+  .rst-content blockquote {
+      margin-left: 0px;
+      line-height: 24px;
+      margin-bottom: 0px;
+      border-left: 5px solid #f2f2f2;
+      padding-left: 18px
+  }
+  
+  /* Sphinx gallery */
+  div.sphx-glr-thumbcontainer {
+      background: var(--pn-lightgray);
+      border: solid var(--pn-lightgray) 1px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+  }
+  div.sphx-glr-thumbcontainer:hover {
+      box-shadow: 0 0 10px #107d7930;
+      border: solid var(--pn-green) 1px;
+  }
+  
+  /* Plot animations */
+  .anim-state label {
+      margin-right: 8px;
+      display: inline;
+  }
+  
+  /* Author attribution */
+  .rst-content .section .authorlist ul li{
+      float: left;
+      list-style: none;
+      margin-left: 16px;
+      margin-bottom: 0px;
+  }
+  
+  .avatar {
+    vertical-align: middle;
+    border-radius: 10%;
+  }
+  
+  /* ReadTheDocs */
+  .fa {
+      font: Open Sans light, Helvetica, sans-serif;
+  }
+  
+  .rst-versions {
+      font-family: Open sans light, Helvetica, sans-serif;
+  }
+  
+  .rst-versions .rst-current-version {
+      color: var(--pn-brightgreen);
+  }
+  
+  .keep-us-sustainable {
+      border: 1px dotted var(--pn-lightgray);
+  }

@@ -11,9 +11,11 @@ dependencies:
   - conda-forge::pytest
   - conda-forge::pytest-cov
   - conda-forge::pytest-benchmark
+  - conda-forge::m2r2
   - conda-forge::sphinx
-  - conda-forge::sphinx-gallery
+  - conda-forge::sphinx-automodapi
   - conda-forge::sphinx_rtd_theme
+  - conda-forge::graphviz
   - conda-forge::tikzplotlib
   - pip:
     - memory-profiler

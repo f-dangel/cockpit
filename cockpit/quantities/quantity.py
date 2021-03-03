@@ -9,6 +9,7 @@ class Quantity:
     """Base class for a tracked quantity with the Cockpit.
 
     Quantities can modify the backward pass:
+
     1. They can ask that the forward pass computation graph be restored.
        This may be useful if their computation requires differentiating through
        the mini-batch loss.

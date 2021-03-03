@@ -4,8 +4,6 @@ import warnings
 
 import numpy
 import torch
-from numpy import histogram2d as numpy_histogram2d
-
 from backpack import extensions
 from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
@@ -18,6 +16,7 @@ from cockpit.quantities.utils_hists import (
     transform_param_abs_max,
     transform_param_min_max,
 )
+from numpy import histogram2d as numpy_histogram2d
 
 
 class BatchGradHistogram1d(SingleStepQuantity):
@@ -38,6 +37,9 @@ class BatchGradHistogram1d(SingleStepQuantity):
         """Initialize the 1D Histogram of individual gradient elements.
 
         Args:
+            track_schedule (callable): Function that maps the ``global_step``
+                to a boolean, which determines if the quantity should be computed.
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             xmin (float): Lower clipping bound for individual gradients in histogram.
             xmax (float): Upper clipping bound for individual gradients in histogram.
             bins (int): Number of bins
@@ -241,6 +243,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
             which (str): Which histogram function should be used. Performance varies
                 strongly among different methods, and also depend on the data being
                 histogram-ed. Choices:
+
                 - ``'numpy'``: Load to CPU and use ``numpy`` implementation.
                 - ``'histogramdd'``: Use torch implementation that is currently under
                   review for being merged.
@@ -254,6 +257,7 @@ class BatchGradHistogram2d(SingleStepQuantity):
                 every time the histogram is recomputed.
             adapt_policy (str): Strategy to adapt the histogram limits.
                 Options are:
+
                 - "abs_max": Sets interval to range between negative and positive
                   maximum absolute value (+ padding).
                 - "min_max": Sets interval range between minimum and maximum value

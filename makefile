@@ -84,6 +84,6 @@ format-check: black-check isort-check pydocstyle-check darglint-check
 conda-env:
 	@conda env create --file .conda_env.yml
 
-### DOC ###
+### DOCS ###
 build-docs:
-	@cd docs/rtd && make html
+	@cd docs && make clean && make html
