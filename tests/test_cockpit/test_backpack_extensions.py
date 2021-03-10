@@ -1,5 +1,6 @@
 """Intergation tests for ``cockpit.quantities``."""
 
+from backpack.extensions import DiagHessian
 from cockpit import quantities
 from cockpit.utils.schedules import linear
 from tests.utils import SimpleTestHarness
@@ -20,7 +21,7 @@ class CustomTestHarness(SimpleTestHarness):
     def check_after_context(self):
         """Check that the buffers are not deleted when specified by the user."""
         for param in self.model.parameters():
-            # assert hasattr(param, "diag_h")
+            assert hasattr(param, "diag_h")
             # not protected by user
             assert not hasattr(param, "grad_batch_transforms")
 
@@ -32,4 +33,4 @@ def test_backpack_extensions():
     iterations = 3
     testing_harness = CustomTestHarness("ToyData", iterations)
     cockpit_kwargs = {"quantities": [quantity]}
-    testing_harness.test(cockpit_kwargs)
+    testing_harness.test(cockpit_kwargs, DiagHessian())
