@@ -25,6 +25,8 @@ jobs:
         pip install pytest
         pip install pytest-cov
         pip install .
+        pip install git+https://git@github.com/fsschneider/DeepOBS.git@develop#egg=deepobs
+        pip install git+https://git@github.com/f-dangel/backobs.git@development#egg=backobs
     - name: Run pytest
       run: |
-        make test-light
+        make test
