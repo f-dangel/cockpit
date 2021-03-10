@@ -40,22 +40,22 @@ def quantities_cls_for_configuration(label):
         KeyError: If ``label`` is an unknown configuration.
     """
     economy = [
-        quantities.AlphaOptimized,
-        quantities.BatchGradHistogram1d,
+        quantities.Alpha,
+        quantities.GradHist1d,
         quantities.Distance,
         quantities.UpdateSize,
         quantities.GradNorm,
-        quantities.InnerProductTest,
+        quantities.InnerTest,
         quantities.NormTest,
-        quantities.OrthogonalityTest,
+        quantities.OrthoTest,
     ]
     business = economy + [
         quantities.TICDiag,
-        quantities.Trace,
+        quantities.HessTrace,
     ]
     full = business + [
-        quantities.MaxEV,
-        quantities.BatchGradHistogram2d,
+        quantities.HessMaxEV,
+        quantities.GradHist2d,
     ]
 
     configs = {
