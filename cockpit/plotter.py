@@ -16,9 +16,6 @@ from cockpit import instruments
 from cockpit.cockpit import Cockpit
 from cockpit.instruments import utils_plotting
 
-# TODO Remove DeepOBS dependency
-from deepobs import config
-
 
 class CockpitPlotter:
     """Cockpit Plotter Class."""
@@ -345,7 +342,7 @@ class CockpitPlotter:
             source.update_output()
             data = source.get_output()
         elif isinstance(source, str):
-            with open(source) as f:
+            with open(source + ".json") as f:
                 # defaultdict to be consistent with fetching from Cockpit
                 data = defaultdict(dict, json.load(f))
         else:
@@ -398,21 +395,9 @@ class CockpitPlotter:
     def _post_process_plot(self):
         """Process the plotting figure, by adding a title, legend, etc."""
         # Set Title
-        try:
-            tp = (
-                config.get_data_set_naming()[self.dataset]
-                + " "
-                + config.get_tp_naming()[self.model]
-            )
-            self.fig.suptitle(
-                "Cockpit for " + self.optimizer + " on " + tp,
-                fontsize="xx-large",
-                fontweight="bold",
-            )
-        except KeyError:
-            self.fig.suptitle(
-                "Cockpit for " + self.optimizer, fontsize="xx-large", fontweight="bold"
-            )
+        self.fig.suptitle(
+            "Cockpit for " + self.optimizer, fontsize="xx-large", fontweight="bold"
+        )
 
         # # Set Legend
         # ax = self.fig.add_subplot(self.grid_spec[0, 0])
