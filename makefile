@@ -75,6 +75,7 @@ conda-env:
 
 ### DOCS ###
 build-docs:
+	@find . -type d -name "automod" -exec rm -r {} +
 	@cd docs && make clean && make html
 
 ### CLEAN ###

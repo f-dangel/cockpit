@@ -1,24 +1,26 @@
-MaxEV
+Alpha
 =====
 
 .. currentmodule:: cockpit.quantities
 
-.. autoclass:: MaxEV
+.. autoclass:: Alpha
    :show-inheritance:
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
-      ~MaxEV.compute
-      ~MaxEV.create_graph
-      ~MaxEV.extensions
-      ~MaxEV.get_output
-      ~MaxEV.should_compute
-      ~MaxEV.track
+      ~Alpha.clear_info
+      ~Alpha.compute
+      ~Alpha.create_graph
+      ~Alpha.extensions
+      ~Alpha.get_output
+      ~Alpha.should_compute
+      ~Alpha.track
 
    .. rubric:: Methods Documentation
 
+   .. automethod:: clear_info
    .. automethod:: compute
    .. automethod:: create_graph
    .. automethod:: extensions

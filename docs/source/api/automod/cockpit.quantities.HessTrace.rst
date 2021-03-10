@@ -1,27 +1,27 @@
-Trace
-=====
+HessTrace
+=========
 
 .. currentmodule:: cockpit.quantities
 
-.. autoclass:: Trace
+.. autoclass:: HessTrace
    :show-inheritance:
 
    .. rubric:: Attributes Summary
 
    .. autosummary::
 
-      ~Trace.extensions_from_str
+      ~HessTrace.extensions_from_str
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
-      ~Trace.compute
-      ~Trace.create_graph
-      ~Trace.extensions
-      ~Trace.get_output
-      ~Trace.should_compute
-      ~Trace.track
+      ~HessTrace.compute
+      ~HessTrace.create_graph
+      ~HessTrace.extensions
+      ~HessTrace.get_output
+      ~HessTrace.should_compute
+      ~HessTrace.track
 
    .. rubric:: Attributes Documentation
 

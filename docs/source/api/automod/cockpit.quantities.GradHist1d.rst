@@ -1,21 +1,21 @@
-BatchGradHistogram2d
-====================
+GradHist1d
+==========
 
 .. currentmodule:: cockpit.quantities
 
-.. autoclass:: BatchGradHistogram2d
+.. autoclass:: GradHist1d
    :show-inheritance:
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
-      ~BatchGradHistogram2d.compute
-      ~BatchGradHistogram2d.create_graph
-      ~BatchGradHistogram2d.extensions
-      ~BatchGradHistogram2d.get_output
-      ~BatchGradHistogram2d.should_compute
-      ~BatchGradHistogram2d.track
+      ~GradHist1d.compute
+      ~GradHist1d.create_graph
+      ~GradHist1d.extensions
+      ~GradHist1d.get_output
+      ~GradHist1d.should_compute
+      ~GradHist1d.track
 
    .. rubric:: Methods Documentation
 

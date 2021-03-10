@@ -1,21 +1,21 @@
-BatchGradHistogram1d
-====================
+HessMaxEV
+=========
 
 .. currentmodule:: cockpit.quantities
 
-.. autoclass:: BatchGradHistogram1d
+.. autoclass:: HessMaxEV
    :show-inheritance:
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
-      ~BatchGradHistogram1d.compute
-      ~BatchGradHistogram1d.create_graph
-      ~BatchGradHistogram1d.extensions
-      ~BatchGradHistogram1d.get_output
-      ~BatchGradHistogram1d.should_compute
-      ~BatchGradHistogram1d.track
+      ~HessMaxEV.compute
+      ~HessMaxEV.create_graph
+      ~HessMaxEV.extensions
+      ~HessMaxEV.get_output
+      ~HessMaxEV.should_compute
+      ~HessMaxEV.track
 
    .. rubric:: Methods Documentation
 

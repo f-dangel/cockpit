@@ -1,26 +1,24 @@
-AlphaOptimized
-==============
+GradHist2d
+==========
 
 .. currentmodule:: cockpit.quantities
 
-.. autoclass:: AlphaOptimized
+.. autoclass:: GradHist2d
    :show-inheritance:
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
-      ~AlphaOptimized.clear_info
-      ~AlphaOptimized.compute
-      ~AlphaOptimized.create_graph
-      ~AlphaOptimized.extensions
-      ~AlphaOptimized.get_output
-      ~AlphaOptimized.should_compute
-      ~AlphaOptimized.track
+      ~GradHist2d.compute
+      ~GradHist2d.create_graph
+      ~GradHist2d.extensions
+      ~GradHist2d.get_output
+      ~GradHist2d.should_compute
+      ~GradHist2d.track
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: clear_info
    .. automethod:: compute
    .. automethod:: create_graph
    .. automethod:: extensions

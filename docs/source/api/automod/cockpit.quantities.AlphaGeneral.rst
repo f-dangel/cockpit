@@ -1,22 +1,22 @@
-AlphaExpensive
-==============
+AlphaGeneral
+============
 
 .. currentmodule:: cockpit.quantities
 
-.. autoclass:: AlphaExpensive
+.. autoclass:: AlphaGeneral
    :show-inheritance:
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
-      ~AlphaExpensive.clear_info
-      ~AlphaExpensive.compute
-      ~AlphaExpensive.create_graph
-      ~AlphaExpensive.extensions
-      ~AlphaExpensive.get_output
-      ~AlphaExpensive.should_compute
-      ~AlphaExpensive.track
+      ~AlphaGeneral.clear_info
+      ~AlphaGeneral.compute
+      ~AlphaGeneral.create_graph
+      ~AlphaGeneral.extensions
+      ~AlphaGeneral.get_output
+      ~AlphaGeneral.should_compute
+      ~AlphaGeneral.track
 
    .. rubric:: Methods Documentation
 

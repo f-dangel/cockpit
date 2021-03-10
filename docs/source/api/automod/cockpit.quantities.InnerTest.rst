@@ -1,21 +1,21 @@
-OrthogonalityTest
-=================
+InnerTest
+=========
 
 .. currentmodule:: cockpit.quantities
 
-.. autoclass:: OrthogonalityTest
+.. autoclass:: InnerTest
    :show-inheritance:
 
    .. rubric:: Methods Summary
 
    .. autosummary::
 
-      ~OrthogonalityTest.compute
-      ~OrthogonalityTest.create_graph
-      ~OrthogonalityTest.extensions
-      ~OrthogonalityTest.get_output
-      ~OrthogonalityTest.should_compute
-      ~OrthogonalityTest.track
+      ~InnerTest.compute
+      ~InnerTest.create_graph
+      ~InnerTest.extensions
+      ~InnerTest.get_output
+      ~InnerTest.should_compute
+      ~InnerTest.track
 
    .. rubric:: Methods Documentation
 
