@@ -1,6 +1,6 @@
 """Quantities tracked during training."""
 
-from cockpit.quantities.alpha import Alpha
+from cockpit.quantities.alpha import Alpha, AlphaGeneral
 from cockpit.quantities.cabs import CABS
 from cockpit.quantities.distance import Distance, UpdateSize
 from cockpit.quantities.early_stopping import EarlyStopping
@@ -27,6 +27,7 @@ __all__ = [
     "GradNorm",
     "Time",
     "Alpha",
+    "AlphaGeneral",
     "CABS",
     "EarlyStopping",
     "GradHist1d",

@@ -120,7 +120,7 @@ class _Alpha(Quantity):
         return self._track_schedule(step)
 
 
-class _AlphaExpensive(_Alpha):
+class AlphaGeneral(_Alpha):
     """Compute α but requires storing individual gradients."""
 
     def extensions(self, global_step):
