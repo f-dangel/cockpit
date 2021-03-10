@@ -188,7 +188,7 @@ class _AlphaExpensive(_Alpha):
         return info
 
 
-class AlphaOptimized(_Alpha):
+class Alpha(_Alpha):
     """Optimized α Quantity Class. Does not require storing individual gradients."""
 
     def extensions(self, global_step):

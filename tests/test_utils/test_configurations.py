@@ -9,17 +9,17 @@ from cockpit.utils.configuration import quantities_cls_for_configuration
 def test_quantities_cls_for_configuration(label):
     """Check cockpit configurations contain the correct quantities."""
     economy = [
-        quantities.AlphaOptimized,
+        quantities.Alpha,
         quantities.GradNorm,
         quantities.UpdateSize,
         quantities.Distance,
-        quantities.InnerProductTest,
-        quantities.OrthogonalityTest,
+        quantities.InnerTest,
+        quantities.OrthoTest,
         quantities.NormTest,
-        quantities.BatchGradHistogram1d,
+        quantities.GradHist1d,
     ]
-    business = economy + [quantities.TICDiag, quantities.Trace]
-    full = business + [quantities.MaxEV, quantities.BatchGradHistogram2d]
+    business = economy + [quantities.TICDiag, quantities.HessTrace]
+    full = business + [quantities.HessMaxEV, quantities.GradHist2d]
 
     configs = {
         "full": set(full),

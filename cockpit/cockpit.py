@@ -76,6 +76,7 @@ class Cockpit:
         """Collect BackPACK extensions required at current iteration.
 
         Args:
+            global_step (int): Current number of iteration.
             custom_exts (list or tuple): Custom BackPACK extensions that will be
                 computed on top.
         """
@@ -124,7 +125,7 @@ class Cockpit:
         batch_loss = get_loss(global_step)
 
         before_cleanup = [
-            q for q in self.quantities if not isinstance(q, quantities.MaxEV)
+            q for q in self.quantities if not isinstance(q, quantities.HessMaxEV)
         ]
 
         for q in before_cleanup:
@@ -132,7 +133,9 @@ class Cockpit:
 
         self._free_backpack_buffers(global_step, protected_savefields)
 
-        after_cleanup = [q for q in self.quantities if isinstance(q, quantities.MaxEV)]
+        after_cleanup = [
+            q for q in self.quantities if isinstance(q, quantities.HessMaxEV)
+        ]
         with backpack_deactivate_io():
             for q in after_cleanup:
                 q.track(global_step, self.params, batch_loss)
@@ -257,7 +260,7 @@ class Cockpit:
             >>> global_step = 3
             >>> global_step_output = cockpit.get_output()[global_step]
             >>> # information tracked at iteration 3 by Hessian max eigenvalue quantity
-            >>> key = "MaxEV"
+            >>> key = "HessMaxEV"
             >>> max_ev_global_step_output = cockpit.output[global_step][key]
         """
         self.update_output()
