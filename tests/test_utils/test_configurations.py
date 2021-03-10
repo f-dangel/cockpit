@@ -1,7 +1,6 @@
 """Tests for ``cockpit.utils.configuration``."""
 
 import pytest
-
 from cockpit import quantities
 from cockpit.utils.configuration import quantities_cls_for_configuration
 
