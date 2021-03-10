@@ -31,7 +31,7 @@ class SimpleTestHarness:
         self.opt_kwargs = opt_kwargs
         self.data, self.model = self.extract_problem(problem)
 
-    def test(self, cockpit_kwargs):
+    def test(self, cockpit_kwargs, *backpack_exts):
         # Extend
         model = extend(self.model)
         loss_fn = extend(torch.nn.CrossEntropyLoss(reduction="mean"))
@@ -42,6 +42,8 @@ class SimpleTestHarness:
 
         # Initialize Cockpit
         self.cockpit = Cockpit(model.parameters(), **cockpit_kwargs)
+
+        # print(cockpit_exts)
 
         # Main training loop
         global_step = 0
@@ -56,6 +58,7 @@ class SimpleTestHarness:
             # backward pass
             with self.cockpit(
                 global_step,
+                *backpack_exts,
                 info={
                     "batch_size": inputs.shape[0],
                     "individual_losses": losses,
