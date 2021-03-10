@@ -20,4 +20,6 @@ dependencies:
   - pip:
     - memory-profiler
     - pre-commit
+    - git+https://git@github.com/fsschneider/DeepOBS.git@develop#egg=deepobs
+    - git+https://git@github.com/f-dangel/backobs.git@development#egg=backobs
     - -e .
