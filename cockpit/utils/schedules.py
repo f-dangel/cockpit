@@ -4,8 +4,15 @@ import torch
 
 
 def linear(interval, offset=0):
-    """Create schedule that tracks at iterations ``{offset + n interval | n >= 0}``."""
+    """Creates a linear schedule that tracks when ``{offset + n interval | n >= 0}``.
 
+    Args:
+        interval (int): The regular tracking interval.
+        offset (int, optional): Offset of tracking. Defaults to 0.
+
+    Returns:
+        func: Function that given the global_step returns whether it should track.
+    """
     docstring = "Track at iterations {" + f"{offset} + n * {interval} " + "| n >= 0}."
 
     def schedule(global_step):
@@ -21,8 +28,18 @@ def linear(interval, offset=0):
 
 
 def logarithmic(start, end, steps=300, base=10, init=True):
-    """Create schedule that tracks linearly in logspace."""
+    """Creates a logarithmic tracking schedule.
 
+    Args:
+        start ([type]): The starting value.
+        end ([type]): The end value.
+        steps (int, optional): Number of log spaced points. Defaults to 300.
+        base (int, optional): Logarithmic base. Defaults to 10.
+        init (bool, optional): Whether 0 should be included. Defaults to True.
+
+    Returns:
+        func: Function that given the global_step returns whether it should track.
+    """
     # TODO Compute match and avoid array lookup
     scheduled_steps = torch.logspace(start, end, steps, base=base, dtype=int)
 
