@@ -12,7 +12,7 @@ from examples.utils.utils_examples import cnn, fmnist_data, get_logpath
 fmnist_data = fmnist_data()
 model = extend(cnn())  # Use a basic convolutional network
 loss_fn = extend(torch.nn.CrossEntropyLoss(reduction="mean"))
-indidivual_loss_fn = extend(torch.nn.CrossEntropyLoss(reduction="none"))
+individual_loss_fn = extend(torch.nn.CrossEntropyLoss(reduction="none"))
 
 # Create SGD Optimizer
 opt = torch.optim.SGD(model.parameters(), lr=5e-1)
@@ -31,7 +31,7 @@ for inputs, labels in iter(fmnist_data):
     # forward pass
     outputs = model(inputs)
     loss = loss_fn(outputs, labels)
-    losses = indidivual_loss_fn(outputs, labels).detach()
+    losses = individual_loss_fn(outputs, labels).detach()
 
     # backward pass
     with cockpit(

@@ -11,7 +11,7 @@ from examples.utils.utils_examples import fmnist_data
 fmnist_data = fmnist_data()
 model = extend(torch.nn.Sequential(torch.nn.Flatten(), torch.nn.Linear(784, 10)))
 loss_fn = extend(torch.nn.CrossEntropyLoss(reduction="mean"))
-indidivual_loss_fn = torch.nn.CrossEntropyLoss(reduction="none")
+individual_loss_fn = torch.nn.CrossEntropyLoss(reduction="none")
 
 # Create SGD Optimizer
 opt = torch.optim.SGD(model.parameters(), lr=1e-2)
@@ -28,7 +28,7 @@ for inputs, labels in iter(fmnist_data):
     # forward pass
     outputs = model(inputs)
     loss = loss_fn(outputs, labels)
-    losses = indidivual_loss_fn(outputs, labels).detach()
+    losses = individual_loss_fn(outputs, labels).detach()
 
     # backward pass
     with cockpit(
