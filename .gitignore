@@ -321,4 +321,6 @@ tex/CVPR2021/arXiv/
 # local emacs variables
 !**/.dir-locals.el
 
+examples/logfiles/
+
 .envrc

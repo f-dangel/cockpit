@@ -1,3 +1,4 @@
+=======
 Cockpit
 =======
 
@@ -5,8 +6,8 @@ Cockpit
 
 ----
 
-**Cockpit is a visual and statistical debugger specifically desigend for deep
-learning.** Training a deep neural network is often a pain! Succesfully training
+**Cockpit is a visual and statistical debugger specifically designed for deep
+learning.** Training a deep neural network is often a pain! Successfully training
 such a network usually requires either years of intuition or expensive parameter
 searches involving lots of trial and error. Traditional debuggers provide only
 limited help: They can find *syntactical errors* but not *training bugs* such as
@@ -15,7 +16,7 @@ into the training process with multiple well-chosen *instruments*.
 
 ----
 
-.. image:: ../source/_static/showcase.gif
+.. image:: _static/showcase.gif
 
 
 To install **Cockpit** simply run
@@ -23,6 +24,16 @@ To install **Cockpit** simply run
 .. code:: bash
 
   pip install 'git+https://github.com/f-dangel/cockpit-paper.git@v1_release'
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Tutorials and Examples
+
+   examples/01_basic_fmnist
+   examples/02_advanced_fmnist
+   examples/03_deepobs
+
 
 .. toctree::
    :maxdepth: 1
