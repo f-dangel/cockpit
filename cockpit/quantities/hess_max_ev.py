@@ -4,21 +4,23 @@ import warnings
 
 import numpy as np
 import torch
-from scipy.sparse.linalg import LinearOperator, eigsh
-from torch.nn.utils import parameters_to_vector
-
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
 from cockpit.quantities.quantity import SingleStepQuantity
+from scipy.sparse.linalg import LinearOperator, eigsh
+from torch.nn.utils import parameters_to_vector
 
 
-class MaxEV(SingleStepQuantity):
+class HessMaxEV(SingleStepQuantity):
     """Maximum Hessian Eigenvalue Quantity Class."""
 
     def __init__(self, track_schedule, verbose=False, use_power=True):
-        """Initialize maximum eigenvalue computation
+        """Initialize maximum eigenvalue computation.
 
         Args:
+            track_schedule (callable): Function that maps the ``global_step``
+                to a boolean, which determines if the quantity should be computed.
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             use_power (bool): If ``True``, uses a power iteration that works on GPUs.
                 If ``True``, use ``scipy.sparse.linalg.eigsh`` for eigenvalue computa-
                 tion (requires transfers from GPU to CPU and ``torch`` to ``numpy``.)

@@ -20,6 +20,9 @@ class CABS(SingleStepQuantity):
         """Initialize.
 
         Args:
+            track_schedule (callable): Function that maps the ``global_step``
+                to a boolean, which determines if the quantity should be computed.
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             lr (float): Learning rate. Defaults to 1.0.
             verbose (bool): Turns on verbose mode. Defaults to ``False``.
         """

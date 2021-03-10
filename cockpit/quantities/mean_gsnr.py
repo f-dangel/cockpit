@@ -1,7 +1,6 @@
 """Class for tracking the Mean Gradient Signal to Noise Ration (GSNR)."""
 
 import torch
-
 from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_quantities import (
@@ -33,6 +32,9 @@ class MeanGSNR(SingleStepQuantity):
         """Initialize.
 
         Args:
+            track_schedule (callable): Function that maps the ``global_step``
+                to a boolean, which determines if the quantity should be computed.
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             epsilon (float): Stabilization constant. Defaults to 1e-5.
         """
         super().__init__(track_schedule, verbose=verbose)
@@ -70,6 +72,7 @@ class MeanGSNR(SingleStepQuantity):
         """Compute gradient signal-to-noise ratio.
 
         Args:
+            global_step (int): The current iteration number.
             params ([torch.Tensor]): List of parameters considered in the computation.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """

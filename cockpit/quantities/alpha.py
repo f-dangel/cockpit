@@ -5,7 +5,6 @@ import warnings
 
 import numpy as np
 import torch
-
 from backpack import extensions
 from cockpit.context import get_batch_size, get_individual_losses
 from cockpit.quantities.quantity import Quantity
@@ -121,7 +120,7 @@ class _Alpha(Quantity):
         return self._track_schedule(step)
 
 
-class AlphaExpensive(_Alpha):
+class _AlphaExpensive(_Alpha):
     """Compute α but requires storing individual gradients."""
 
     def extensions(self, global_step):

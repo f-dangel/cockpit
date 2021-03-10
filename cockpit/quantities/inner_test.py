@@ -1,13 +1,12 @@
 """Class for tracking the Inner Product Test."""
 
 import torch
-
 from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_transforms import BatchGradTransforms_BatchDotGrad
 
 
-class InnerProductTest(SingleStepQuantity):
+class InnerTest(SingleStepQuantity):
     """Inner Product Quantitiy Class.
 
     Inner product test proposed in bollapragada2017adaptive.
@@ -40,6 +39,7 @@ class InnerProductTest(SingleStepQuantity):
         The inner product test is defined by Equation (2.6) in bollapragada2017adaptive.
 
         Args:
+            global_step (int): The current iteration number.
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.

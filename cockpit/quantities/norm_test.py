@@ -1,7 +1,6 @@
 """Class for tracking the Norm Test."""
 
 import torch
-
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_transforms import BatchGradTransforms_BatchL2Grad
 
@@ -39,6 +38,7 @@ class NormTest(SingleStepQuantity):
         The norm test is defined by Equation (3.9) in byrd2012sample.
 
         Args:
+            global_step (int): The current iteration number.
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.

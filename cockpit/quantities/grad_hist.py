@@ -19,7 +19,7 @@ from cockpit.quantities.utils_hists import (
 from numpy import histogram2d as numpy_histogram2d
 
 
-class BatchGradHistogram1d(SingleStepQuantity):
+class GradHist1d(SingleStepQuantity):
     """One-dimensional histogram of individual gradient elements."""
 
     def __init__(
@@ -200,7 +200,7 @@ class BatchGradHistogram1d(SingleStepQuantity):
         return torch.linspace(self._xmin, self._xmax, steps=self._bins + 1)
 
 
-class BatchGradHistogram2d(SingleStepQuantity):
+class GradHist2d(SingleStepQuantity):
     """Two-dimensional histogram of individual gradient elements over parameters.
 
     Individual gradient values are binned among the x-axis, parameter values are
@@ -590,7 +590,6 @@ class BatchGradHistogram2d(SingleStepQuantity):
 
     def _update_x_limits(self, params):
         """Update the histogram's x limits."""
-
         if self._adapt_policy == "abs_max":
             pad_factor = 1 + self._xpad
             abs_max = max(p.grad_batch_transforms["grad_batch_abs_max"] for p in params)
@@ -623,7 +622,6 @@ class BatchGradHistogram2d(SingleStepQuantity):
 
     def _update_y_limits(self, params):
         """Update the histogram's y limits."""
-
         if self._adapt_policy == "abs_max":
             pad_factor = 1 + self._ypad
             abs_max = max(p.grad_batch_transforms["param_abs_max"] for p in params)

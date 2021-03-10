@@ -364,10 +364,30 @@ class SingleStepQuantity(Quantity):
     """Quantity that only accessed information at one point in time."""
 
     def should_compute(self, global_step):
-        """Return if quantity needs to perform actions at current iteration."""
+        """Return if computations need to be performed at a specific iteration.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            bool: Truth value whether computations need to be performed.
+        """
         return self._track_schedule(global_step)
 
     def compute(self, global_step, params, batch_loss):
+        """Evaluate quantity at a step in training.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            (int, arbitrary): The second value is the result that will be stored at
+                the iteration indicated by the first entry (important for multi-step
+                quantities whose values are computed in later iterations).
+        """
         return (global_step, self._compute(global_step, params, batch_loss))
 
     def _compute(self, global_step, params, batch_loss):
@@ -378,4 +398,12 @@ class ByproductQuantity(SingleStepQuantity):
     """Quantity that is just tracked and does not require additional computation."""
 
     def extensions(self, global_step):
+        """Return list of BackPACK extensions required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            list: (Potentially empty) list with required BackPACK quantities.
+        """
         return []

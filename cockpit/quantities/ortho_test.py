@@ -3,12 +3,11 @@
 import math
 
 import torch
-
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_transforms import BatchGradTransforms_BatchDotGrad
 
 
-class OrthogonalityTest(SingleStepQuantity):
+class OrthoTest(SingleStepQuantity):
     """Orthogonality Test Quantitiy Class.
 
     Orthogonality test proposed in bollapragada2017adaptive.
@@ -34,13 +33,14 @@ class OrthogonalityTest(SingleStepQuantity):
         return ext
 
     def _compute(self, global_step, params, batch_loss):
-        """Track the practical version of the norm test.
+        """Track the practical version of the orthogonality test.
 
         Return maximum ν for which the orthogonality test would pass.
 
         The orthogonality test is defined by Equation (3.3) in bollapragada2017adaptive.
 
         Args:
+            global_step (int): The current iteration number.
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.

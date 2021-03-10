@@ -1,7 +1,6 @@
 """Quantity for Takeuchi Information Criterion (TIC)."""
 
 import torch
-
 from backpack import extensions
 from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
@@ -48,6 +47,9 @@ class TIC(SingleStepQuantity):
             gated through the computation graph.
 
         Args:
+            track_schedule (callable): Function that maps the ``global_step``
+                to a boolean, which determines if the quantity should be computed.
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             curvature (string): Which diagonal curvature approximation should be used.
                 Options are "diag_h", "diag_ggn_exact", "diag_ggn_mc".
             epsilon (float): Stabilization constant. Defaults to 1e-7.

@@ -4,7 +4,7 @@ from backpack import extensions
 from cockpit.quantities.quantity import SingleStepQuantity
 
 
-class Trace(SingleStepQuantity):
+class HessTrace(SingleStepQuantity):
     """Trace Quantitiy Class."""
 
     extensions_from_str = {
@@ -14,7 +14,7 @@ class Trace(SingleStepQuantity):
     }
 
     def __init__(self, track_schedule, verbose=False, curvature="diag_h"):
-        """Initialize the trace quantity.
+        """Initialize the Hessian trace quantity.
 
         Crucially, it creates the output dictionary, that is meant to store all
         values that should be stored.
@@ -26,6 +26,9 @@ class Trace(SingleStepQuantity):
             gated through the computation graph.
 
         Args:
+            track_schedule (callable): Function that maps the ``global_step``
+                to a boolean, which determines if the quantity should be computed.
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             curvature (string): Which diagonal curvature approximation should be used.
                 Options are "diag_h", "diag_ggn_exact", "diag_ggn_mc".
         """
