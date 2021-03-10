@@ -1,6 +1,6 @@
 .PHONY: help
 .PHONY: black black-check flake8
-.PHONY: test test-light examples
+.PHONY: test
 .PHONY: conda-env
 .PHONY: black isort format
 .PHONY: black-check isort-check format-check
@@ -8,15 +8,12 @@
 .PHONY: pydocstyle-check
 .PHONY: darglint-check
 .PHONY: build-docs
+.PHONY: clean-all
 
 .DEFAULT: help
 help:
 	@echo "test"
 	@echo "        Run pytest on the project and report coverage"
-	@echo "test-light"
-	@echo "        Run pytest on 'small' tests and report coverage"
-	@echo "examples"
-	@echo "        Run examples"
 	@echo "black"
 	@echo "        Run black on the project"
 	@echo "black-check"
@@ -31,20 +28,12 @@ help:
 	@echo "        Create conda environment 'cockpit' with dev setup"
 	@echo "build-docs"
 	@echo "        Build the docs"
+	@echo "clean-all"
+	@echo "        Removes all unnecessary files."
 
 ### TESTING ###
 test:
-	@pytest -vx --cov=cockpit --ignore=tests/test_deepobs tests
-
-test-light:
-	@pytest -vx --cov=cockpit --ignore=tests/test_deepobs tests
-
-examples:
-	@cd examples && python pytorch_mnist_minimal.py
-	# @cd examples && python new_api.py
-	# @cd examples && python pytorch_mnist.py
-	# @cd examples && python deepobs_quadratic_deep.py
-
+	@pytest -vx --cov=cockpit
 
 ### LINTING & FORMATTING ###
 
@@ -87,3 +76,12 @@ conda-env:
 ### DOCS ###
 build-docs:
 	@cd docs && make clean && make html
+
+### CLEAN ###
+clean-all:
+	@find . -name '*.pyc' -delete
+	@find . -name '*.pyo' -delete
+	@find . -name '*~' -delete
+	@find . -type d -name "__pycache__" -delete
+	@rm -fr .pytest_cache/
+	@rm -fr .benchmarks/
