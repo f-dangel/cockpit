@@ -7,9 +7,7 @@ from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.utils.schedules import linear
 from tests.utils import SimpleTestHarness
 
-QUANTITIES = [
-    getattr(quantities, q) for q in __all__ if q != "Quantity" and q != "Parameters"
-]
+QUANTITIES = [getattr(quantities, q) for q in __all__ if q != "Quantity"]
 IDS = [q_cls.__name__ for q_cls in QUANTITIES]
 
 
