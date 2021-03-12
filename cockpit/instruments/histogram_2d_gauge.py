@@ -129,7 +129,8 @@ def _get_2d_histogram_data(tracking_data, transformation=None, idx=None):
         idx (int): Index of parameter whose histogram data should be used.
             If ``None`` (default), uses data of all parameters.
     """
-    last_step_data = tracking_data.GradHist2d.dropna()[tracking_data.index[-1]]
+    clean_data = tracking_data.GradHist2d.dropna()
+    last_step_data = clean_data[clean_data.index[-1]]
 
     key_prefix = "" if idx is None else f"param_{idx}_"
     x_key = key_prefix + "x_edges"
@@ -173,7 +174,8 @@ def _get_xmargin_histogram_data(tracking_data, idx=None):
     x_key = key_prefix + "x_edges"
     hist_key = key_prefix + "hist_2d"
 
-    last_step_data = tracking_data.GradHist2d.dropna()[tracking_data.index[-1]]
+    clean_data = tracking_data.GradHist2d.dropna()
+    last_step_data = clean_data[clean_data.index[-1]]
 
     vals = np.array(last_step_data[hist_key]).sum(1)
     bins = np.array(last_step_data[x_key])
@@ -203,7 +205,8 @@ def _get_ymargin_histogram_data(tracking_data, idx=None):
     y_key = key_prefix + "y_edges"
     hist_key = key_prefix + "hist_2d"
 
-    last_step_data = tracking_data.GradHist2d.dropna()[tracking_data.index[-1]]
+    clean_data = tracking_data.GradHist2d.dropna()
+    last_step_data = clean_data[clean_data.index[-1]]
 
     vals = np.array(last_step_data[hist_key]).sum(0)
     bins = np.array(last_step_data[y_key])

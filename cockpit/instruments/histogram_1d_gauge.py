@@ -60,7 +60,8 @@ def _get_histogram_data(tracking_data):
     Args:
         tracking_data (pandas.DataFrame): DataFrame holding the tracking data.
     """
-    last_step_data = tracking_data.GradHist1d.dropna()[tracking_data.index[-1]]
+    clean_data = tracking_data.GradHist1d.dropna()
+    last_step_data = clean_data[clean_data.index[-1]]
 
     vals = np.array(last_step_data["hist_1d"])
     bins = np.array(last_step_data["edges"])
