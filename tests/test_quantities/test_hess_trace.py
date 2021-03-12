@@ -4,6 +4,8 @@ import pytest
 import torch
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
+from torch.nn.utils.convert_parameters import parameters_to_vector
+
 from cockpit.quantities import HessTrace
 from cockpit.utils.schedules import linear
 from tests.test_quantities.settings import PROBLEMS, PROBLEMS_IDS
@@ -11,7 +13,6 @@ from tests.test_quantities.utils import (
     compare_quantities_separate_runs,
     compare_quantities_single_run,
 )
-from torch.nn.utils.convert_parameters import parameters_to_vector
 
 
 class AutogradHessTrace(HessTrace):

@@ -1,6 +1,7 @@
 """Check that ``track`` is called when leaving the ``cockpit`` context."""
 
 import pytest
+
 from cockpit import quantities
 from cockpit.utils.schedules import linear
 from tests.test_cockpit.settings import PROBLEMS, PROBLEMS_IDS

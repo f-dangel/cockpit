@@ -1,6 +1,7 @@
 """Settings used by the tests in this submodule."""
 
 import torch
+
 from tests.settings import SETTINGS as GLOBAL_SETTINGS
 from tests.utils.data import load_toy_data
 from tests.utils.models import load_toy_model
