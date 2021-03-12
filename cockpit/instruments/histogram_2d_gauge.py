@@ -22,7 +22,7 @@ def histogram_2d_gauge(
         transformation (method): Some map applied to the bin values as a
             transformation for the plot. Defaults to `None` which means no
             transformation.
-        marginal (bool): Whether to plot the marginal histograms as well.
+        marginals (bool): Whether to plot the marginal histograms as well.
         idx (int): Index of parameter whose histogram data should be used.
             If ``None`` (default), uses data of all parameters.
     """

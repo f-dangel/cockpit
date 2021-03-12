@@ -232,6 +232,9 @@ class GradHist2d(SingleStepQuantity):
         """Initialize the 2D Histogram of individual gradient elements over parameters.
 
         Args:
+            track_schedule (callable): Function that maps the ``global_step``
+                to a boolean, which determines if the quantity should be computed.
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             xmin (float): Lower clipping bound for individual gradients in histogram.
             xmax (float): Upper clipping bound for individual gradients in histogram.
             min_xrange (float): Lower bound for limit difference along x axis.

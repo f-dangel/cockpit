@@ -29,7 +29,3 @@ def test_linear_schedule(interval, offset):
     assert all(tracking[offset::interval])
     # Check that everything else is false
     assert sum(tracking[offset::interval]) == sum(tracking)
-
-
-def test_log_schedule():
-    pass

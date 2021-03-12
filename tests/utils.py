@@ -19,6 +19,18 @@ class SimpleTestHarness:
         opt_cls=torch.optim.SGD,
         opt_kwargs=None,
     ):
+        """Init the Testing Harness.
+
+        Args:
+            problem (string): The problem to test on.
+            iterations (int): Maximum number of iterations to run the train loop.
+            batch_size (int, optional): Batch size. Defaults to 5.
+            opt_cls (class, optional): Optimizer class. Defaults to torch.optim.SGD.
+            opt_kwargs (dict, optional): Arguments of the optimizer. Defaults to None.
+
+        Raises:
+            NotImplementedError: If no `opt_kwargs` given for a non-SGD optimizer.
+        """
         torch.manual_seed(0)
 
         self.iterations = iterations
@@ -33,6 +45,12 @@ class SimpleTestHarness:
         self.data, self.model = self.extract_problem(problem)
 
     def test(self, cockpit_kwargs, *backpack_exts):
+        """Run the test loop.
+
+        Args:
+            cockpit_kwargs (dict): Arguments for the cockpit.
+            *backpack_exts (list): List of user-defined BackPACK extensions.
+        """
         # Extend
         model = extend(self.model)
         loss_fn = extend(torch.nn.CrossEntropyLoss(reduction="mean"))
@@ -79,6 +97,14 @@ class SimpleTestHarness:
                 break
 
     def extract_problem(self, problem):
+        """Return the problem (data, model, loss_fn) given its string.
+
+        Args:
+            problem (string): The problem to test on.
+
+        Returns:
+            [tuple]: Data, model (and potentially loss_fn) of this problem.
+        """
         if problem == "ToyData":
             dataset = ToyData()
             data = DataLoader(dataset, batch_size=self.batch_size)
@@ -94,20 +120,34 @@ class SimpleTestHarness:
         return data, model  # , loss_fn
 
     def check_in_context(self):
+        """Check that will be executed within the cockpit context."""
         pass
 
     def check_after_context(self):
+        """Check that will be executed directly after the cockpit context."""
         pass
 
 
 class ToyData(Dataset):
+    """Toy data set used for testing. Consists of small random "images" and labels."""
+
     def __init__(self):
+        """Init the toy data set."""
         super(ToyData, self).__init__()
 
     def __getitem__(self, index):
+        """Return item with index `index` of data set.
+
+        Args:
+            index (int): Index of sample to access. Ignored for now.
+
+        Returns:
+            [tuple]: Tuple of (random) input and (random) label.
+        """
         item_input = torch.rand(2, 8, 8)
         item_label = torch.randint(size=(), low=0, high=10)
         return (item_input, item_label)
 
     def __len__(self):
+        """Length of dataset. Arbitrarily set to 10 000."""
         return 10000  # of how many examples(images?) you have
