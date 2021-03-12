@@ -18,6 +18,7 @@ def test_quantities_cls_for_configuration(label):
         quantities.OrthoTest,
         quantities.NormTest,
         quantities.GradHist1d,
+        quantities.Loss,
     ]
     business = economy + [quantities.TICDiag, quantities.HessTrace]
     full = business + [quantities.HessMaxEV, quantities.GradHist2d]
