@@ -6,6 +6,7 @@ import warnings
 import numpy as np
 import torch
 from backpack import extensions
+
 from cockpit.context import get_batch_size, get_individual_losses
 from cockpit.quantities.quantity import Quantity
 from cockpit.quantities.utils_quantities import (
@@ -50,7 +51,7 @@ class _Alpha(Quantity):
             if self._verbose:
                 print(f"[Step {global_step}] Alpha: {alpha:.4f}")
 
-            self.output[global_step - self._start_end_difference]["alpha"] = alpha
+            self.output[global_step - self._start_end_difference] = alpha
             self.clear_info()
 
         if self._is_position(global_step, pos="start"):

@@ -2,6 +2,7 @@
 
 import pytest
 from backpack.extensions import DiagHessian
+
 from cockpit import quantities
 from cockpit.utils.schedules import linear
 from tests.test_cockpit.settings import PROBLEMS, PROBLEMS_IDS

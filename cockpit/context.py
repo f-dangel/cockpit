@@ -1,3 +1,5 @@
+"""Cockpit Context."""
+
 import warnings
 
 from backpack import backpack, backpack_deactivate_io
@@ -10,10 +12,30 @@ class CockpitCTX:
 
     @staticmethod
     def set(info, global_step):
+        """Store the given info for the global step.
+
+        Args:
+            info (dict): Dictionary that specifies additional information. Some
+                quantities require additional information that is overly difficult
+                to infer from a backward pass, like the individual losses.
+            global_step (int): Current number of iteration/global step.
+        """
         CockpitCTX.INFO[global_step] = info
 
     @staticmethod
     def get(name, global_step):
+        """Get info from global step.
+
+        Args:
+            name (str): Name of the info that should be extracted.
+            global_step (int): Current number of iteration/global step.
+
+        Raises:
+            KeyError: If no info is stored for `name`.
+
+        Returns:
+            [type]: Info stored under name for this step.
+        """
         try:
             return CockpitCTX.INFO[global_step][name]
         except KeyError as e:
@@ -56,6 +78,18 @@ class BackwardCTX:
     """Context used by a ``Cockpit`` to handle computations in backward pass."""
 
     def __init__(self, cp, global_step, custom_exts, info, debug=False):
+        """Initialize context for the backward pass.
+
+        Args:
+            cp (Cockpit): ``Cockpit`` instance.
+            global_step (int): Current number of iteration.
+            custom_exts (list or tuple): Custom BackPACK extensions that will be
+                computed on top.
+            info (dict): Dictionary that specifies additional information. Some
+                quantities require additional information that is overly difficult
+                to infer from a backward pass, like the individual losses.
+            debug (bool, optional): Switch on debug mode. Defaults to False.
+        """
         CockpitCTX.set(info, global_step)
         self.cp = cp
         self.global_step = global_step
@@ -76,9 +110,11 @@ class BackwardCTX:
             print(f" ↪Create graph: {cp.create_graph}")
 
     def __enter__(self):
+        """Enter cockpit context."""
         self.ctx.__enter__()
 
     def __exit__(self, type, value, traceback):
+        """Exist cockpit context and call tracking function of cockpit."""
         self.ctx.__exit__(type, value, traceback)
 
         self.cp.track(self.global_step, protected_savefields=self.protected_savefields)

@@ -6,9 +6,10 @@ import numpy as np
 import torch
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
-from cockpit.quantities.quantity import SingleStepQuantity
 from scipy.sparse.linalg import LinearOperator, eigsh
 from torch.nn.utils import parameters_to_vector
+
+from cockpit.quantities.quantity import SingleStepQuantity
 
 
 class HessMaxEV(SingleStepQuantity):

@@ -21,13 +21,14 @@ def gradient_tests_gauge(self, fig, gridspec):
     title = "Gradient Tests"
 
     # Check if the required data is available, else skip this instrument
-    requires = ["iteration", "inner_product_test", "norm_test", "orthogonality_test"]
+    requires = ["iteration", "InnerTest", "NormTest", "OrthoTest"]
     plot_possible = check_data(self.tracking_data, requires, min_elements=1)
     if not plot_possible:
-        warnings.warn(
-            "Couldn't get the required data for the " + title + " instrument",
-            stacklevel=1,
-        )
+        if self.debug:
+            warnings.warn(
+                "Couldn't get the required data for the " + title + " instrument",
+                stacklevel=1,
+            )
         return
 
     ax = fig.add_subplot(gridspec)
@@ -63,21 +64,21 @@ def _format(self, ax_all, ax_norm, ax_inner, ax_ortho):
     ax_all.plot(0, 0, color="black", marker="+", markersize=18, markeredgewidth=4)
     ax_all.set_facecolor(self.bg_color_instruments)
 
-    ax_norm.set_ylabel("norm")
+    ax_norm.set_ylabel("Norm")
     ax_norm.set_yscale("log")
 
     ax_norm.xaxis.tick_top()
     ax_norm.set_facecolor(self.bg_color_instruments)
     ax_norm.set_xscale(iter_scale)
 
-    ax_inner.set_ylabel("inner")
+    ax_inner.set_ylabel("Inner")
     ax_inner.set_yscale("log")
 
     ax_inner.invert_yaxis()
     ax_inner.set_facecolor(self.bg_color_instruments)
     ax_inner.set_xscale(iter_scale)
 
-    ax_ortho.set_title("ortho")
+    ax_ortho.set_title("Ortho")
     ax_ortho.xaxis.tick_top()
     ax_ortho.yaxis.tick_right()
     ax_ortho.set_xscale("log")
@@ -91,13 +92,13 @@ def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
     """Plot data."""
     # data extraction
     log = self.tracking_data[
-        ["iteration", "inner_product_test", "norm_test", "orthogonality_test"]
+        ["iteration", "InnerTest", "NormTest", "OrthoTest"]
     ].dropna()
 
     steps_array = log.iteration.tolist()
-    norm_test_radii = log.norm_test.tolist()
-    inner_product_test_widths = log.inner_product_test.tolist()
-    orthogonality_test_widths = log.orthogonality_test.tolist()
+    norm_test_radii = log.NormTest.tolist()
+    inner_product_test_widths = log.InnerTest.tolist()
+    orthogonality_test_widths = log.OrthoTest.tolist()
 
     # plot norm test
     ax_all.add_artist(

@@ -19,26 +19,27 @@ def distance_gauge(self, fig, gridspec):
     title = "Distance"
 
     # Check if the required data is available, else skip this instrument
-    requires = ["d2init", "update_size"]
+    requires = ["Distance", "UpdateSize"]
     plot_possible = check_data(self.tracking_data, requires)
     if not plot_possible:
-        warnings.warn(
-            "Couldn't get the required data for the " + title + " instrument",
-            stacklevel=1,
-        )
+        if self.debug:
+            warnings.warn(
+                "Couldn't get the required data for the " + title + " instrument",
+                stacklevel=1,
+            )
         return
 
     # Compute
-    self.tracking_data["d2init_all"] = self.tracking_data.d2init.map(
+    self.tracking_data["Distance_all"] = self.tracking_data.Distance.map(
         lambda x: _root_sum_of_squares(x) if type(x) == list else x
     )
-    self.tracking_data["update_size_all"] = self.tracking_data.update_size.map(
+    self.tracking_data["UpdateSize_all"] = self.tracking_data.UpdateSize.map(
         lambda x: _root_sum_of_squares(x) if type(x) == list else x
     )
 
     plot_args = {
         "x": "iteration",
-        "y": "d2init_all",
+        "y": "Distance_all",
         "data": self.tracking_data,
         "y_scale": "linear",
         "x_scale": "symlog" if self.show_log_iter else "linear",
@@ -58,7 +59,7 @@ def distance_gauge(self, fig, gridspec):
     ax2 = ax.twinx()
     plot_args = {
         "x": "iteration",
-        "y": "update_size_all",
+        "y": "UpdateSize_all",
         "data": self.tracking_data,
         "y_scale": "linear",
         "x_scale": "symlog" if self.show_log_iter else "linear",

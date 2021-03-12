@@ -24,18 +24,19 @@ def cabs_gauge(self, fig, gridspec):
     title = "CABS"
 
     # Check if the required data is available, else skip this instrument
-    requires = ["cabs"]
+    requires = ["CABS"]
     plot_possible = check_data(self.tracking_data, requires)
     if not plot_possible:
-        warnings.warn(
-            "Couldn't get the required data for the " + title + " instrument",
-            stacklevel=1,
-        )
+        if self.debug:
+            warnings.warn(
+                "Couldn't get the required data for the " + title + " instrument",
+                stacklevel=1,
+            )
         return
 
     plot_args = {
         "x": "iteration",
-        "y": "cabs",
+        "y": "CABS",
         "data": self.tracking_data,
         "x_scale": "symlog" if self.show_log_iter else "linear",
         "y_scale": "linear",

@@ -15,10 +15,10 @@ def tic_gauge(self, fig, gridspec):
     # Plot Trace vs iteration
     title = "TIC"
 
-    if check_data(self.tracking_data, ["tic_diag"]):
+    if check_data(self.tracking_data, ["TICDiag"]):
         plot_args = {
             "x": "iteration",
-            "y": "tic_diag",
+            "y": "TICDiag",
             "data": self.tracking_data,
             "x_scale": "symlog" if self.show_log_iter else "linear",
             "y_scale": "linear",
@@ -35,14 +35,14 @@ def tic_gauge(self, fig, gridspec):
         ax = fig.add_subplot(gridspec)
         create_basic_plot(**plot_args, ax=ax)
 
-    if check_data(self.tracking_data, ["tic_trace"]):
+    if check_data(self.tracking_data, ["TICTrace"]):
         if "ax" in locals():
             ax2 = ax.twinx()
         else:
             ax2 = fig.add_subplot(gridspec)
         plot_args = {
             "x": "iteration",
-            "y": "tic_trace",
+            "y": "TICTrace",
             "data": self.tracking_data,
             "x_scale": "symlog" if self.show_log_iter else "linear",
             "y_scale": "linear",

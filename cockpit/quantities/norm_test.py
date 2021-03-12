@@ -1,6 +1,7 @@
 """Class for tracking the Norm Test."""
 
 import torch
+
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_transforms import BatchGradTransforms_BatchL2Grad
 

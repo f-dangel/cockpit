@@ -3,18 +3,27 @@
 
 import torch
 from backpack import extend
+
 from cockpit import Cockpit
 
 
 class SimpleTestHarness:
-    """Class for running a simple test loop with the Cockpit."""
+    """Class for running a simple test loop with the Cockpit.
+
+    Args:
+        problem (string): The problem to test on.
+    """
 
     def __init__(self, problem):
         self.problem = problem
         self.check_optimizer(problem)
 
     def check_optimizer(self, problem):
-        """Raise ``NotImplementedError`` if ``problem``'s optimizer is unsupported."""
+        """Raise ``NotImplementedError`` if ``problem``'s optimizer is unsupported.
+
+        Raises:
+            NotImplementedError: If no `opt_kwargs` given for a non-SGD optimizer.
+        """
         if not self.is_momentum_free_sgd(problem.optimizer):
             raise NotImplementedError(
                 f"Please use momentum-free SGD. Got {problem.optimizer}"
@@ -37,6 +46,12 @@ class SimpleTestHarness:
             return zero_momentum and other_default
 
     def test(self, cockpit_kwargs, *backpack_exts):
+        """Run the test loop.
+
+        Args:
+            cockpit_kwargs (dict): Arguments for the cockpit.
+            *backpack_exts (list): List of user-defined BackPACK extensions.
+        """
         problem = self.problem
 
         data = problem.data

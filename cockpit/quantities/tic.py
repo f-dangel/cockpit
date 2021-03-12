@@ -2,6 +2,7 @@
 
 import torch
 from backpack import extensions
+
 from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_quantities import (

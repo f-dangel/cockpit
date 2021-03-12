@@ -5,6 +5,8 @@ import warnings
 import numpy
 import torch
 from backpack import extensions
+from numpy import histogram2d as numpy_histogram2d
+
 from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_hists import (
@@ -16,7 +18,6 @@ from cockpit.quantities.utils_hists import (
     transform_param_abs_max,
     transform_param_min_max,
 )
-from numpy import histogram2d as numpy_histogram2d
 
 
 class GradHist1d(SingleStepQuantity):
@@ -231,6 +232,9 @@ class GradHist2d(SingleStepQuantity):
         """Initialize the 2D Histogram of individual gradient elements over parameters.
 
         Args:
+            track_schedule (callable): Function that maps the ``global_step``
+                to a boolean, which determines if the quantity should be computed.
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             xmin (float): Lower clipping bound for individual gradients in histogram.
             xmax (float): Upper clipping bound for individual gradients in histogram.
             min_xrange (float): Lower bound for limit difference along x axis.

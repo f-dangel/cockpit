@@ -1,6 +1,7 @@
 """Class for tracking the Inner Product Test."""
 
 import torch
+
 from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_transforms import BatchGradTransforms_BatchDotGrad

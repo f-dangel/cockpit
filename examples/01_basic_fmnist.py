@@ -2,9 +2,9 @@
 
 import torch
 from backpack import extend
+
 from cockpit import Cockpit, CockpitPlotter
 from cockpit.utils.configuration import configuration
-
 from examples.utils.utils_examples import fmnist_data
 
 # Build Fashion-MNIST classifier

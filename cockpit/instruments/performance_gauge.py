@@ -24,19 +24,20 @@ def performance_gauge(self, fig, gridspec):
     title = "Performance Plot"
 
     # Check if the required data is available, else skip this instrument
-    requires = ["iteration", "train_accuracy", "valid_accuracy", "mini_batch_loss"]
+    requires = ["iteration", "Loss"]
     plot_possible = check_data(self.tracking_data, requires)
     if not plot_possible:
-        warnings.warn(
-            "Couldn't get the required data for the " + title + " instrument",
-            stacklevel=1,
-        )
+        if self.debug:
+            warnings.warn(
+                "Couldn't get the loss data for the " + title + " instrument",
+                stacklevel=1,
+            )
         return
 
     # Mini-batch train loss
     plot_args = {
         "x": "iteration",
-        "y": "mini_batch_loss",
+        "y": "Loss",
         "data": self.tracking_data,
         "EMA": "y",
         "EMA_alpha": self.EMA_alpha,
@@ -53,40 +54,50 @@ def performance_gauge(self, fig, gridspec):
     ax = fig.add_subplot(gridspec)
     create_basic_plot(**plot_args, ax=ax)
 
-    clean_accuracies = self.tracking_data[
-        ["iteration", "train_accuracy", "valid_accuracy"]
-    ].dropna()
+    requires = ["iteration", "train_accuracy", "valid_accuracy"]
+    plot_possible = check_data(self.tracking_data, requires)
+    if not plot_possible:
+        if self.debug:
+            warnings.warn(
+                "Couldn't get the accuracy data for the " + title + " instrument",
+                stacklevel=1,
+            )
+        return
+    else:
+        clean_accuracies = self.tracking_data[
+            ["iteration", "train_accuracy", "valid_accuracy"]
+        ].dropna()
 
-    # Train Accuracy
-    plot_args = {
-        "x": "iteration",
-        "y": "train_accuracy",
-        "data": clean_accuracies,
-    }
-    ax2 = ax.twinx()
-    sns.lineplot(
-        **plot_args,
-        ax=ax2,
-        label=plot_args["y"].title().replace("_", " "),
-        linewidth=2,
-        color=self.primary_color,
-    )
+        # Train Accuracy
+        plot_args = {
+            "x": "iteration",
+            "y": "train_accuracy",
+            "data": clean_accuracies,
+        }
+        ax2 = ax.twinx()
+        sns.lineplot(
+            **plot_args,
+            ax=ax2,
+            label=plot_args["y"].title().replace("_", " "),
+            linewidth=2,
+            color=self.primary_color,
+        )
 
-    # Train Accuracy
-    plot_args = {
-        "x": "iteration",
-        "y": "valid_accuracy",
-        "data": clean_accuracies,
-    }
-    sns.lineplot(
-        **plot_args,
-        ax=ax2,
-        label=plot_args["y"].title().replace("_", " "),
-        linewidth=2,
-        color=self.secondary_color,
-    )
+        # Train Accuracy
+        plot_args = {
+            "x": "iteration",
+            "y": "valid_accuracy",
+            "data": clean_accuracies,
+        }
+        sns.lineplot(
+            **plot_args,
+            ax=ax2,
+            label=plot_args["y"].title().replace("_", " "),
+            linewidth=2,
+            color=self.secondary_color,
+        )
 
-    # Customization
-    ax2.set_ylim([0, 1])
-    ax2.set_ylabel("Accuracy")
-    _add_last_value_to_legend(ax2, percentage=True)
+        # Customization
+        ax2.set_ylim([0, 1])
+        ax2.set_ylabel("Accuracy")
+        _add_last_value_to_legend(ax2, percentage=True)

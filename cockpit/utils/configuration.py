@@ -48,6 +48,7 @@ def quantities_cls_for_configuration(label):
         quantities.InnerTest,
         quantities.NormTest,
         quantities.OrthoTest,
+        quantities.Loss,
     ]
     business = economy + [
         quantities.TICDiag,

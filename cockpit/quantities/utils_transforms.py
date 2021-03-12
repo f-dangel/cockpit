@@ -1,8 +1,9 @@
+"""Utility functions for Transforms."""
+
 import string
 
-from torch import einsum
-
 from backpack import extensions
+from torch import einsum
 
 
 def BatchGradTransforms_BatchL2Grad():

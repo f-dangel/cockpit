@@ -19,23 +19,24 @@ def grad_norm_gauge(self, fig, gridspec):
     title = "Gradient Norm"
 
     # Check if the required data is available, else skip this instrument
-    requires = ["grad_norm"]
+    requires = ["GradNorm"]
     plot_possible = check_data(self.tracking_data, requires)
     if not plot_possible:
-        warnings.warn(
-            "Couldn't get the required data for the " + title + " instrument",
-            stacklevel=1,
-        )
+        if self.debug:
+            warnings.warn(
+                "Couldn't get the required data for the " + title + " instrument",
+                stacklevel=1,
+            )
         return
 
     # Compute
-    self.tracking_data["grad_norm_all"] = self.tracking_data.grad_norm.map(
+    self.tracking_data["GradNorm_all"] = self.tracking_data.GradNorm.map(
         lambda x: _root_sum_of_squares(x) if type(x) == list else x
     )
 
     plot_args = {
         "x": "iteration",
-        "y": "grad_norm_all",
+        "y": "GradNorm_all",
         "data": self.tracking_data,
         "x_scale": "symlog" if self.show_log_iter else "linear",
         "y_scale": "linear",

@@ -98,7 +98,7 @@ class Cockpit:
             info (dict): Dictionary that specifies additional information. Some
                 quantities require additional information that is overly difficult
                 to infer from a backward pass, like the individual losses.
-            debug (bool): Enable debug mode.
+            debug (bool, optional): Enable debug mode.. Defaults to False.
 
         Returns:
             backpack.backpack: BackPACK with the appropriate extensions, or the

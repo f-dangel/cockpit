@@ -54,13 +54,13 @@ pydocstyle-check:
 	@pydocstyle --count .
 
 darglint-check:
-	@darglint --verbosity 2 cockpit
+	@darglint --verbosity 2
 
 isort:
-	@isort --apply
+	@isort .
 
 isort-check:
-	@isort --check
+	@isort . --check
 
 format:
 	@make black

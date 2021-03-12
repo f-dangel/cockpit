@@ -1,5 +1,6 @@
 """Alpha Gauge."""
 
+import math
 import warnings
 
 import numpy as np
@@ -22,13 +23,14 @@ def alpha_gauge(self, fig, gridspec):
     title = "Alpha Distribution"
 
     # Check if the required data is available, else skip this instrument
-    requires = ["alpha"]
+    requires = ["Alpha"]
     plot_possible = check_data(self.tracking_data, requires, min_elements=2)
     if not plot_possible:
-        warnings.warn(
-            "Couldn't get the required data for the " + title + " instrument",
-            stacklevel=1,
-        )
+        if self.debug:
+            warnings.warn(
+                "Couldn't get the required data for the " + title + " instrument",
+                stacklevel=1,
+            )
         return
 
     plot_args = {
@@ -58,37 +60,35 @@ def alpha_gauge(self, fig, gridspec):
     # Alpha Histogram
     ax2 = ax.twinx()
     # All alphas
-    sns.distplot(
-        self.tracking_data["alpha"].dropna(),
+    sns.histplot(
+        self.tracking_data["Alpha"].dropna(),
         ax=ax2,
-        # norm_hist=True,
-        fit=stats.norm,
-        kde=False,
+        kde=True,
         color=color_all,
-        fit_kws={"color": color_all},
-        hist_kws={"linewidth": 0, "alpha": 0.5},
+        kde_kws={"cut": 10},
+        alpha=0.5,
+        stat="probability",
         label="all",
     )
-    (mu_all, _) = stats.norm.fit(self.tracking_data["alpha"].dropna())
+    (mu_all, _) = stats.norm.fit(self.tracking_data["Alpha"].dropna())
     # Last 10% alphas
-    len_last_elements = int(len(self.tracking_data["alpha"]) / 10)
-    try:
-        sns.distplot(
-            self.tracking_data["alpha"][-len_last_elements:].dropna(),
-            ax=ax2,
-            # norm_hist=True,
-            fit=stats.norm,
-            kde=False,
-            color=color_last,
-            fit_kws={"color": color_last},
-            hist_kws={"linewidth": 0, "alpha": 0.85},
-            label="last 10 %",
-        )
+    len_last_elements = int(len(self.tracking_data["Alpha"]) / 10)
+    sns.histplot(
+        self.tracking_data["Alpha"].dropna().tail(len_last_elements),
+        ax=ax2,
+        kde=True,
+        color=color_last,
+        kde_kws={"cut": 10},
+        alpha=0.5,
+        stat="probability",
+        label="last 10 %",
+    )
+    if len_last_elements == 0:
+        mu_last = math.nan
+    else:
         (mu_last, _) = stats.norm.fit(
-            self.tracking_data["alpha"][-len_last_elements:].dropna()
+            self.tracking_data["Alpha"].dropna().tail(len_last_elements)
         )
-    except ValueError:
-        mu_last = None
 
     # Manually beautify the plot:
     # Adding Zone Lines
@@ -100,45 +100,63 @@ def alpha_gauge(self, fig, gridspec):
     # Labels
     ax.set_xlabel(r"Local step length $\alpha$")
     ax2.set_ylabel(r"$\alpha$ density")
-    # Add indicator for outliers
-    if max(self.tracking_data["alpha"][-len_last_elements:]) > plot_args["xlim"][1]:
-        ax.annotate(
-            "",
-            xy=(1.8, 0.3),
-            xytext=(1.7, 0.3),
-            size=20,
-            arrowprops=dict(color=color_last),
-        )
-    elif max(self.tracking_data["alpha"]) > plot_args["xlim"][1]:
-        ax.annotate(
-            "",
-            xy=(1.8, 0.3),
-            xytext=(1.7, 0.3),
-            size=20,
-            arrowprops=dict(color=color_all),
-        )
-    if min(self.tracking_data["alpha"][-len_last_elements:]) < plot_args["xlim"][0]:
-        ax.annotate(
-            "",
-            xy=(-1.8, 0.3),
-            xytext=(-1.7, 0.3),
-            size=20,
-            arrowprops=dict(color=color_last),
-        )
-    elif min(self.tracking_data["alpha"]) < plot_args["xlim"][0]:
-        ax.annotate(
-            "",
-            xy=(-1.8, 0.3),
-            xytext=(-1.7, 0.3),
-            size=20,
-            arrowprops=dict(color=color_all),
-        )
+    _add_indicators(
+        self, ax, mu_last, plot_args, color_all, color_last, len_last_elements
+    )
+
     # Legend
     # Get the fitted parameters used by sns
     lines2, labels2 = ax2.get_legend_handles_labels()
-    legend = []
-    if mu_all is not None:
-        legend.append("{0} ($\mu=${1:.2f})".format(labels2[0], mu_all))  # noqa: W605
-    if mu_last is not None:
-        legend.append("{0} ($\mu=${1:.2f})".format(labels2[1], mu_last))  # noqa: W605
-    ax2.legend(legend)
+    for idx, lab in enumerate(labels2):
+        if "all" in lab and not math.isnan(mu_all):
+            labels2[idx] = lab + " ($\mu=${0:.2f})".format(mu_all)  # noqa: W605
+        if "last 10 %" in lab and not math.isnan(mu_last):
+            labels2[idx] = lab + " ($\mu=${0:.2f})".format(mu_last)  # noqa: W605
+    ax2.legend(lines2, labels2)
+
+
+def _add_indicators(
+    self, ax, mu_last, plot_args, color_all, color_last, len_last_elements
+):
+    """Adds indicators that some alpha values were outside of ploting range."""
+    # Add indicator for outliers
+    if (
+        not math.isnan(mu_last)
+        and max(self.tracking_data["Alpha"].dropna().tail(len_last_elements))
+        > plot_args["xlim"][1]
+    ):
+        ax.annotate(
+            "",
+            xy=(1.8, 0.3),
+            xytext=(1.7, 0.3),
+            size=20,
+            arrowprops=dict(color=color_last),
+        )
+    elif max(self.tracking_data["Alpha"]) > plot_args["xlim"][1]:
+        ax.annotate(
+            "",
+            xy=(1.8, 0.3),
+            xytext=(1.7, 0.3),
+            size=20,
+            arrowprops=dict(color=color_all),
+        )
+    if (
+        not math.isnan(mu_last)
+        and min(self.tracking_data["Alpha"].dropna().tail(len_last_elements))
+        < plot_args["xlim"][0]
+    ):
+        ax.annotate(
+            "",
+            xy=(-1.8, 0.3),
+            xytext=(-1.7, 0.3),
+            size=20,
+            arrowprops=dict(color=color_last),
+        )
+    elif min(self.tracking_data["Alpha"]) < plot_args["xlim"][0]:
+        ax.annotate(
+            "",
+            xy=(-1.8, 0.3),
+            xytext=(-1.7, 0.3),
+            size=20,
+            arrowprops=dict(color=color_all),
+        )

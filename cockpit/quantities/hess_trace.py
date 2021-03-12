@@ -1,6 +1,7 @@
 """Class for tracking the Trace of the Hessian or an approximation thereof."""
 
 from backpack import extensions
+
 from cockpit.quantities.quantity import SingleStepQuantity
 
 

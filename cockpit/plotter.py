@@ -68,6 +68,7 @@ class CockpitPlotter:
         block=False,
         show_log_iter=False,
         discard=None,
+        debug=False,
     ):
         """Plot the cockpit for the current state of the log file.
 
@@ -75,6 +76,7 @@ class CockpitPlotter:
             source (Cockpit or str): ``Cockpit`` instance, or string containing the path
                 to a .json log produced with ``Cockpit.write``, where information will
                 be fetched from.
+            savedir (str): Directory where to save the plot.
             show_plot (bool, optional): Whether the plot should be shown on
                 screen. Defaults to True.
             save_plot (bool, optional): Whether the plot should be saved to disk.
@@ -87,10 +89,12 @@ class CockpitPlotter:
                 a log scale for the iterations. Defaults to False.
             discard (int, optional): Global step after which information
                 should be discarded.
+            debug (bool, optional): Enable debug mode.. Defaults to False.
         """
         problem_info_path = source if isinstance(source, str) else ""
         self.__update_problem_info(problem_info_path)
         self._set_backend(show_plot)
+        self.debug = debug
 
         self.show_log_iter = show_log_iter
 
@@ -122,7 +126,7 @@ class CockpitPlotter:
             nrows=2,
             width_ratios=outer_widths,
             height_ratios=outer_heights,
-            wspace=0.1,
+            wspace=0.05,
             hspace=0.1,
         )
 
@@ -137,8 +141,6 @@ class CockpitPlotter:
 
         if self._secondary_screen:
             self._plot_secondary_screen()
-
-        plt.tight_layout()
 
         # Show or Save plots
         if show_plot:
@@ -266,6 +268,7 @@ class CockpitPlotter:
         in hindsight and ideally use fixed axis.
 
         Args:
+            logpath (str): Full logpath to the JSON file.
             duration (int, optional): Time to display each frame, in milliseconds.
                 Defaults to 200.
             loop (int, optional): Number of times the GIF should loop.
@@ -364,6 +367,7 @@ class CockpitPlotter:
         """Save the (internal) figure to file.
 
         Args:
+            logpath (str): Full logpath to the JSON file.
             savename_append (str, optional): Optional appendix to the savefile
                 name. Defaults to None.
             screen (str): String that specifies screen figure should be saved.
@@ -443,7 +447,6 @@ class CockpitPlotter:
 
     def _plot_auxiliary(self, grid_spec):
         """Plot auxiliary quantities to the secondary screen."""
-
         # Build inner structure of this plotting group
         # We use additional "dummy" gridspecs to position the instruments
         self.gs_auxiliary = grid_spec.subgridspec(
@@ -471,7 +474,6 @@ class CockpitPlotter:
 
     def _plot_layerwise(self, grid_spec, fig=None):
         """Plot layerwise 2d histograms to the secondary screen."""
-
         # Build inner structure
         try:
             param_groups = int(

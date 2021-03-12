@@ -4,11 +4,12 @@ import os
 import warnings
 
 from backobs import extend_with_access_unreduced_loss
+from deepobs.pytorch.runners.runner import PTRunner
+from torch.optim.lr_scheduler import LambdaLR
+
 from cockpit import Cockpit
 from cockpit.plotter import CockpitPlotter
 from cockpit.utils import schedules
-from deepobs.pytorch.runners.runner import PTRunner
-from torch.optim.lr_scheduler import LambdaLR
 
 
 class _DeepOBSRunner(PTRunner):
