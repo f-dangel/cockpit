@@ -83,9 +83,12 @@ def alpha_gauge(self, fig, gridspec):
         stat="probability",
         label="last 10 %",
     )
-    (mu_last, _) = stats.norm.fit(
-        self.tracking_data["Alpha"].dropna().tail(len_last_elements)
-    )
+    if len_last_elements == 0:
+        mu_last = math.nan
+    else:
+        (mu_last, _) = stats.norm.fit(
+            self.tracking_data["Alpha"].dropna().tail(len_last_elements)
+        )
 
     # Manually beautify the plot:
     # Adding Zone Lines
@@ -97,6 +100,25 @@ def alpha_gauge(self, fig, gridspec):
     # Labels
     ax.set_xlabel(r"Local step length $\alpha$")
     ax2.set_ylabel(r"$\alpha$ density")
+    _add_indicators(
+        self, ax, mu_last, plot_args, color_all, color_last, len_last_elements
+    )
+
+    # Legend
+    # Get the fitted parameters used by sns
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    for idx, lab in enumerate(labels2):
+        if "all" in lab and not math.isnan(mu_all):
+            labels2[idx] = lab + " ($\mu=${0:.2f})".format(mu_all)  # noqa: W605
+        if "last 10 %" in lab and not math.isnan(mu_last):
+            labels2[idx] = lab + " ($\mu=${0:.2f})".format(mu_last)  # noqa: W605
+    ax2.legend(lines2, labels2)
+
+
+def _add_indicators(
+    self, ax, mu_last, plot_args, color_all, color_last, len_last_elements
+):
+    """Adds indicators that some alpha values were outside of ploting range."""
     # Add indicator for outliers
     if (
         not math.isnan(mu_last)
@@ -138,12 +160,3 @@ def alpha_gauge(self, fig, gridspec):
             size=20,
             arrowprops=dict(color=color_all),
         )
-    # Legend
-    # Get the fitted parameters used by sns
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    for idx, lab in enumerate(labels2):
-        if "all" in lab and not math.isnan(mu_all):
-            labels2[idx] = lab + " ($\mu=${0:.2f})".format(mu_all)  # noqa: W605
-        if "last 10 %" in lab and not math.isnan(mu_last):
-            labels2[idx] = lab + " ($\mu=${0:.2f})".format(mu_last)  # noqa: W605
-    ax2.legend(lines2, labels2)

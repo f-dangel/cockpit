@@ -142,8 +142,6 @@ class CockpitPlotter:
         if self._secondary_screen:
             self._plot_secondary_screen()
 
-        plt.tight_layout()
-
         # Show or Save plots
         if show_plot:
             plt.show(block=block)
