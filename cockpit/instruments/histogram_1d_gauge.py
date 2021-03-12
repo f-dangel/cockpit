@@ -24,10 +24,11 @@ def histogram_1d_gauge(self, fig, gridspec, y_scale="log"):
     requires = ["GradHist1d"]
     plot_possible = check_data(self.tracking_data, requires, min_elements=1)
     if not plot_possible:
-        warnings.warn(
-            "Couldn't get the required data for the " + title + " instrument",
-            stacklevel=1,
-        )
+        if self.debug:
+            warnings.warn(
+                "Couldn't get the required data for the " + title + " instrument",
+                stacklevel=1,
+            )
         return
 
     ax = fig.add_subplot(gridspec)

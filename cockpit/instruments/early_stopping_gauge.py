@@ -27,10 +27,11 @@ def early_stopping_gauge(self, fig, gridspec):
     requires = ["EarlyStopping"]
     plot_possible = check_data(self.tracking_data, requires)
     if not plot_possible:
-        warnings.warn(
-            "Couldn't get the required data for the " + title + " instrument",
-            stacklevel=1,
-        )
+        if self.debug:
+            warnings.warn(
+                "Couldn't get the required data for the " + title + " instrument",
+                stacklevel=1,
+            )
         return
 
     plot_args = {

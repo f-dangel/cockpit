@@ -68,6 +68,7 @@ class CockpitPlotter:
         block=False,
         show_log_iter=False,
         discard=None,
+        debug=False,
     ):
         """Plot the cockpit for the current state of the log file.
 
@@ -88,10 +89,12 @@ class CockpitPlotter:
                 a log scale for the iterations. Defaults to False.
             discard (int, optional): Global step after which information
                 should be discarded.
+            debug (bool, optional): Enable debug mode.. Defaults to False.
         """
         problem_info_path = source if isinstance(source, str) else ""
         self.__update_problem_info(problem_info_path)
         self._set_backend(show_plot)
+        self.debug = debug
 
         self.show_log_iter = show_log_iter
 

@@ -27,10 +27,11 @@ def hyperparameter_gauge(self, fig, gridspec):
     requires = ["iteration", "learning_rate"]
     plot_possible = check_data(self.tracking_data, requires)
     if not plot_possible:
-        warnings.warn(
-            "Couldn't get the required data for the " + title + " instrument",
-            stacklevel=1,
-        )
+        if self.debug:
+            warnings.warn(
+                "Couldn't get the required data for the " + title + " instrument",
+                stacklevel=1,
+            )
         return
 
     ax = fig.add_subplot(gridspec)

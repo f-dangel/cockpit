@@ -27,10 +27,11 @@ def performance_gauge(self, fig, gridspec):
     requires = ["iteration", "Loss"]
     plot_possible = check_data(self.tracking_data, requires)
     if not plot_possible:
-        warnings.warn(
-            "Couldn't get the required data for the " + title + " instrument",
-            stacklevel=1,
-        )
+        if self.debug:
+            warnings.warn(
+                "Couldn't get the loss data for the " + title + " instrument",
+                stacklevel=1,
+            )
         return
 
     # Mini-batch train loss
@@ -56,6 +57,11 @@ def performance_gauge(self, fig, gridspec):
     requires = ["iteration", "train_accuracy", "valid_accuracy"]
     plot_possible = check_data(self.tracking_data, requires)
     if not plot_possible:
+        if self.debug:
+            warnings.warn(
+                "Couldn't get the accuracy data for the " + title + " instrument",
+                stacklevel=1,
+            )
         return
     else:
         clean_accuracies = self.tracking_data[
