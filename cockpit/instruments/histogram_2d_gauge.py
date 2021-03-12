@@ -31,11 +31,7 @@ def histogram_2d_gauge(
     title = f"Gradient/Parameter Element Histogram {title_suffix}"
 
     # Check if the required data is available, else skip this instrument
-    key_prefix = "" if idx is None else f"param_{idx}_"
-    x_key = key_prefix + "x_edges"
-    y_key = key_prefix + "y_edges"
-    hist_key = key_prefix + "hist_2d"
-    requires = [x_key, y_key, hist_key]
+    requires = ["GradHist2d"]
 
     plot_possible = check_data(self.tracking_data, requires, min_elements=1)
     if not plot_possible:
@@ -60,8 +56,8 @@ def histogram_2d_gauge(
 
     joint_plot_args = {
         "facecolor": self.bg_color_instruments,
-        "xlabel": "parameter element value",
-        "ylabel": "gradient element value",
+        "xlabel": "Parameter Element Value",
+        "ylabel": "Gradient Element Value",
     }
 
     df = _get_2d_histogram_data(
@@ -132,14 +128,14 @@ def _get_2d_histogram_data(tracking_data, transformation=None, idx=None):
         idx (int): Index of parameter whose histogram data should be used.
             If ``None`` (default), uses data of all parameters.
     """
+    last_step_data = tracking_data.GradHist2d.dropna()[tracking_data.index[-1]]
+
     key_prefix = "" if idx is None else f"param_{idx}_"
     x_key = key_prefix + "x_edges"
     y_key = key_prefix + "y_edges"
     hist_key = key_prefix + "hist_2d"
 
-    data = tracking_data[[x_key, y_key, hist_key]].dropna().tail(1)
-
-    vals = np.array(getattr(data, hist_key).to_numpy()[0])
+    vals = np.array(last_step_data[hist_key])
 
     # apply transformation
     if transformation is None:
@@ -147,8 +143,8 @@ def _get_2d_histogram_data(tracking_data, transformation=None, idx=None):
 
     vals = transformation(vals)
 
-    x_bins = np.array(getattr(data, x_key).to_numpy()[0])
-    y_bins = np.array(getattr(data, y_key).to_numpy()[0])
+    x_bins = np.array(last_step_data[x_key])
+    y_bins = np.array(last_step_data[y_key])
 
     x_mid_points = (x_bins[1:] + x_bins[:-1]) / 2
     y_mid_points = (y_bins[1:] + y_bins[:-1]) / 2
@@ -176,10 +172,10 @@ def _get_xmargin_histogram_data(tracking_data, idx=None):
     x_key = key_prefix + "x_edges"
     hist_key = key_prefix + "hist_2d"
 
-    data = tracking_data[[x_key, hist_key]].dropna().tail(1)
+    last_step_data = tracking_data.GradHist2d.dropna()[tracking_data.index[-1]]
 
-    vals = np.array(getattr(data, hist_key).to_numpy()[0]).sum(1)
-    bins = np.array(getattr(data, x_key).to_numpy()[0])
+    vals = np.array(last_step_data[hist_key]).sum(1)
+    bins = np.array(last_step_data[x_key])
     # invert to be consistent with 2d plot
     vals = vals[::-1]
 
@@ -206,11 +202,10 @@ def _get_ymargin_histogram_data(tracking_data, idx=None):
     y_key = key_prefix + "y_edges"
     hist_key = key_prefix + "hist_2d"
 
-    data = tracking_data[[y_key, hist_key]].dropna().tail(1)
+    last_step_data = tracking_data.GradHist2d.dropna()[tracking_data.index[-1]]
 
-    vals = np.array(getattr(data, hist_key).to_numpy()[0]).sum(0)
-
-    bins = np.array(getattr(data, y_key).to_numpy()[0])
+    vals = np.array(last_step_data[hist_key]).sum(0)
+    bins = np.array(last_step_data[y_key])
 
     bin_size = bins[1] - bins[0]
 

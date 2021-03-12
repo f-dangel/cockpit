@@ -18,7 +18,7 @@ def trace_gauge(self, fig, gridspec):
     title = "Trace"
 
     # Check if the required data is available, else skip this instrument
-    requires = ["trace"]
+    requires = ["HessTrace"]
     plot_possible = check_data(self.tracking_data, requires)
     if not plot_possible:
         warnings.warn(
@@ -28,13 +28,13 @@ def trace_gauge(self, fig, gridspec):
         return
 
     # Compute
-    self.tracking_data["trace_all"] = self.tracking_data.trace.map(
+    self.tracking_data["HessTrace_all"] = self.tracking_data.HessTrace.map(
         lambda x: sum(x) if type(x) == list else x
     )
 
     plot_args = {
         "x": "iteration",
-        "y": "trace_all",
+        "y": "HessTrace_all",
         "data": self.tracking_data,
         "x_scale": "symlog" if self.show_log_iter else "linear",
         "y_scale": "linear",

@@ -21,7 +21,7 @@ def histogram_1d_gauge(self, fig, gridspec, y_scale="log"):
     title = "Gradient Element Histogram"
 
     # Check if the required data is available, else skip this instrument
-    requires = ["edges", "hist_1d"]
+    requires = ["GradHist1d"]
     plot_possible = check_data(self.tracking_data, requires, min_elements=1)
     if not plot_possible:
         warnings.warn(
@@ -36,8 +36,8 @@ def histogram_1d_gauge(self, fig, gridspec, y_scale="log"):
         "title": title,
         "fontweight": "bold",
         "facecolor": self.bg_color_instruments,
-        "xlabel": "gradient element value",
-        "ylabel": "frequency",
+        "xlabel": "Gradient Element Value",
+        "ylabel": "Frequency",
         "y_scale": y_scale,
     }
 
@@ -59,10 +59,10 @@ def _get_histogram_data(tracking_data):
     Args:
         tracking_data (pandas.DataFrame): DataFrame holding the tracking data.
     """
-    data = tracking_data[["edges", "hist_1d"]].dropna().tail(1)
+    last_step_data = tracking_data.GradHist1d.dropna()[tracking_data.index[-1]]
 
-    vals = np.array(data.hist_1d.to_numpy()[0])
-    bins = np.array(data.edges.to_numpy()[0])
+    vals = np.array(last_step_data["hist_1d"])
+    bins = np.array(last_step_data["edges"])
 
     width = bins[1] - bins[0]
 

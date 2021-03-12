@@ -123,7 +123,7 @@ class CockpitPlotter:
             nrows=2,
             width_ratios=outer_widths,
             height_ratios=outer_heights,
-            wspace=0.1,
+            wspace=0.05,
             hspace=0.1,
         )
 

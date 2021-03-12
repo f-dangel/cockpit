@@ -173,9 +173,12 @@ def _beautify_plot(
         ax.set_yscale(y_scale)
 
     if xlabel is not None:
-        ax.set_xlabel(xlabel.title().replace("_", " "))
+        if xlabel == "iteration":
+            xlabel = "Iteration"
+        ax.set_xlabel(xlabel.replace("_", " "))
+
     if ylabel is not None:
-        ax.set_ylabel(ylabel.title().replace("_", " "))
+        ax.set_ylabel(ylabel.replace("_", " "))
 
     xlim, ylim = _compute_plot_limits(ax, xlim, ylim, center)
     ax.set_xlim(xlim)

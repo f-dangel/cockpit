@@ -22,7 +22,7 @@ def alpha_gauge(self, fig, gridspec):
     title = "Alpha Distribution"
 
     # Check if the required data is available, else skip this instrument
-    requires = ["alpha"]
+    requires = ["Alpha"]
     plot_possible = check_data(self.tracking_data, requires, min_elements=2)
     if not plot_possible:
         warnings.warn(
@@ -59,7 +59,7 @@ def alpha_gauge(self, fig, gridspec):
     ax2 = ax.twinx()
     # All alphas
     sns.distplot(
-        self.tracking_data["alpha"].dropna(),
+        self.tracking_data["Alpha"].dropna(),
         ax=ax2,
         # norm_hist=True,
         fit=stats.norm,
@@ -69,12 +69,12 @@ def alpha_gauge(self, fig, gridspec):
         hist_kws={"linewidth": 0, "alpha": 0.5},
         label="all",
     )
-    (mu_all, _) = stats.norm.fit(self.tracking_data["alpha"].dropna())
+    (mu_all, _) = stats.norm.fit(self.tracking_data["Alpha"].dropna())
     # Last 10% alphas
-    len_last_elements = int(len(self.tracking_data["alpha"]) / 10)
+    len_last_elements = int(len(self.tracking_data["Alpha"]) / 10)
     try:
         sns.distplot(
-            self.tracking_data["alpha"][-len_last_elements:].dropna(),
+            self.tracking_data["Alpha"][-len_last_elements:].dropna(),
             ax=ax2,
             # norm_hist=True,
             fit=stats.norm,
@@ -85,7 +85,7 @@ def alpha_gauge(self, fig, gridspec):
             label="last 10 %",
         )
         (mu_last, _) = stats.norm.fit(
-            self.tracking_data["alpha"][-len_last_elements:].dropna()
+            self.tracking_data["Alpha"][-len_last_elements:].dropna()
         )
     except ValueError:
         mu_last = None
@@ -101,7 +101,7 @@ def alpha_gauge(self, fig, gridspec):
     ax.set_xlabel(r"Local step length $\alpha$")
     ax2.set_ylabel(r"$\alpha$ density")
     # Add indicator for outliers
-    if max(self.tracking_data["alpha"][-len_last_elements:]) > plot_args["xlim"][1]:
+    if max(self.tracking_data["Alpha"][-len_last_elements:]) > plot_args["xlim"][1]:
         ax.annotate(
             "",
             xy=(1.8, 0.3),
@@ -109,7 +109,7 @@ def alpha_gauge(self, fig, gridspec):
             size=20,
             arrowprops=dict(color=color_last),
         )
-    elif max(self.tracking_data["alpha"]) > plot_args["xlim"][1]:
+    elif max(self.tracking_data["Alpha"]) > plot_args["xlim"][1]:
         ax.annotate(
             "",
             xy=(1.8, 0.3),
@@ -117,7 +117,7 @@ def alpha_gauge(self, fig, gridspec):
             size=20,
             arrowprops=dict(color=color_all),
         )
-    if min(self.tracking_data["alpha"][-len_last_elements:]) < plot_args["xlim"][0]:
+    if min(self.tracking_data["Alpha"][-len_last_elements:]) < plot_args["xlim"][0]:
         ax.annotate(
             "",
             xy=(-1.8, 0.3),
@@ -125,7 +125,7 @@ def alpha_gauge(self, fig, gridspec):
             size=20,
             arrowprops=dict(color=color_last),
         )
-    elif min(self.tracking_data["alpha"]) < plot_args["xlim"][0]:
+    elif min(self.tracking_data["Alpha"]) < plot_args["xlim"][0]:
         ax.annotate(
             "",
             xy=(-1.8, 0.3),
