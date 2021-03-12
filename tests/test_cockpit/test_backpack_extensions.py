@@ -6,6 +6,7 @@ from cockpit import quantities
 from cockpit.utils.schedules import linear
 from tests.test_cockpit.settings import PROBLEMS, PROBLEMS_IDS
 from tests.utils.harness import SimpleTestHarness
+from tests.utils.problem import instantiate
 
 
 class CustomTestHarness(SimpleTestHarness):
@@ -33,8 +34,7 @@ def test_backpack_extensions(problem):
     """Check if backpack quantities can be computed inside cockpit."""
     quantity = quantities.TICDiag(track_schedule=linear(1))
 
-    problem.set_up()
-    testing_harness = CustomTestHarness(problem)
-    cockpit_kwargs = {"quantities": [quantity]}
-    testing_harness.test(cockpit_kwargs, DiagHessian())
-    problem.tear_down()
+    with instantiate(problem):
+        testing_harness = CustomTestHarness(problem)
+        cockpit_kwargs = {"quantities": [quantity]}
+        testing_harness.test(cockpit_kwargs, DiagHessian())

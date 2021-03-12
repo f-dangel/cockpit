@@ -3,6 +3,19 @@ import copy
 import torch
 
 
+class instantiate:
+    """Instantiates the objects in a problem from their functional representation."""
+
+    def __init__(self, problem):
+        self.problem = problem
+
+    def __enter__(self):
+        self.problem.set_up()
+
+    def __exit__(self, type, value, traceback):
+        self.problem.tear_down()
+
+
 class Problem:
     """Class for encapsulating information that specifies a training loop."""
 

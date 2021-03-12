@@ -7,6 +7,7 @@ from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.utils.schedules import linear
 from tests.test_quantities.settings import PROBLEMS, PROBLEMS_IDS
 from tests.utils.harness import SimpleTestHarness
+from tests.utils.problem import instantiate
 
 QUANTITIES = [getattr(quantities, q) for q in __all__ if q != "Quantity"]
 IDS = [q_cls.__name__ for q_cls in QUANTITIES]
@@ -25,12 +26,11 @@ def test_quantity_integration_and_track_events(problem, quantity_cls):
     schedule = linear(interval, offset=offset)
     quantity = quantity_cls(track_schedule=schedule, verbose=True)
 
-    problem.set_up()
-    iterations = problem.iterations
-    testing_harness = SimpleTestHarness(problem)
-    cockpit_kwargs = {"quantities": [quantity]}
-    testing_harness.test(cockpit_kwargs)
-    problem.tear_down()
+    with instantiate(problem):
+        iterations = problem.iterations
+        testing_harness = SimpleTestHarness(problem)
+        cockpit_kwargs = {"quantities": [quantity]}
+        testing_harness.test(cockpit_kwargs)
 
     def is_track_event(iteration):
         if isinstance(quantity, SingleStepQuantity):

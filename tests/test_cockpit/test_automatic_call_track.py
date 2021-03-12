@@ -5,6 +5,7 @@ from cockpit import quantities
 from cockpit.utils.schedules import linear
 from tests.test_cockpit.settings import PROBLEMS, PROBLEMS_IDS
 from tests.utils.harness import SimpleTestHarness
+from tests.utils.problem import instantiate
 
 
 # TODO Reconsider purpose of this test
@@ -29,8 +30,7 @@ def test_track_writes_output(problem):
     """Test that a ``cockpit``'s ``track`` function writes to the output."""
     quantity = quantities.Time(track_schedule=linear(1))
 
-    problem.set_up()
-    testing_harness = CustomTestHarness(problem)
-    cockpit_kwargs = {"quantities": [quantity]}
-    testing_harness.test(cockpit_kwargs)
-    problem.tear_down()
+    with instantiate(problem):
+        testing_harness = CustomTestHarness(problem)
+        cockpit_kwargs = {"quantities": [quantity]}
+        testing_harness.test(cockpit_kwargs)

@@ -2,6 +2,7 @@
 
 from tests.utils.check import compare_outputs
 from tests.utils.harness import SimpleTestHarness
+from tests.utils.problem import instantiate
 
 
 def compare_quantities_single_run(problem, quantity_classes, schedule):
@@ -31,10 +32,9 @@ def compare_quantities_separate_runs(problem, quantity_classes, schedule):
 
 
 def run_harness_get_output(problem, quantities):
-    problem.set_up()
-    testing_harness = SimpleTestHarness(problem)
-    cockpit_kwargs = {"quantities": quantities}
-    testing_harness.test(cockpit_kwargs)
-    problem.tear_down()
+    with instantiate(problem):
+        testing_harness = SimpleTestHarness(problem)
+        cockpit_kwargs = {"quantities": quantities}
+        testing_harness.test(cockpit_kwargs)
 
     return [q.get_output() for q in quantities]
