@@ -1,8 +1,8 @@
 """An example of using Cockpit with DeepOBS."""
 
-from cockpit.utils import configuration, schedules
 from torch.optim import SGD
 
+from cockpit.utils import configuration, schedules
 from examples.utils.deepobs_runner import DeepOBSRunner
 
 optimizer = SGD

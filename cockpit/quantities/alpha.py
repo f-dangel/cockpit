@@ -6,6 +6,7 @@ import warnings
 import numpy as np
 import torch
 from backpack import extensions
+
 from cockpit.context import get_batch_size, get_individual_losses
 from cockpit.quantities.quantity import Quantity
 from cockpit.quantities.utils_quantities import (

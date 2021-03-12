@@ -1,6 +1,7 @@
 """Intergation tests for ``cockpit.quantities``."""
 
 from backpack.extensions import DiagHessian
+
 from cockpit import quantities
 from cockpit.utils.schedules import linear
 from tests.utils import SimpleTestHarness

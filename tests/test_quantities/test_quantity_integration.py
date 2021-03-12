@@ -1,6 +1,7 @@
 """Intergation tests for ``cockpit.quantities``."""
 
 import pytest
+
 from cockpit import quantities
 from cockpit.quantities import __all__
 from cockpit.quantities.quantity import SingleStepQuantity

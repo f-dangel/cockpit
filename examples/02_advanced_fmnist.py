@@ -3,9 +3,9 @@ import time
 
 import torch
 from backpack import extend, extensions
+
 from cockpit import Cockpit, CockpitPlotter, quantities
 from cockpit.utils import schedules
-
 from examples.utils.utils_examples import cnn, fmnist_data, get_logpath
 
 # Build Fashion-MNIST classifier

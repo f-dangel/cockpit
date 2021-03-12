@@ -5,6 +5,8 @@ import warnings
 import numpy
 import torch
 from backpack import extensions
+from numpy import histogram2d as numpy_histogram2d
+
 from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_hists import (
@@ -16,7 +18,6 @@ from cockpit.quantities.utils_hists import (
     transform_param_abs_max,
     transform_param_min_max,
 )
-from numpy import histogram2d as numpy_histogram2d
 
 
 class GradHist1d(SingleStepQuantity):

@@ -2,9 +2,10 @@
 
 import torch
 from backpack import extend
-from cockpit import Cockpit
 from torch.utils.data.dataloader import DataLoader
 from torch.utils.data.dataset import Dataset
+
+from cockpit import Cockpit
 
 
 class SimpleTestHarness:

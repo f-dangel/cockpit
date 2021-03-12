@@ -1,6 +1,7 @@
 """Test for ``cockpit.utils.schedules``."""
 
 import pytest
+
 from cockpit.utils import schedules
 
 MAX_STEP = 100
