@@ -15,8 +15,8 @@ class ToyData(Dataset):
         super(ToyData, self).__init__()
 
     def __getitem__(self, index):
-        item_input = torch.rand(2, 8, 8)
-        item_label = torch.randint(size=(), low=0, high=10)
+        item_input = torch.rand(1, 5, 5)
+        item_label = torch.randint(size=(), low=0, high=3)
         return (item_input, item_label)
 
     def __len__(self):
