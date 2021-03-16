@@ -1,4 +1,4 @@
-"""Compare ``HessTrace`` quantity with autograd."""
+"""Compare ``HessTrace`` quantity with ``torch.autograd``."""
 
 import pytest
 
