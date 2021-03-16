@@ -85,7 +85,6 @@ def test_inner_test(problem, independent_runs):
     """
     interval, offset = 1, 2
     schedule = linear(interval, offset=offset)
-    rtol, atol = 5e-3, 1e-5
 
     compare_fn = get_compare_fn(independent_runs)
-    compare_fn(problem, (InnerTest, AutogradInnerTest), schedule, rtol=rtol, atol=atol)
+    compare_fn(problem, (InnerTest, AutogradInnerTest), schedule)
