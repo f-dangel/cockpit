@@ -3,7 +3,6 @@
 import torch
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
-from torch.nn.utils.convert_parameters import parameters_to_vector
 
 from tests.utils.check import compare_outputs
 from tests.utils.harness import SimpleTestHarness
@@ -49,21 +48,45 @@ def run_harness_get_output(problem, quantities):
     return [q.get_output() for q in quantities]
 
 
-def autograd_diag_hessian(loss, params):
-    """Compute the Hessian diagonal via ``torch.autograd``."""
+def autograd_hessian_columns(loss, params, concat=False):
+    """Return an iterator of the Hessian columns computed via ``torch.autograd``.
+
+    Args:
+        concat (bool): If ``True``, flatten and concatenate the columns over all
+            parameters.
+    """
     D = sum(p.numel() for p in params)
     device = loss.device
 
-    hessian_diag = torch.zeros(D, device=device)
-
-    # compute Hessian columns by HVPs with one-hot vectors
     for d in range(D):
         e_d = torch.zeros(D, device=device)
         e_d[d] = 1.0
         e_d_list = vector_to_parameter_list(e_d, params)
 
-        hessian_d_list = hessian_vector_product(loss, params, e_d_list)
+        hessian_e_d = hessian_vector_product(loss, params, e_d_list)
 
-        hessian_diag[d] = parameters_to_vector(hessian_d_list)[d]
+        if concat:
+            hessian_e_d = torch.cat([tensor.flatten() for tensor in hessian_e_d])
 
-    return vector_to_parameter_list(hessian_diag, params)
+        yield hessian_e_d
+
+
+def autograd_diag_hessian(loss, params, concat=False):
+    """Compute the Hessian diagonal via ``torch.autograd``.
+
+    Args:
+        concat (bool): If ``True``, flatten and concatenate the columns over all
+            parameters.
+    """
+    D = sum(p.numel() for p in params)
+    device = loss.device
+
+    hessian_diag = torch.zeros(D, device=device)
+
+    for d, column_d in enumerate(autograd_hessian_columns(loss, params, concat=True)):
+        hessian_diag[d] = column_d[d]
+
+    if concat is False:
+        hessian_diag = vector_to_parameter_list(hessian_diag, params)
+
+    return hessian_diag
