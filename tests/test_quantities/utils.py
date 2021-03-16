@@ -1,5 +1,10 @@
 """Utilities specifically required for testing quantities."""
 
+import torch
+from backpack.hessianfree.hvp import hessian_vector_product
+from backpack.utils.convert_parameters import vector_to_parameter_list
+from torch.nn.utils.convert_parameters import parameters_to_vector
+
 from tests.utils.check import compare_outputs
 from tests.utils.harness import SimpleTestHarness
 from tests.utils.problem import instantiate
@@ -42,3 +47,23 @@ def run_harness_get_output(problem, quantities):
         testing_harness.test(cockpit_kwargs)
 
     return [q.get_output() for q in quantities]
+
+
+def autograd_diag_hessian(loss, params):
+    """Compute the Hessian diagonal via ``torch.autograd``."""
+    D = sum(p.numel() for p in params)
+    device = loss.device
+
+    hessian_diag = torch.zeros(D, device=device)
+
+    # compute Hessian columns by HVPs with one-hot vectors
+    for d in range(D):
+        e_d = torch.zeros(D, device=device)
+        e_d[d] = 1.0
+        e_d_list = vector_to_parameter_list(e_d, params)
+
+        hessian_d_list = hessian_vector_product(loss, params, e_d_list)
+
+        hessian_diag[d] = parameters_to_vector(hessian_d_list)[d]
+
+    return vector_to_parameter_list(hessian_diag, params)

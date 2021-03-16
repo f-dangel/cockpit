@@ -1,15 +1,12 @@
 """Compare ``HessTrace`` quantity with autograd."""
 
 import pytest
-import torch
-from backpack.hessianfree.hvp import hessian_vector_product
-from backpack.utils.convert_parameters import vector_to_parameter_list
-from torch.nn.utils.convert_parameters import parameters_to_vector
 
 from cockpit.quantities import HessTrace
 from cockpit.utils.schedules import linear
 from tests.test_quantities.settings import PROBLEMS, PROBLEMS_IDS
 from tests.test_quantities.utils import (
+    autograd_diag_hessian,
     compare_quantities_separate_runs,
     compare_quantities_single_run,
 )
@@ -41,26 +38,6 @@ class AutogradHessTrace(HessTrace):
         """
         return True
 
-    @staticmethod
-    def autograd_diag_hessian(loss, params):
-        """Compute the Hessian diagonal via ``torch.autograd``."""
-        D = sum(p.numel() for p in params)
-        device = loss.device
-
-        hessian_diag = torch.zeros(D, device=device)
-
-        # compute Hessian columns by HVPs with one-hot vectors
-        for d in range(D):
-            e_d = torch.zeros(D, device=device)
-            e_d[d] = 1.0
-            e_d_list = vector_to_parameter_list(e_d, params)
-
-            hessian_d_list = hessian_vector_product(loss, params, e_d_list)
-
-            hessian_diag[d] = parameters_to_vector(hessian_d_list)[d]
-
-        return vector_to_parameter_list(hessian_diag, params)
-
     def _compute(self, global_step, params, batch_loss):
         """Evaluate the trace of the Hessian at the current point.
 
@@ -71,8 +48,7 @@ class AutogradHessTrace(HessTrace):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         return [
-            diag_h.sum().item()
-            for diag_h in self.autograd_diag_hessian(batch_loss, params)
+            diag_h.sum().item() for diag_h in autograd_diag_hessian(batch_loss, params)
         ]
 
 
