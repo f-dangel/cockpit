@@ -82,7 +82,7 @@ class SimpleTestHarness:
             # forward pass
             outputs = model(inputs)
             loss = loss_fn(outputs, labels)
-            losses = individual_loss_fn(outputs, labels).detach()
+            losses = individual_loss_fn(outputs, labels)
 
             # code inside this block does not alter random number generation
             with restore_rng_state():
