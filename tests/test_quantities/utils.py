@@ -94,3 +94,28 @@ def autograd_diag_hessian(loss, params, concat=False):
         hessian_diag = vector_to_parameter_list(hessian_diag, params)
 
     return hessian_diag
+
+
+def autograd_hessian(loss, params):
+    """Compute the full Hessian via ``torch.autograd``.
+
+    Flatten and concatenate the columns over all parameters, such that the result
+    is a ``[D, D]`` tensor, where ``D`` denotes the total number of parameters.
+
+    Returns:
+        torch.Tensor: 2d tensor containing the Hessian matrix
+    """
+    return torch.stack(list(autograd_hessian_columns(loss, params, concat=True)))
+
+
+def autograd_hessian_maximum_eigenvalue(loss, params):
+    """Compute the full Hessian via ``torch.autograd``.
+
+    Flatten and concatenate the columns over all parameters.
+    """
+    hessian = autograd_hessian(loss, params)
+
+    # TODO Use torch.linalg.eigvalsh after supporting torch>=1.8.0
+    evals, _ = hessian.symeig()
+
+    return evals.max()
