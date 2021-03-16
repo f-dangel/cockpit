@@ -67,7 +67,7 @@ class MeanGSNR(SingleStepQuantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        return self._compute_gsnr(global_step, params, batch_loss).mean()
+        return self._compute_gsnr(global_step, params, batch_loss).mean().item()
 
     def _compute_gsnr(self, global_step, params, batch_loss):
         """Compute gradient signal-to-noise ratio.
