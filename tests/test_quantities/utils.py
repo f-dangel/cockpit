@@ -119,3 +119,33 @@ def autograd_hessian_maximum_eigenvalue(loss, params):
     evals, _ = hessian.symeig()
 
     return evals.max()
+
+
+def autograd_individual_gradients(losses, params, concat=False):
+    """Compute individual gradients from individual losses via ``torch.autograd``.
+
+    Args:
+        concat (bool): If ``True``, flatten and concatenate the gradients over all
+            parameters.
+    """
+
+    # nesting is [sample, param]
+    individual_gradients = [
+        torch.autograd.grad(loss, params, create_graph=True) for loss in losses
+    ]
+
+    num_layers = len(params)
+
+    # concatenate samples for each parameter, nesting is [param, sample]
+    individual_gradients = [
+        torch.cat([g[layer_idx].unsqueeze(0) for g in individual_gradients], dim=0)
+        for layer_idx in range(num_layers)
+    ]
+
+    # concatenate over parameters
+    if concat:
+        individual_gradients = torch.cat(
+            [g.flatten(start_dim=1) for g in individual_gradients], dim=1
+        )
+
+    return individual_gradients
