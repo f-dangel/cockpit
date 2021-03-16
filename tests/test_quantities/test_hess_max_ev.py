@@ -6,11 +6,15 @@ import pytest
 
 from cockpit.quantities import HessMaxEV
 from cockpit.utils.schedules import linear
-from tests.test_quantities.settings import PROBLEMS, PROBLEMS_IDS
+from tests.test_quantities.settings import (
+    INDEPENDENT_RUNS,
+    INDEPENDENT_RUNS_IDS,
+    PROBLEMS,
+    PROBLEMS_IDS,
+)
 from tests.test_quantities.utils import (
     autograd_hessian_maximum_eigenvalue,
-    compare_quantities_separate_runs,
-    compare_quantities_single_run,
+    get_compare_fn,
 )
 
 
@@ -44,36 +48,18 @@ class AutogradHessMaxEV(HessMaxEV):
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
-def test_hess_max_ev_single_run(problem):
+@pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
+def test_hess_max_ev(problem, independent_runs):
     """Compare BackPACK and ``torch.autograd`` implementation of Hessian max eigenvalue.
-
-    Both quantities run simultaneously in the same cockpit.
 
     Args:
         problem (tests.utils.Problem): Settings for train loop.
+        independent_runs (bool): Whether to use to separate runs to compute the
+            output of every quantity.
     """
     interval, offset = 1, 2
     schedule = linear(interval, offset=offset)
     atol, rtol = 1e-4, 1e-2
 
-    compare_quantities_single_run(
-        problem, (HessMaxEV, AutogradHessMaxEV), schedule, rtol=rtol, atol=atol
-    )
-
-
-@pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
-def test_hess_max_ev_separate_runs(problem):
-    """Compare BackPACK and ``torch.autograd`` implementation of Hessian max eigenvalue.
-
-    Both quantities run in separate cockpits.
-
-    Args:
-        problem (tests.utils.Problem): Settings for train loop.
-    """
-    interval, offset = 1, 2
-    schedule = linear(interval, offset=offset)
-    atol, rtol = 1e-4, 1e-2
-
-    compare_quantities_separate_runs(
-        problem, (HessMaxEV, AutogradHessMaxEV), schedule, rtol=rtol, atol=atol
-    )
+    compare_fn = get_compare_fn(independent_runs)
+    compare_fn(problem, (HessMaxEV, AutogradHessMaxEV), schedule, rtol=rtol, atol=atol)

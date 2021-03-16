@@ -4,12 +4,13 @@ import pytest
 
 from cockpit.quantities import HessTrace
 from cockpit.utils.schedules import linear
-from tests.test_quantities.settings import PROBLEMS, PROBLEMS_IDS
-from tests.test_quantities.utils import (
-    autograd_diag_hessian,
-    compare_quantities_separate_runs,
-    compare_quantities_single_run,
+from tests.test_quantities.settings import (
+    INDEPENDENT_RUNS,
+    INDEPENDENT_RUNS_IDS,
+    PROBLEMS,
+    PROBLEMS_IDS,
 )
+from tests.test_quantities.utils import autograd_diag_hessian, get_compare_fn
 
 
 class AutogradHessTrace(HessTrace):
@@ -53,30 +54,17 @@ class AutogradHessTrace(HessTrace):
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
-def test_hess_trace_single_run(problem):
+@pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
+def test_hess_trace(problem, independent_runs):
     """Compare BackPACK and ``torch.autograd`` implementation of Hessian trace.
-
-    Both quantities run simultaneously in the same cockpit.
 
     Args:
         problem (tests.utils.Problem): Settings for train loop.
+        independent_runs (bool): Whether to use to separate runs to compute the
+            output of every quantity.
     """
     interval, offset = 1, 2
     schedule = linear(interval, offset=offset)
 
-    compare_quantities_single_run(problem, (HessTrace, AutogradHessTrace), schedule)
-
-
-@pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
-def test_hess_trace_separate_runs(problem):
-    """Compare BackPACK and ``torch.autograd`` implementation of Hessian trace.
-
-    Both quantities run in separate cockpits.
-
-    Args:
-        problem (tests.utils.Problem): Settings for train loop.
-    """
-    interval, offset = 1, 2
-    schedule = linear(interval, offset=offset)
-
-    compare_quantities_separate_runs(problem, (HessTrace, AutogradHessTrace), schedule)
+    compare_fn = get_compare_fn(independent_runs)
+    compare_fn(problem, (HessTrace, AutogradHessTrace), schedule)

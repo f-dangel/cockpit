@@ -6,12 +6,13 @@ import torch
 from cockpit.context import get_individual_losses
 from cockpit.quantities import MeanGSNR
 from cockpit.utils.schedules import linear
-from tests.test_quantities.settings import PROBLEMS, PROBLEMS_IDS
-from tests.test_quantities.utils import (
-    autograd_individual_gradients,
-    compare_quantities_separate_runs,
-    compare_quantities_single_run,
+from tests.test_quantities.settings import (
+    INDEPENDENT_RUNS,
+    INDEPENDENT_RUNS_IDS,
+    PROBLEMS,
+    PROBLEMS_IDS,
 )
+from tests.test_quantities.utils import autograd_individual_gradients, get_compare_fn
 
 
 class AutogradMeanGSNR(MeanGSNR):
@@ -65,36 +66,18 @@ class AutogradMeanGSNR(MeanGSNR):
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
-def test_mean_gsnr_single_run(problem):
+@pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
+def test_mean_gsnr(problem, independent_runs):
     """Compare BackPACK and ``torch.autograd`` implementation of MeanGSNR.
-
-    Both quantities run simultaneously in the same cockpit.
 
     Args:
         problem (tests.utils.Problem): Settings for train loop.
+        independent_runs (bool): Whether to use to separate runs to compute the
+            output of every quantity.
     """
     interval, offset = 1, 2
     schedule = linear(interval, offset=offset)
     rtol, atol = 5e-3, 1e-5
 
-    compare_quantities_single_run(
-        problem, (MeanGSNR, AutogradMeanGSNR), schedule, rtol=rtol, atol=atol
-    )
-
-
-@pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
-def test_mean_gsnr_separate_runs(problem):
-    """Compare BackPACK and ``torch.autograd`` implementation of MeanGSNR.
-
-    Both quantities run in separate cockpits.
-
-    Args:
-        problem (tests.utils.Problem): Settings for train loop.
-    """
-    interval, offset = 1, 2
-    schedule = linear(interval, offset=offset)
-    rtol, atol = 5e-3, 1e-5
-
-    compare_quantities_separate_runs(
-        problem, (MeanGSNR, AutogradMeanGSNR), schedule, rtol=rtol, atol=atol
-    )
+    compare_fn = get_compare_fn(independent_runs)
+    compare_fn(problem, (MeanGSNR, AutogradMeanGSNR), schedule, rtol=rtol, atol=atol)

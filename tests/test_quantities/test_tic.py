@@ -5,12 +5,16 @@ import pytest
 from cockpit.context import get_individual_losses
 from cockpit.quantities import TICDiag, TICTrace
 from cockpit.utils.schedules import linear
-from tests.test_quantities.settings import PROBLEMS, PROBLEMS_IDS
+from tests.test_quantities.settings import (
+    INDEPENDENT_RUNS,
+    INDEPENDENT_RUNS_IDS,
+    PROBLEMS,
+    PROBLEMS_IDS,
+)
 from tests.test_quantities.utils import (
     autograd_diag_hessian,
     autograd_individual_gradients,
-    compare_quantities_separate_runs,
-    compare_quantities_single_run,
+    get_compare_fn,
 )
 
 
@@ -119,60 +123,36 @@ class AutogradTICTrace(TICTrace):
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
-def test_tic_diag_single_run(problem):
+@pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
+def test_tic_diag(problem, independent_runs):
     """Compare BackPACK and ``torch.autograd`` implementation of TICDiag.
-
-    Both quantities run simultaneously in the same cockpit.
 
     Args:
         problem (tests.utils.Problem): Settings for train loop.
+        independent_runs (bool): Whether to use to separate runs to compute the
+            output of every quantity.
     """
     interval, offset = 1, 2
     schedule = linear(interval, offset=offset)
 
-    compare_quantities_single_run(problem, (TICDiag, AutogradTICDiag), schedule)
+    compare_fn = get_compare_fn(independent_runs)
+    compare_fn(problem, (TICDiag, AutogradTICDiag), schedule)
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
-def test_tic_diag_separate_runs(problem):
-    """Compare BackPACK and ``torch.autograd`` implementation of TICDiag.
-
-    Both quantities run in separate cockpits.
-
-    Args:
-        problem (tests.utils.Problem): Settings for train loop.
-    """
-    interval, offset = 1, 2
-    schedule = linear(interval, offset=offset)
-
-    compare_quantities_separate_runs(problem, (TICDiag, AutogradTICDiag), schedule)
-
-
-@pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
-def test_tic_trace_single_run(problem):
+@pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
+def test_tic_trace(problem, independent_runs):
     """Compare BackPACK and ``torch.autograd`` implementation of TICTrace.
 
     Both quantities run simultaneously in the same cockpit.
 
     Args:
         problem (tests.utils.Problem): Settings for train loop.
+        independent_runs (bool): Whether to use to separate runs to compute the
+            output of every quantity.
     """
     interval, offset = 1, 2
     schedule = linear(interval, offset=offset)
 
-    compare_quantities_single_run(problem, (TICTrace, AutogradTICTrace), schedule)
-
-
-@pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
-def test_tic_trace_separate_runs(problem):
-    """Compare BackPACK and ``torch.autograd`` implementation of TICTrace.
-
-    Both quantities run in separate cockpits.
-
-    Args:
-        problem (tests.utils.Problem): Settings for train loop.
-    """
-    interval, offset = 1, 2
-    schedule = linear(interval, offset=offset)
-
-    compare_quantities_separate_runs(problem, (TICTrace, AutogradTICTrace), schedule)
+    compare_fn = get_compare_fn(independent_runs)
+    compare_fn(problem, (TICTrace, AutogradTICTrace), schedule)

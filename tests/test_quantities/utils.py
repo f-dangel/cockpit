@@ -39,6 +39,22 @@ def compare_quantities_separate_runs(
     compare_outputs(outputs[0], outputs[1], rtol=rtol, atol=atol)
 
 
+def get_compare_fn(independent_runs):
+    """Return the function used to compare quantities.
+
+    Args:
+        independent_runs (bool): Whether to use to separate runs to compute the
+            output of every quantity.
+
+    Returns:
+        callable: Function that computes and compares the output of two quantities.
+    """
+    if independent_runs:
+        return compare_quantities_separate_runs
+    else:
+        return compare_quantities_separate_runs
+
+
 def run_harness_get_output(problem, quantities):
     """Instantiate problem, run ``SimpleTestHarness`` using ``quantities``.
 
