@@ -9,7 +9,9 @@ from tests.utils.harness import SimpleTestHarness
 from tests.utils.problem import instantiate
 
 
-def compare_quantities_single_run(problem, quantity_classes, schedule):
+def compare_quantities_single_run(
+    problem, quantity_classes, schedule, rtol=1e-5, atol=1e-7
+):
     """Run quantities in one cockpit. Compare written outputs."""
     q1_cls, q2_cls = quantity_classes
     q1 = q1_cls(track_schedule=schedule, verbose=True)
@@ -17,10 +19,12 @@ def compare_quantities_single_run(problem, quantity_classes, schedule):
 
     outputs = run_harness_get_output(problem, [q1, q2])
 
-    compare_outputs(outputs[0], outputs[1])
+    compare_outputs(outputs[0], outputs[1], rtol=rtol, atol=atol)
 
 
-def compare_quantities_separate_runs(problem, quantity_classes, schedule):
+def compare_quantities_separate_runs(
+    problem, quantity_classes, schedule, rtol=1e-5, atol=1e-7
+):
     """Run quantities in separate cockpits. Compare written outputs."""
     assert (
         len(quantity_classes) == 2
@@ -32,7 +36,7 @@ def compare_quantities_separate_runs(problem, quantity_classes, schedule):
         q = q_cls(track_schedule=schedule, verbose=True)
         outputs.append(run_harness_get_output(problem, [q])[0])
 
-    compare_outputs(outputs[0], outputs[1])
+    compare_outputs(outputs[0], outputs[1], rtol=rtol, atol=atol)
 
 
 def run_harness_get_output(problem, quantities):
