@@ -56,6 +56,9 @@ def autograd_hessian_columns(loss, params, concat=False):
     """Return an iterator of the Hessian columns computed via ``torch.autograd``.
 
     Args:
+        loss (torch.Tensor): Loss whose Hessian is investigated.
+        params ([torch.Tensor]): List of torch.Tensors holding the network's
+            parameters.
         concat (bool): If ``True``, flatten and concatenate the columns over all
             parameters.
     """
@@ -79,6 +82,9 @@ def autograd_diag_hessian(loss, params, concat=False):
     """Compute the Hessian diagonal via ``torch.autograd``.
 
     Args:
+        loss (torch.Tensor): Loss whose Hessian is investigated.
+        params ([torch.Tensor]): List of torch.Tensors holding the network's
+            parameters.
         concat (bool): If ``True``, flatten and concatenate the columns over all
             parameters.
     """
@@ -102,6 +108,10 @@ def autograd_hessian(loss, params):
     Flatten and concatenate the columns over all parameters, such that the result
     is a ``[D, D]`` tensor, where ``D`` denotes the total number of parameters.
 
+    Args:
+        params ([torch.Tensor]): List of torch.Tensors holding the network's
+            parameters.
+
     Returns:
         torch.Tensor: 2d tensor containing the Hessian matrix
     """
@@ -112,6 +122,11 @@ def autograd_hessian_maximum_eigenvalue(loss, params):
     """Compute the full Hessian via ``torch.autograd``.
 
     Flatten and concatenate the columns over all parameters.
+
+    Args:
+        loss (torch.Tensor): Loss whose Hessian is investigated.
+        params ([torch.Tensor]): List of torch.Tensors holding the network's
+            parameters.
     """
     hessian = autograd_hessian(loss, params)
 
@@ -125,10 +140,12 @@ def autograd_individual_gradients(losses, params, concat=False):
     """Compute individual gradients from individual losses via ``torch.autograd``.
 
     Args:
+        losses (torch.Tensor): Individual losses.
+        params ([torch.Tensor]): List of torch.Tensors holding the network's
+            parameters.
         concat (bool): If ``True``, flatten and concatenate the gradients over all
             parameters.
     """
-
     # nesting is [sample, param]
     individual_gradients = [
         torch.autograd.grad(loss, params, create_graph=True) for loss in losses
