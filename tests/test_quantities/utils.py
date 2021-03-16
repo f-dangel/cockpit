@@ -32,6 +32,10 @@ def compare_quantities_separate_runs(problem, quantity_classes, schedule):
 
 
 def run_harness_get_output(problem, quantities):
+    """Instantiate problem, run ``SimpleTestHarness`` using ``quantities``.
+
+    Return list of quantity outputs.
+    """
     with instantiate(problem):
         testing_harness = SimpleTestHarness(problem)
         cockpit_kwargs = {"quantities": quantities}

@@ -1,3 +1,4 @@
+"""Class for problem definition used in the tests."""
 import copy
 
 import torch
@@ -7,12 +8,15 @@ class instantiate:
     """Instantiates the objects in a problem from their functional representation."""
 
     def __init__(self, problem):
+        """Store problem configuration."""
         self.problem = problem
 
     def __enter__(self):
+        """Set up the problem."""
         self.problem.set_up()
 
     def __exit__(self, type, value, traceback):
+        """Tear down the problem."""
         self.problem.tear_down()
 
 

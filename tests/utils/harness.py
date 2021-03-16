@@ -11,10 +11,11 @@ class SimpleTestHarness:
     """Class for running a simple test loop with the Cockpit.
 
     Args:
-        problem (string): The problem to test on.
+        problem (string): The (instantiated) problem to test on.
     """
 
     def __init__(self, problem):
+        """Store the instantiated problem."""
         self.problem = problem
         self.check_optimizer(problem)
 
@@ -105,7 +106,9 @@ class SimpleTestHarness:
                 break
 
     def check_in_context(self):
+        """Check that will be executed within the cockpit context."""
         pass
 
     def check_after_context(self):
+        """Check that will be executed directly after the cockpit context."""
         pass

@@ -21,6 +21,7 @@ def compare_outputs(output1, output2, rtol=1e-5, atol=1e-7):
 
 
 def get_compare_function(value1, value2):
+    """Return the function used to compare ``value1`` with ``value2``."""
     if isinstance(value1, float) and isinstance(value2, float):
         compare_fn = compare_floats
     elif isinstance(value1, list) and isinstance(value2, list):
@@ -32,10 +33,12 @@ def get_compare_function(value1, value2):
 
 
 def compare_floats(float1, float2, rtol=1e-5, atol=1e-7):
+    """Compare two floats."""
     assert numpy.isclose(float1, float2, atol=atol, rtol=rtol), f"{float1} ≠ {float2}"
 
 
 def compare_lists(list1, list2, rtol=1e-5, atol=1e-7):
+    """Compare two lists containing floats."""
     assert len(list1) == len(
         list2
     ), f"Lists don't match in size: {len(list1)} ≠ {len(list2)}"
