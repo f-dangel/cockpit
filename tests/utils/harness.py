@@ -5,6 +5,7 @@ import torch
 from backpack import extend
 
 from cockpit import Cockpit
+from tests.utils.rand import restore_rng_state
 
 
 class SimpleTestHarness:
@@ -83,20 +84,22 @@ class SimpleTestHarness:
             loss = loss_fn(outputs, labels)
             losses = individual_loss_fn(outputs, labels).detach()
 
-            # backward pass
-            with self.cockpit(
-                global_step,
-                *backpack_exts,
-                info={
-                    "batch_size": inputs.shape[0],
-                    "individual_losses": losses,
-                    "loss": loss,
-                },
-            ):
-                loss.backward(create_graph=self.cockpit.create_graph(global_step))
-                self.check_in_context()
+            # code inside this block does not alter random number generation
+            with restore_rng_state():
+                # backward pass
+                with self.cockpit(
+                    global_step,
+                    *backpack_exts,
+                    info={
+                        "batch_size": inputs.shape[0],
+                        "individual_losses": losses,
+                        "loss": loss,
+                    },
+                ):
+                    loss.backward(create_graph=self.cockpit.create_graph(global_step))
+                    self.check_in_context()
 
-            self.check_after_context()
+                self.check_after_context()
 
             # optimizer step
             optimizer.step()
