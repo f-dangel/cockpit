@@ -21,29 +21,6 @@ class AutogradHessMaxEV(HessMaxEV):
     networks.
     """
 
-    def extensions(self, global_step):
-        """Return list of BackPACK extensions required for the computation.
-
-        Args:
-            global_step (int): The current iteration number.
-
-        Returns:
-            list: (Potentially empty) list with required BackPACK quantities.
-        """
-        return []
-
-    def create_graph(self, global_step):
-        """Return whether access to the forward pass computation graph is needed.
-
-        Args:
-            global_step (int): The current iteration number.
-
-        Returns:
-            bool: ``True`` if the computation graph shall not be deleted,
-                else ``False``.
-        """
-        return True
-
     def _compute(self, global_step, params, batch_loss):
         """Evaluate the maximum mini-batch loss Hessian eigenvalue.
 

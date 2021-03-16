@@ -38,10 +38,10 @@ class AutogradMeanGSNR(MeanGSNR):
             bool: ``True`` if the computation graph shall not be deleted,
                 else ``False``.
         """
-        return True
+        return self.should_compute(global_step)
 
     def _compute(self, global_step, params, batch_loss):
-        """Evaluate the TIC approximating the Hessian by its diagonal.
+        """Evaluate the MeanGSNR.
 
         Args:
             global_step (int): The current iteration number.

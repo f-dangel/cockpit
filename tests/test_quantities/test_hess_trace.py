@@ -36,7 +36,7 @@ class AutogradHessTrace(HessTrace):
             bool: ``True`` if the computation graph shall not be deleted,
                 else ``False``.
         """
-        return True
+        return self.should_compute(global_step)
 
     def _compute(self, global_step, params, batch_loss):
         """Evaluate the trace of the Hessian at the current point.

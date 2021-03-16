@@ -38,7 +38,7 @@ class AutogradTICDiag(TICDiag):
             bool: ``True`` if the computation graph shall not be deleted,
                 else ``False``.
         """
-        return True
+        return self.should_compute(global_step)
 
     def _compute(self, global_step, params, batch_loss):
         """Evaluate the TIC approximating the Hessian by its diagonal.
@@ -89,7 +89,7 @@ class AutogradTICTrace(TICTrace):
             bool: ``True`` if the computation graph shall not be deleted,
                 else ``False``.
         """
-        return True
+        return self.should_compute(global_step)
 
     def _compute(self, global_step, params, batch_loss):
         """Evaluate the TIC approximation proposed in thomas2020interplay.
