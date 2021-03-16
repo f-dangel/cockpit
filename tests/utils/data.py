@@ -13,9 +13,14 @@ def load_toy_data(batch_size):
 class ToyData(Dataset):
     """Toy data set used for testing. Consists of small random "images" and labels."""
 
-    def __init__(self):
-        """Init the toy data set."""
+    def __init__(self, center=0.1):
+        """Init the toy data set.
+
+        Args:
+            center (float): Center around which the data is randomly distributed.
+        """
         super(ToyData, self).__init__()
+        self._center = center
 
     def __getitem__(self, index):
         """Return item with index `index` of data set.
@@ -26,7 +31,7 @@ class ToyData(Dataset):
         Returns:
             [tuple]: Tuple of (random) input and (random) label.
         """
-        item_input = torch.rand(1, 5, 5)
+        item_input = torch.rand(1, 5, 5) + self._center
         item_label = torch.randint(size=(), low=0, high=3)
         return (item_input, item_label)
 
