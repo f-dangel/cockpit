@@ -5,12 +5,13 @@ import torch
 
 from cockpit.context import get_individual_losses
 from cockpit.quantities import MeanGSNR
-from cockpit.utils.schedules import linear
 from tests.test_quantities.settings import (
     INDEPENDENT_RUNS,
     INDEPENDENT_RUNS_IDS,
     PROBLEMS,
     PROBLEMS_IDS,
+    QUANTITY_KWARGS,
+    QUANTITY_KWARGS_IDS,
 )
 from tests.test_quantities.utils import autograd_individual_gradients, get_compare_fn
 
@@ -67,17 +68,17 @@ class AutogradMeanGSNR(MeanGSNR):
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
 @pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
-def test_mean_gsnr(problem, independent_runs):
+@pytest.mark.parametrize("q_kwargs", QUANTITY_KWARGS, ids=QUANTITY_KWARGS_IDS)
+def test_mean_gsnr(problem, independent_runs, q_kwargs):
     """Compare BackPACK and ``torch.autograd`` implementation of MeanGSNR.
 
     Args:
         problem (tests.utils.Problem): Settings for train loop.
         independent_runs (bool): Whether to use to separate runs to compute the
             output of every quantity.
+        q_kwargs (dict): Keyword arguments handed over to both quantities.
     """
-    interval, offset = 1, 2
-    schedule = linear(interval, offset=offset)
     rtol, atol = 5e-3, 1e-5
 
     compare_fn = get_compare_fn(independent_runs)
-    compare_fn(problem, (MeanGSNR, AutogradMeanGSNR), schedule, rtol=rtol, atol=atol)
+    compare_fn(problem, (MeanGSNR, AutogradMeanGSNR), q_kwargs, rtol=rtol, atol=atol)

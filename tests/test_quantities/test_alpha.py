@@ -5,12 +5,13 @@ import pytest
 from cockpit.context import get_individual_losses
 from cockpit.quantities import Alpha, AlphaGeneral
 from cockpit.quantities.alpha import _exact_variance, _projected_gradient
-from cockpit.utils.schedules import linear
 from tests.test_quantities.settings import (
     INDEPENDENT_RUNS,
     INDEPENDENT_RUNS_IDS,
     PROBLEMS,
     PROBLEMS_IDS,
+    QUANTITY_KWARGS,
+    QUANTITY_KWARGS_IDS,
 )
 from tests.test_quantities.utils import autograd_individual_gradients, get_compare_fn
 
@@ -119,33 +120,31 @@ class AutogradAlphaGeneral(AlphaGeneral):
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
 @pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
-def test_alpha(problem, independent_runs):
+@pytest.mark.parametrize("q_kwargs", QUANTITY_KWARGS, ids=QUANTITY_KWARGS_IDS)
+def test_alpha(problem, independent_runs, q_kwargs):
     """Compare BackPACK and ``torch.autograd`` implementation of Alpha.
 
     Args:
         problem (tests.utils.Problem): Settings for train loop.
         independent_runs (bool): Whether to use to separate runs to compute the
             output of every quantity.
+        q_kwargs (dict): Keyword arguments handed over to both quantities.
     """
-    interval, offset = 1, 2
-    schedule = linear(interval, offset=offset)
-
     compare_fn = get_compare_fn(independent_runs)
-    compare_fn(problem, (Alpha, AutogradAlphaGeneral), schedule)
+    compare_fn(problem, (Alpha, AutogradAlphaGeneral), q_kwargs)
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
 @pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
-def test_alpha_general(problem, independent_runs):
+@pytest.mark.parametrize("q_kwargs", QUANTITY_KWARGS, ids=QUANTITY_KWARGS_IDS)
+def test_alpha_general(problem, independent_runs, q_kwargs):
     """Compare BackPACK and ``torch.autograd`` implementation of AlphaGeneral.
 
     Args:
         problem (tests.utils.Problem): Settings for train loop.
         independent_runs (bool): Whether to use to separate runs to compute the
             output of every quantity.
+        q_kwargs (dict): Keyword arguments handed over to both quantities.
     """
-    interval, offset = 1, 2
-    schedule = linear(interval, offset=offset)
-
     compare_fn = get_compare_fn(independent_runs)
-    compare_fn(problem, (AlphaGeneral, AutogradAlphaGeneral), schedule)
+    compare_fn(problem, (AlphaGeneral, AutogradAlphaGeneral), q_kwargs)

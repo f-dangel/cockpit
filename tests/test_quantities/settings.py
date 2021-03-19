@@ -2,6 +2,7 @@
 
 import torch
 
+from cockpit.utils.schedules import linear
 from tests.settings import SETTINGS as GLOBAL_SETTINGS
 from tests.utils.data import load_toy_data
 from tests.utils.models import load_toy_model
@@ -32,3 +33,11 @@ for problem, problem_id in zip(PROBLEMS, PROBLEMS_IDS):
     if "cpu" in str(problem.device):
         CPU_PROBLEMS.append(problem)
         CPU_PROBLEMS_ID.append(problem_id)
+
+QUANTITY_KWARGS = [
+    {
+        "track_schedule": linear(interval=1, offset=2),
+        "verbose": True,
+    },
+]
+QUANTITY_KWARGS_IDS = [f"q_kwargs={q_kwargs}" for q_kwargs in QUANTITY_KWARGS]
