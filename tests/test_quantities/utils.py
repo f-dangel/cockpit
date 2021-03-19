@@ -56,7 +56,7 @@ def get_compare_fn(independent_runs):
     if independent_runs:
         return compare_quantities_separate_runs
     else:
-        return compare_quantities_separate_runs
+        return compare_quantities_single_run
 
 
 def run_harness_get_output(problem, quantities):
