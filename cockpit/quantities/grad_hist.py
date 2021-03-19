@@ -385,12 +385,6 @@ class GradHist2d(SingleStepQuantity):
 
             hist = p.grad_batch_transforms["hist_2d"]
 
-            if self._check:
-                batch_size = get_batch_size(global_step)
-                num_params = p.numel()
-                num_counts = hist.sum()
-                assert batch_size * num_params == num_counts
-
             self.output[global_step][f"param_{idx}_hist_2d"] = (
                 hist.cpu().numpy().tolist()
             )
