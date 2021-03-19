@@ -168,10 +168,14 @@ def autograd_individual_gradients(losses, params, concat=False):
     ]
 
     num_layers = len(params)
+    batch_axis = 0
 
     # concatenate samples for each parameter, nesting is [param, sample]
     individual_gradients = [
-        torch.cat([g[layer_idx].unsqueeze(0) for g in individual_gradients], dim=0)
+        torch.cat(
+            [g[layer_idx].unsqueeze(batch_axis) for g in individual_gradients],
+            dim=batch_axis,
+        )
         for layer_idx in range(num_layers)
     ]
 
@@ -182,3 +186,31 @@ def autograd_individual_gradients(losses, params, concat=False):
         )
 
     return individual_gradients
+
+
+def autograd_diagonal_variance(losses, params, concat=False, unbiased=True):
+    """Compute diagonal of gradient variance via ``torch.autograd``.
+
+    Args:
+        losses (torch.Tensor): Individual losses.
+        params ([torch.Tensor]): List of torch.Tensors holding the network's
+            parameters.
+        concat (bool): If ``True``, flatten and concatenate the results over all
+            parameters.
+        unbiased (bool, optional): Use unbiased estimation. Default value: ``True``.
+    """
+    individual_gradients = autograd_individual_gradients(losses, params)
+
+    batch_axis = 0
+    batch_size = individual_gradients[0].shape[batch_axis]
+    factor = batch_size / (batch_size - 1) if unbiased else 1
+
+    diag_variance = [
+        factor * ((igrad ** 2).mean(batch_axis) - igrad.mean(batch_axis) ** 2)
+        for igrad in individual_gradients
+    ]
+
+    if concat:
+        diag_variance = torch.cat([diag_var.flatten() for diag_var in diag_variance])
+
+    return diag_variance
