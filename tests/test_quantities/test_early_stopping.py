@@ -42,7 +42,7 @@ class AutogradEarlyStopping(EarlyStopping):
         return self.should_compute(global_step)
 
     def _compute(self, global_step, params, batch_loss):
-        """Evaluate the norm test.
+        """Evaluate the early stopping criterion.
 
         Args:
             global_step (int): The current iteration number.
