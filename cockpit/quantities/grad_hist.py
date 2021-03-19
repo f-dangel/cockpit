@@ -98,7 +98,7 @@ class GradHist1d(SingleStepQuantity):
 
     # TODO Rewrite to use parent class track method
     def track(self, global_step, params, batch_loss):
-        """Evaluate the trace of the Hessian at the current point.
+        """Evaluate the individual gradient histogram at the current point.
 
         Args:
             global_step (int): The current iteration number.
