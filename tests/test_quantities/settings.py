@@ -2,7 +2,7 @@
 
 import torch
 
-from cockpit.utils.schedules import linear
+from cockpit.utils.schedules import linear, logarithmic
 from tests.settings import SETTINGS as GLOBAL_SETTINGS
 from tests.utils.data import load_toy_data
 from tests.utils.models import load_toy_model
@@ -36,7 +36,13 @@ for problem, problem_id in zip(PROBLEMS, PROBLEMS_IDS):
 
 QUANTITY_KWARGS = [
     {
-        "track_schedule": linear(interval=1, offset=2),
+        "track_schedule": linear(interval=1, offset=2),  # [1, 3, 5, ...]
+        "verbose": True,
+    },
+    {
+        "track_schedule": logarithmic(
+            start=0, end=1, steps=4, init=False
+        ),  # [1, 2, 4, 10]
         "verbose": True,
     },
 ]
