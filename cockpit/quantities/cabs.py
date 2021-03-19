@@ -76,4 +76,6 @@ class CABS(SingleStepQuantity):
             )
         )
 
-        return lr * (sgs_compensated - B * grad_squared).sum() / (B * batch_loss.item())
+        return (
+            lr * (sgs_compensated - B * grad_squared).sum() / (B * batch_loss)
+        ).item()
