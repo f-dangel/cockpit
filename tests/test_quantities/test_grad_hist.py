@@ -86,7 +86,7 @@ class AutogradGradHist1d(GradHist1d):
             individual_gradients, bins=self._bins, range=(self._xmin, self._xmax)
         )
 
-        return hist
+        return hist.astype(float)
 
     def _update_limits(self, global_step, params, batch_loss):
         """Update limits for next histogram computation."""
