@@ -44,4 +44,5 @@ def compare_lists(list1, list2, rtol=1e-5, atol=1e-7):
     ), f"Lists don't match in size: {len(list1)} ≠ {len(list2)}"
 
     for val1, val2 in zip(list1, list2):
-        compare_floats(val1, val2, rtol=rtol, atol=atol)
+        compare_fn = get_compare_function(val1, val2)
+        compare_fn(val1, val2, rtol=rtol, atol=atol)

@@ -10,12 +10,14 @@ from tests.utils.problem import instantiate
 
 
 def compare_quantities_single_run(
-    problem, quantity_classes, schedule, rtol=1e-5, atol=1e-7
+    problem, quantity_classes, schedule, rtol=1e-5, atol=1e-7, q_kwargs=None
 ):
     """Run quantities in one cockpit. Compare written outputs."""
     q1_cls, q2_cls = quantity_classes
-    q1 = q1_cls(track_schedule=schedule, verbose=True)
-    q2 = q2_cls(track_schedule=schedule, verbose=True)
+    q_kwargs = q_kwargs if q_kwargs is not None else {}
+
+    q1 = q1_cls(track_schedule=schedule, verbose=True, **q_kwargs)
+    q2 = q2_cls(track_schedule=schedule, verbose=True, **q_kwargs)
 
     outputs = run_harness_get_output(problem, [q1, q2])
 
@@ -23,7 +25,7 @@ def compare_quantities_single_run(
 
 
 def compare_quantities_separate_runs(
-    problem, quantity_classes, schedule, rtol=1e-5, atol=1e-7
+    problem, quantity_classes, schedule, rtol=1e-5, atol=1e-7, q_kwargs=None
 ):
     """Run quantities in separate cockpits. Compare written outputs."""
     assert (
@@ -32,8 +34,10 @@ def compare_quantities_separate_runs(
 
     outputs = []
 
+    q_kwargs = q_kwargs if q_kwargs is not None else {}
+
     for q_cls in quantity_classes:
-        q = q_cls(track_schedule=schedule, verbose=True)
+        q = q_cls(track_schedule=schedule, verbose=True, **q_kwargs)
         outputs.append(run_harness_get_output(problem, [q])[0])
 
     compare_outputs(outputs[0], outputs[1], rtol=rtol, atol=atol)

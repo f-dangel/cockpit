@@ -25,3 +25,10 @@ PROBLEMS, PROBLEMS_IDS = make_problems_with_ids(SETTINGS)
 
 INDEPENDENT_RUNS = [True, False]
 INDEPENDENT_RUNS_IDS = [f"independent_runs={run}" for run in INDEPENDENT_RUNS]
+
+CPU_PROBLEMS = []
+CPU_PROBLEMS_ID = []
+for problem, problem_id in zip(PROBLEMS, PROBLEMS_IDS):
+    if "cpu" in str(problem.device):
+        CPU_PROBLEMS.append(problem)
+        CPU_PROBLEMS_ID.append(problem_id)
