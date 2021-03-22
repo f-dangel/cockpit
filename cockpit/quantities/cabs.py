@@ -34,6 +34,10 @@ class CABS(SingleStepQuantity):
         """Set value for current learning rate."""
         self._lr = lr
 
+    def get_lr(self):
+        """Get value for current learning rate."""
+        return self._lr
+
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
 
@@ -65,7 +69,7 @@ class CABS(SingleStepQuantity):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
         B = get_batch_size(global_step)
-        lr = self._lr
+        lr = self.get_lr()
 
         grad_squared = self._fetch_grad(params, aggregate=True) ** 2
         # # compensate BackPACK's 1/B scaling
@@ -76,4 +80,6 @@ class CABS(SingleStepQuantity):
             )
         )
 
-        return lr * (sgs_compensated - B * grad_squared).sum() / (B * batch_loss.item())
+        return (
+            lr * (sgs_compensated - B * grad_squared).sum() / (B * batch_loss)
+        ).item()

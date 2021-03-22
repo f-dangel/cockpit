@@ -7,7 +7,6 @@ import torch
 from backpack import extensions
 from numpy import histogram2d as numpy_histogram2d
 
-from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_hists import (
     histogram2d,
@@ -32,7 +31,6 @@ class GradHist1d(SingleStepQuantity):
         bins=100,
         adapt_schedule=None,
         pad=0.2,
-        check=False,
         remove_outliers=False,
     ):
         """Initialize the 1D Histogram of individual gradient elements.
@@ -48,8 +46,6 @@ class GradHist1d(SingleStepQuantity):
                 that indicates if the limits should be updated. If ``None``, adapt
                 only at step 0.
             pad (float): Relative padding added to the limits
-            check (bool): If True, this quantity will be computed via two different
-                ways and compared. Defaults to ``False``.
             remove_outliers (bool): Whether outliers should be removed. If ``False``,
                 they show up in the edge bins.
         """
@@ -69,8 +65,6 @@ class GradHist1d(SingleStepQuantity):
             self._adapt_schedule = default_adapt_schedule
         else:
             self._adapt_schedule = adapt_schedule
-
-        self._check = check
 
         self._remove_outliers = remove_outliers
 
@@ -103,7 +97,7 @@ class GradHist1d(SingleStepQuantity):
 
     # TODO Rewrite to use parent class track method
     def track(self, global_step, params, batch_loss):
-        """Evaluate the trace of the Hessian at the current point.
+        """Evaluate the individual gradient histogram at the current point.
 
         Args:
             global_step (int): The current iteration number.
@@ -114,12 +108,6 @@ class GradHist1d(SingleStepQuantity):
         if self.should_compute(global_step):
             edges = self._get_current_bin_edges()
             hist = sum(p.grad_batch_transforms["hist_1d"] for p in params)
-
-            if self._check:
-                batch_size = get_batch_size(global_step)
-                num_params = sum(p.numel() for p in params)
-                num_counts = hist.sum()
-                assert batch_size * num_params == num_counts
 
             self.output[global_step]["hist_1d"] = hist.cpu().numpy().tolist()
             self.output[global_step]["edges"] = edges.cpu().numpy().tolist()
@@ -226,7 +214,6 @@ class GradHist2d(SingleStepQuantity):
         adapt_policy="abs_max",
         xpad=0.2,
         ypad=0.2,
-        check=False,
         keep_individual=False,
     ):
         """Initialize the 2D Histogram of individual gradient elements over parameters.
@@ -268,8 +255,6 @@ class GradHist2d(SingleStepQuantity):
                   (+ padding).
             xpad (float): Relative padding added to the x limits.
             ypad (float): Relative padding added to the y limits.
-            check (bool): If True, this quantity will be computed via two different
-                ways and compared. Defaults to ``False``.
             keep_individual (bool): Whether to keep individual parameter histograms.
         """
         super().__init__(track_schedule, verbose=verbose)
@@ -308,8 +293,6 @@ class GradHist2d(SingleStepQuantity):
             "min_max",
         ], "Invalid adaptation policy"
         self._adapt_policy = adapt_policy
-
-        self._check = check
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -376,12 +359,6 @@ class GradHist2d(SingleStepQuantity):
         x_edges, y_edges = self._get_current_bin_edges()
         hist = sum(p.grad_batch_transforms["hist_2d"] for p in params)
 
-        if self._check:
-            batch_size = get_batch_size(global_step)
-            num_params = sum(p.numel() for p in params)
-            num_counts = hist.sum()
-            assert batch_size * num_params == num_counts
-
         self.output[global_step]["hist_2d"] = hist.cpu().numpy().tolist()
         self.output[global_step]["x_edges"] = x_edges.cpu().numpy().tolist()
         self.output[global_step]["y_edges"] = y_edges.cpu().numpy().tolist()
@@ -406,12 +383,6 @@ class GradHist2d(SingleStepQuantity):
             x_edges, y_edges = self._get_current_bin_edges()
 
             hist = p.grad_batch_transforms["hist_2d"]
-
-            if self._check:
-                batch_size = get_batch_size(global_step)
-                num_params = p.numel()
-                num_counts = hist.sum()
-                assert batch_size * num_params == num_counts
 
             self.output[global_step][f"param_{idx}_hist_2d"] = (
                 hist.cpu().numpy().tolist()

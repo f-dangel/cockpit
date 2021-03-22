@@ -1,20 +1,10 @@
 """Quantity for Takeuchi Information Criterion (TIC)."""
 
-import torch
 from backpack import extensions
 
 from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
-from cockpit.quantities.utils_quantities import (
-    has_negative,
-    has_zeros,
-    report_nonclose_values,
-)
 from cockpit.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
-
-# TODO Move to tests
-ATOL = 1e-5
-RTOL = 5e-4
 
 
 class TIC(SingleStepQuantity):
@@ -105,36 +95,6 @@ class TICDiag(TIC):
             (batch_size * sum_grad_squared / (curvature + self._epsilon)).sum().item()
         )
 
-    # TODO Move to tests
-    def __run_check(self, global_step, params, batch_loss):
-        """Run sanity checks for TICDiag."""
-
-        def _compute_tic_with_batch_grad(params):
-            """TICDiag."""
-            batch_grad = self._fetch_batch_grad(params, aggregate=True)
-            curvature = self._fetch_diag_curvature(
-                params, self._curvature, aggregate=True
-            )
-
-            curv_stable = curvature + self._epsilon
-            if has_zeros(curv_stable):
-                raise ValueError("Diagonal curvature + ε has zeros.")
-            if has_negative(curv_stable):
-                raise ValueError("Diagonal curvature + ε has negative entries.")
-
-            batch_size = get_batch_size(global_step)
-
-            return torch.einsum("j,nj->", 1 / curv_stable, batch_size * batch_grad ** 2)
-
-        # sanity check 1: Both TICDiags match
-        tic_from_sgs = self._compute(global_step, params, batch_loss)
-        tic_from_batch_grad = _compute_tic_with_batch_grad(params)
-
-        report_nonclose_values(tic_from_sgs, tic_from_batch_grad, atol=ATOL, rtol=RTOL)
-        assert torch.allclose(
-            tic_from_sgs, tic_from_batch_grad, atol=ATOL, rtol=RTOL
-        ), "TICDiags from sum_grad_squared and batch_grad do not match"
-
 
 class TICTrace(TIC):
     """TIC approximation using the trace of curvature and gradient covariance."""
@@ -157,33 +117,3 @@ class TICTrace(TIC):
         return (
             batch_size * sum_grad_squared.sum() / (curvature.sum() + self._epsilon)
         ).item()
-
-    # TODO Move to tests
-    def __run_check(self, global_step, params, batch_loss):
-        """Run sanity checks for TICTrace."""
-
-        def _compute_tic_with_batch_grad(params):
-            """TICTrace."""
-            batch_grad = self._fetch_batch_grad(params, aggregate=True)
-            curvature = self._fetch_diag_curvature(
-                params, self._curvature, aggregate=True
-            )
-
-            curv_trace_stable = curvature.sum() + self._epsilon
-            if has_zeros(curv_trace_stable):
-                raise ValueError("Curvature trace + ε has zeros.")
-            if has_negative(curv_trace_stable):
-                raise ValueError("Curvature trace + ε has negative entries.")
-
-            batch_size = get_batch_size(global_step)
-
-            return batch_size * (batch_grad ** 2).sum() / curv_trace_stable
-
-        # sanity check 1: Both TICTraces match
-        tic_from_sgs = self._compute(global_step, params, batch_loss)
-        tic_from_batch_grad = _compute_tic_with_batch_grad(params)
-
-        report_nonclose_values(tic_from_sgs, tic_from_batch_grad, atol=ATOL, rtol=RTOL)
-        assert torch.allclose(
-            tic_from_sgs, tic_from_batch_grad, atol=ATOL, rtol=RTOL
-        ), "TICTraces from sum_grad_squared and batch_grad do not match"

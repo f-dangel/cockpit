@@ -79,4 +79,4 @@ class EarlyStopping(SingleStepQuantity):
 
         snr = grad_squared / (diag_variance + self._epsilon)
 
-        return 1 - B * snr.mean()
+        return 1 - B * snr.mean().item()

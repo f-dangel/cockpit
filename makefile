@@ -3,7 +3,7 @@
 .PHONY: test
 .PHONY: conda-env
 .PHONY: black isort format
-.PHONY: black-check isort-check format-check
+.PHONY: black-check isort-check format-check, code-standard-check
 .PHONY: flake8
 .PHONY: pydocstyle-check
 .PHONY: darglint-check
@@ -24,6 +24,8 @@ help:
 	@echo "        Run pydocstyle on the project"
 	@echo "darglint-check"
 	@echo "        Run darglint on the project"
+	@echo "code-standard-check"
+	@echo "        Run all linters on the project to check quality standards."
 	@echo "conda-env"
 	@echo "        Create conda environment 'cockpit' with dev setup"
 	@echo "build-docs"
@@ -68,6 +70,13 @@ format:
 	@make black-check
 
 format-check: black-check isort-check pydocstyle-check darglint-check
+
+code-standard-check:
+	@make black
+	@make isort
+	@make black-check
+	@make flake8
+	@make pydocstyle-check
 
 ### CONDA ###
 conda-env:
