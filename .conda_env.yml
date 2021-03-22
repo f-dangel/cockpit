@@ -3,11 +3,13 @@ dependencies:
   - pip=19.3.1
   - python=3.7.6
   - conda-forge::black
+  - conda-forge::darglint
   - conda-forge::flake8
   - conda-forge::flake8-bugbear
   - conda-forge::flake8-comprehensions
   - conda-forge::isort
   - conda-forge::palettable
+  - conda-forge::pydocstyle
   - conda-forge::pytest
   - conda-forge::pytest-cov
   - conda-forge::pytest-benchmark
