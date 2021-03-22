@@ -17,11 +17,11 @@ dependencies:
   - conda-forge::sphinx
   - conda-forge::sphinx-automodapi
   - conda-forge::sphinx_rtd_theme
-  - conda-forge::graphviz
   - conda-forge::tikzplotlib
   - pip:
     - memory-profiler
     - pre-commit
+    - graphviz
     - git+https://git@github.com/fsschneider/DeepOBS.git@develop#egg=deepobs
     - git+https://git@github.com/f-dangel/backobs.git@development#egg=backobs
     - -e .
