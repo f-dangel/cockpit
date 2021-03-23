@@ -487,12 +487,12 @@ class TwoStepQuantity(Quantity):
             Any: Result of the computation. If ``None``, the step served to compute
                 intermediate information rather than computing the quantity's value.
         """
+        if self.is_start(global_step):
+            self._compute_start(global_step, params, batch_loss)
+
         result = None
         if self.is_end(global_step):
             result = self._compute_end(global_step, params, batch_loss)
-
-        if self.is_start(global_step):
-            self._compute_start(global_step, params, batch_loss)
 
         return result
 
