@@ -2,7 +2,7 @@
 
 from cockpit.quantities.alpha import Alpha, AlphaGeneral
 from cockpit.quantities.cabs import CABS
-from cockpit.quantities.distance import Distance, DistanceTwoStep
+from cockpit.quantities.distance import Distance
 from cockpit.quantities.early_stopping import EarlyStopping
 from cockpit.quantities.grad_hist import GradHist1d, GradHist2d
 from cockpit.quantities.grad_norm import GradNorm
