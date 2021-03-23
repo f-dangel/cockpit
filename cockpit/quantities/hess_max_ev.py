@@ -61,6 +61,9 @@ class HessMaxEV(SingleStepQuantity):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Larges eigenvalue of the Hessian.
         """
         HVP = HVPLinearOperator(
             batch_loss, params, grad_params=self._fetch_grad(params)
@@ -131,7 +134,7 @@ class HVPLinearOperator(BaseLinearOperator):
             atol (float): Absolute tolerance to determine convergence from
                 consecutive eigenvalues.
 
-        Returns
+        Returns:
             (torch.Tensor): Maximum eigenvalue. Warns if maximum number of iterations
                 was reached and returns the potentially unconverged estimate.
         """

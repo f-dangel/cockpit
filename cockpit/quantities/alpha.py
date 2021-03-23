@@ -282,6 +282,17 @@ class _Alpha(Quantity):
         """Fetch values for quadratic fit. Return as dictionary.
 
         The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
+
+        Args:
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+            pos (str): Whether we are at the start or end of an iteration.
+                One of ``start`` or ``end``.
+            global_step (int): The current iteration number.
+
+        Raises:
+            NotImplementedError: If not defined. Should be implemented by subclass.
         """
         raise NotImplementedError
 
@@ -318,6 +329,9 @@ class _Alpha(Quantity):
                 of the quadratic fit.
             start (bool, optional): Whether to get info at start. Defaults to `True`.
             end (bool, optional): Whether to get info at end. Defaults to `True`.
+
+        Returns:
+            list: Requested information.
         """
         start_value, end_value = None, None
 
@@ -365,6 +379,20 @@ class AlphaGeneral(_Alpha):
         """Fetch values for quadratic fit. Return as dictionary.
 
         The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
+
+        Args:
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+            pos (str): Whether we are at the start or end of an iteration.
+                One of ``start`` or ``end``.
+            global_step (int): The current iteration number.
+
+        Raises:
+            ValueError: If position is not one of ``start`` or ``end``.
+
+        Returns:
+            dict: Holding the parameters, (variance of) loss and slope.
         """
         info = {}
 
@@ -433,6 +461,17 @@ class Alpha(_Alpha):
         """Fetch values for quadratic fit. Return as dictionary.
 
         The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
+
+        Args:
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+            pos (str): Whether we are at the start or end of an iteration.
+                One of ``start`` or ``end``.
+            global_step (int): The current iteration number.
+
+        Returns:
+            dict: Holding the parameters, (variance of) loss and slope.
         """
         info = {}
 
@@ -456,6 +495,10 @@ class Alpha(_Alpha):
         individual gradients. However, this fraction cannot be aggregated among
         parameters. We have to split the computation into components that can be
         aggregated, namely dᵀgᵢ and ||d||₂².
+
+        Returns:
+            BatchGradTransform: Transform to compute information to project
+            individual gradients.
         """
 
         def compute_start_projection_info(batch_grad):
@@ -492,6 +535,10 @@ class Alpha(_Alpha):
         individual gradients. However, this fraction cannot be aggregated among
         parameters. We have to split the computation into components that can be
         aggregated, namely dᵀgᵢ and ||d||₂².
+
+        Returns:
+            BatchGradTransform: Transform to compute information to project
+            individual gradients.
         """
 
         def compute_end_projection_info(batch_grad):

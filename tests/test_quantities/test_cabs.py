@@ -49,6 +49,9 @@ class AutogradCABS(CABS):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Evaluated CABS criterion.
         """
         losses = get_individual_losses(global_step)
         batch_axis = 0

@@ -24,8 +24,16 @@ def histogramdd(  # noqa: C901
         range (sequence, optional): Each item in the sequence is either a (min,max)
             Tuple, or None, in which case the edges are calculated as the minimum and
             maximum of input data
+        weights (Tensor, optional): Weight for each value in the input tensor.
+            Has to be ``None``. Defaults to ``None``.
         remove_outliers (bool, optional): Whether the overflow bins should be included
             in the final histogram or not
+
+    Raises:
+        ValueError: If the dimension of the bins is not equal to the dimension
+            of the sample.
+        ValueError: If the number of bins is not a positive integer.
+        ValueError: If max of hist is not greater than min in range parameters.
 
     Returns:
         Histogram with axes
@@ -256,6 +264,14 @@ def transform_grad_batch_abs_max(batch_grad):
     """Compute maximum value of absolute individual gradients.
 
     Transformation used by BackPACK's ``BatchGradTransforms``.
+
+    Args:
+        batch_grad (torch.Tensor): Individual gradient of a parameter `p`. If
+                `p` is of shape `(*)`, the individual gradients have shape `(N, *)`,
+                where `N` denotes the batch size.
+
+    Returns:
+        float: Maximum value of absolute individual gradients.
     """
     batch_size = batch_grad.shape[0]
     return batch_size * abs_max(batch_grad.data).item()
@@ -265,6 +281,14 @@ def transform_param_abs_max(batch_grad):
     """Compute maximum value of absolute individual gradients.
 
     Transformation used by BackPACK's ``BatchGradTransforms``.
+
+    Args:
+        batch_grad (torch.Tensor): Individual gradient of a parameter `p`. If
+                `p` is of shape `(*)`, the individual gradients have shape `(N, *)`,
+                where `N` denotes the batch size.
+
+    Returns:
+        float: Maximum value of absolute individual gradients.
     """
     return abs_max(batch_grad._param_weakref().data).item()
 
@@ -273,6 +297,14 @@ def transform_grad_batch_min_max(batch_grad):
     """Compute minimum and maximum value of absolute individual gradients.
 
     Transformation used by BackPACK's ``BatchGradTransforms``.
+
+    Args:
+        batch_grad (torch.Tensor): Individual gradient of a parameter `p`. If
+                `p` is of shape `(*)`, the individual gradients have shape `(N, *)`,
+                where `N` denotes the batch size.
+
+    Returns:
+        list: Minimum and maximum value of absolute individual gradients.
     """
     batch_size = batch_grad.shape[0]
     return [
@@ -285,6 +317,14 @@ def transform_param_min_max(batch_grad):
     """Compute minimum and maximum value of absolute individual gradients.
 
     Transformation used by BackPACK's ``BatchGradTransforms``.
+
+    Args:
+        batch_grad (torch.Tensor): Individual gradient of a parameter `p`. If
+                `p` is of shape `(*)`, the individual gradients have shape `(N, *)`,
+                where `N` denotes the batch size.
+
+    Returns:
+        list: Minimum and maximum value of absolute individual gradients.
     """
     return [
         batch_grad._param_weakref().data.min().item(),

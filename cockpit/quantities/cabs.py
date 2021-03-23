@@ -67,6 +67,9 @@ class CABS(SingleStepQuantity):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Batch size suggested by CABS.
         """
         B = get_batch_size(global_step)
         lr = self.get_lr()

@@ -41,6 +41,9 @@ class NormTest(SingleStepQuantity):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Maximum θ for which the norm test would pass.
         """
         batch_l2_squared = self._fetch_batch_l2_squared_via_batch_grad_transforms(
             params, aggregate=True

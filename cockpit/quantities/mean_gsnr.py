@@ -55,6 +55,9 @@ class MeanGSNR(SingleStepQuantity):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Mean GSNR of the current iteration.
         """
         return self._compute_gsnr(global_step, params, batch_loss).mean().item()
 
@@ -65,6 +68,9 @@ class MeanGSNR(SingleStepQuantity):
             global_step (int): The current iteration number.
             params ([torch.Tensor]): List of parameters considered in the computation.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Mean GSNR of the current iteration.
         """
         grad_squared = self._fetch_grad(params, aggregate=True) ** 2
         sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(

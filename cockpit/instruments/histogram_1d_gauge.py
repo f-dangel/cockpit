@@ -59,6 +59,11 @@ def _get_histogram_data(tracking_data):
 
     Args:
         tracking_data (pandas.DataFrame): DataFrame holding the tracking data.
+
+    Returns:
+        list: Bins of the histogram.
+        list: Mid points of the bins.
+        list: Width of the bins.
     """
     clean_data = tracking_data.GradHist1d.dropna()
     last_step_data = clean_data[clean_data.index[-1]]

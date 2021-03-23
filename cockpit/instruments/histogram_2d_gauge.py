@@ -128,6 +128,9 @@ def _get_2d_histogram_data(tracking_data, transformation=None, idx=None):
             transformation for the plot. Use logarithmic transformation per default.
         idx (int): Index of parameter whose histogram data should be used.
             If ``None`` (default), uses data of all parameters.
+
+    Returns:
+        DataFrame: DataFrame holding the x and y mid_points and bin values.
     """
     clean_data = tracking_data.GradHist2d.dropna()
     last_step_data = clean_data[clean_data.index[-1]]
@@ -161,14 +164,17 @@ def _get_2d_histogram_data(tracking_data, transformation=None, idx=None):
 def _get_xmargin_histogram_data(tracking_data, idx=None):
     """Compute histogram data when marginalizing out y-dimension.
 
+    Args:
+        tracking_data (pandas.DataFrame): DataFrame holding the tracking data.
+        idx (int, optional): Index of parameter whose histogram data should be used.
+            If ``None``, uses data of all parameters. Defaults to ``None``.
+
     Returns:
         vals (numpy.array): Bin counts of one-dimensional histogram when the
             two-dimensional histogram is reduced over the y-dimension.
         mid_points (numpy.array): One-dimensional array containing the center
             points of the histogram bins.
         bin_size (float): Width of a bin.
-        idx (int): Index of parameter whose histogram data should be used.
-            If ``None`` (default), uses data of all parameters.
     """
     key_prefix = "" if idx is None else f"param_{idx}_"
     x_key = key_prefix + "x_edges"
@@ -192,14 +198,17 @@ def _get_xmargin_histogram_data(tracking_data, idx=None):
 def _get_ymargin_histogram_data(tracking_data, idx=None):
     """Compute histogram data when marginalizing out x-dimension.
 
+    Args:
+        tracking_data (pandas.DataFrame): DataFrame holding the tracking data.
+        idx (int, optional): Index of parameter whose histogram data should be used.
+            If ``None``, uses data of all parameters. Defaults to ``None``.
+
     Returns:
         vals (numpy.array): Bin counts of one-dimensional histogram when the
-            two-dimensional histogram is reduced over the x-dimension.
+            two-dimensional histogram is reduced over the y-dimension.
         mid_points (numpy.array): One-dimensional array containing the center
             points of the histogram bins.
         bin_size (float): Width of a bin.
-        idx (int): Index of parameter whose histogram data should be used.
-            If ``None`` (default), uses data of all parameters.
     """
     key_prefix = "" if idx is None else f"param_{idx}_"
     y_key = key_prefix + "y_edges"

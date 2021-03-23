@@ -135,6 +135,9 @@ class GradHist1d(SingleStepQuantity):
             batch_grad (torch.Tensor): Individual gradient of a parameter `p`. If
                 `p` is of shape `(*)`, the individual gradients have shape `(N, *)`,
                 where `N` denotes the batch size.
+
+        Returns:
+            Tensor: Histogram represented as a tensor
         """
         # NOTE ``batch_grad`` is 1/B ∇ℓᵢ so we need to compensate the 1/B. Instead of
         # multiplying ``batch_grad`` with the batch size, we instead scale the histogram
@@ -222,19 +225,25 @@ class GradHist2d(SingleStepQuantity):
             track_schedule (callable): Function that maps the ``global_step``
                 to a boolean, which determines if the quantity should be computed.
             verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
-            xmin (float): Lower clipping bound for individual gradients in histogram.
-            xmax (float): Upper clipping bound for individual gradients in histogram.
-            min_xrange (float): Lower bound for limit difference along x axis.
-            xbins (int): Number of bins in x-direction
-            ymin (float): Lower clipping bound for parameters in histogram.
-            ymax (float): Upper clipping bound for parameters in histogram.
-            min_yrange (float): Lower bound for limit difference along y axis.
-            ybins (int): Number of bins in y-direction
-            save_memory (bool): Sacrifice binning runtime for less memory.
-            which (str): Which histogram function should be used. Performance varies
-                strongly among different methods, and also depend on the data being
-                histogram-ed. Choices:
-
+            xmin (int, optional): Lower clipping bound for individual gradients
+                in histogram. Defaults to -1.
+            xmax (int, optional): Upper clipping bound for individual gradients
+                in histogram. Defaults to 1.
+            min_xrange (float, optional): Lower bound for limit difference along
+                x axis. Defaults to 1e-6.
+            xbins (int, optional): Number of bins in x-direction. Defaults to 40.
+            ymin (int, optional): Lower clipping bound for parameters in histogram.
+                Defaults to -2.
+            ymax (int, optional): Upper clipping bound for parameters in histogram.
+                Defaults to 2.
+            min_yrange (float, optional): Lower bound for limit difference
+                along y axis. Defaults to 1e-6.
+            ybins (int, optional): Number of bins in y-direction. Defaults to 50.
+            save_memory (bool, optional): Sacrifice binning runtime for less
+                memory. Defaults to True.
+            which (str, optional): Which histogram function should be used.
+                Performance varies strongly among different methods, and also
+                depend on the data being histogram-ed. Choices:
                 - ``'numpy'``: Load to CPU and use ``numpy`` implementation.
                 - ``'histogramdd'``: Use torch implementation that is currently under
                   review for being merged.
@@ -243,19 +252,24 @@ class GradHist2d(SingleStepQuantity):
                 - ``histogram2d_opt``: Use custom optimized torch implementation which
                   works without expanding the parameter values and saves some memory.
                   Will be unaffected by ``save_memory``.
-            adapt_schedule (callable): Function that maps ``global_step`` to a boolean
-                that indicates if the limits should be updated. If ``None``, adapt
-                every time the histogram is recomputed.
-            adapt_policy (str): Strategy to adapt the histogram limits.
+                Defaults to "histogram2d".
+            adapt_schedule (callable, optional): Function that maps ``global_step``
+                to a boolean that indicates if the limits should be updated.
+                If ``None``, adapt every time the histogram is recomputed.
+                Defaults to None.
+            adapt_policy (str, optional): Strategy to adapt the histogram limits.
                 Options are:
-
                 - "abs_max": Sets interval to range between negative and positive
                   maximum absolute value (+ padding).
                 - "min_max": Sets interval range between minimum and maximum value
                   (+ padding).
-            xpad (float): Relative padding added to the x limits.
-            ypad (float): Relative padding added to the y limits.
-            keep_individual (bool): Whether to keep individual parameter histograms.
+                  Defaults to "abs_max".
+            xpad (float, optional): Relative padding added to the x limits.
+                Defaults to 0.2.
+            ypad (float, optional): Relative padding added to the y limits.
+                Defaults to 0.2.
+            keep_individual (bool, optional):  Whether to keep individual
+                parameter histograms. Defaults to False.
         """
         super().__init__(track_schedule, verbose=verbose)
 
@@ -299,6 +313,9 @@ class GradHist2d(SingleStepQuantity):
 
         Args:
             global_step (int): The current iteration number.
+
+        Raises:
+            ValueError: If unknown adaption policy.
 
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
@@ -438,6 +455,13 @@ class GradHist2d(SingleStepQuantity):
             Don't hand in sequences of arrays for ``bins`` as this way the
             histogram functions do not know that the bins are uniform. They
             will then call a sort algorithm, which is expensive.
+
+        Args:
+            batch_grad_clamped (Tensor): Clamped BatchGradients.
+            param_clamped (Tensor): Clamped parameters.
+
+        Returns:
+            Tensor or NumpyArray: Histogram.
         """
         batch_grad_clamped = batch_grad_clamped.flatten(start_dim=1)
         param_clamped = param_clamped.flatten()
@@ -496,6 +520,13 @@ class GradHist2d(SingleStepQuantity):
             Don't hand in sequences of arrays for ``bins`` as this way the
             histogram functions do not know that the bins are uniform. They
             will then call a sort algorithm, which is expensive.
+
+        Args:
+            batch_grad_clamped (Tensor): Clamped BatchGradients.
+            param_clamped (Tensor): Clamped parameters.
+
+        Returns:
+            Tensor or NumpyArray: Histogram.
         """
         batch_size = batch_grad_clamped.shape[0]
         expand_arg = [batch_size] + len(param_clamped.shape) * [-1]
@@ -533,6 +564,14 @@ class GradHist2d(SingleStepQuantity):
 
         Todo:
             Wait for PyTorch functionality and replace numpy
+
+        Args:
+            batch_grad (torch.Tensor): Individual gradient of a parameter `p`. If
+                `p` is of shape `(*)`, the individual gradients have shape `(N, *)`,
+                where `N` denotes the batch size.
+
+        Returns:
+            Callable, Tensor or NumpyArray: Histogram
         """
         batch_grad_clamped, param_clamped = self.__preprocess(
             batch_grad.data, batch_grad._param_weakref().data

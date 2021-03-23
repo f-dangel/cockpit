@@ -48,6 +48,9 @@ class AutogradHessTrace(HessTrace):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            list: Traces of the Hessian by layer.
         """
         return [
             diag_h.sum().item() for diag_h in autograd_diag_hessian(batch_loss, params)

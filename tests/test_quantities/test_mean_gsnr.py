@@ -50,6 +50,9 @@ class AutogradMeanGSNR(MeanGSNR):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Mean GSNR of the current iteration.
         """
         losses = get_individual_losses(global_step)
         individual_gradients_flat = autograd_individual_gradients(

@@ -56,6 +56,9 @@ class TIC(SingleStepQuantity):
         Args:
             global_step (int): The current iteration number.
 
+        Raises:
+            KeyError: If curvature string has unknown associated extension.
+
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
@@ -84,6 +87,9 @@ class TICDiag(TIC):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: TIC computed using a diagonal curvature approximation.
         """
         sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
             params, aggregate=True
@@ -107,6 +113,9 @@ class TICTrace(TIC):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: TIC computed using a trace approximation.
         """
         sum_grad_squared = self._fetch_sum_grad_squared_via_batch_grad_transforms(
             params, aggregate=True
