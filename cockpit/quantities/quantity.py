@@ -361,7 +361,13 @@ class Quantity:
 
 
 class SingleStepQuantity(Quantity):
-    """Quantity that only accessed information at one point in time."""
+    """Quantity that only accessed information at one point in time.
+
+    Child classes must implement the following methods:
+
+    - ``_compute``
+
+    """
 
     def should_compute(self, global_step):
         """Return if computations need to be performed at a specific iteration.
@@ -407,3 +413,249 @@ class ByproductQuantity(SingleStepQuantity):
             list: (Potentially empty) list with required BackPACK quantities.
         """
         return []
+
+
+class TwoStepQuantity(Quantity):
+    """Quantity that accesses information from two points in time.
+
+    The earlier point is referred to as 'start', while the latter is referred to
+    as 'end'.
+
+    Child classes must implement the following methods:
+
+    - ``is_start``, ``is_end``
+    - ``_compute_start``, ``_compute_end``
+
+    """
+
+    def __init__(self, save_shift, track_schedule, verbose=False):
+        """Initialize the Quantity by storing the track interval.
+
+        Crucially, it creates the output dictionary, that is meant to store all
+        values that should be stored.
+
+        Args:
+            save_shift (int): Difference between iteration at which information
+                is computed versus iteration under which it is stored. For instance, if
+                set to ``1``, the information computed at iteration ``n + 1`` is saved
+                under iteration ``n``.
+            track_schedule (callable): Function that maps the ``global_step``
+                to a boolean, which determines if the quantity should be computed.
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
+        """
+        super().__init__(track_schedule, verbose=verbose)
+
+        self._cache = defaultdict(dict)
+        self._save_shift = save_shift
+
+    def compute(self, global_step, params, batch_loss):
+        """Evaluate quantity at a step in training.
+
+        After the computation, temporarily cached info is deleted from the internal
+        cache.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            (int, arbitrary): The second value is the result that will be stored at
+                the iteration indicated by the first entry (important for multi-step
+                quantities whose values are computed in later iterations).
+        """
+        save_iter = global_step - self._save_shift
+        save_result = self._compute(global_step, params, batch_loss)
+
+        # assume next iteration already started to discard irrelevant information
+        virtual_step = global_step + 1
+        self.free_cache(global_step, virtual_step)
+
+        return save_iter, save_result
+
+    def _compute(self, global_step, params, batch_loss):
+        """Perform start and end point computation if necessary.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            Any: Result of the computation. If ``None``, the step served to compute
+                intermediate information rather than computing the quantity's value.
+        """
+        result = None
+        if self.is_end(global_step):
+            result = self._compute_end(global_step, params, batch_loss)
+
+        if self.is_start(global_step):
+            self._compute_start(global_step, params, batch_loss)
+
+        return result
+
+    def _compute_start(self, global_step, params, batch_loss):
+        """Compute and cache information at a start point.
+
+        Use ``self.save_to_cache`` to store information temporarily.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Raises:
+            NotImplementedError: Must be implemented by child classes.
+        """
+        raise NotImplementedError
+
+    def _compute_end(self, global_step, params, batch_loss):
+        """Compute info at end, combine with start info and return quantity's value.
+
+        Use ``self.load_from_cache`` to retrieve cached info from the start point.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            Any: The quantity's value.
+
+        Raises:
+            NotImplementedError: Must be implemented by child classes.
+        """
+        raise NotImplementedError
+
+    def should_compute(self, global_step):
+        """Return if computations need to be performed at a specific iteration.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            bool: Truth value whether computations need to be performed.
+        """
+        return self.is_start(global_step) or self.is_end(global_step)
+
+    def is_start(self, global_step):
+        """Return whether current iteration is start point.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            bool: Whether ``global_step`` is a start point.
+
+        Raises:
+            NotImplementedError: Must be implemented by child classes.
+        """
+        raise NotImplementedError
+
+    def is_end(self, global_step):
+        """Return whether current iteration is end point.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            bool: Whether ``global_step`` is an end point.
+
+        Raises:
+            NotImplementedError: Must be implemented by child classes.
+        """
+        raise NotImplementedError
+
+    def save_to_cache(self, global_step, key, value, block_fn):
+        """Save information to cache. Overwrite existing entry.
+
+        Modifies the class-internal cache in ``self._cache``, a nested dictionary
+        with iterations as outer, and custom keys as inner, nesting.
+
+        Args:
+            global_step (int): The iteration number associated with the cache event.
+            key (str): Custom key under which ``value`` is cached.
+            value (any): Object to be cached.
+            block_fn (callable): Function mapping integers (iteration count) to a
+                boolean. This value indicates whether deletion is blocked for the
+                cached ``(key, value)`` pair at a certain iteration.
+        """
+        if self._verbose:
+            message = f"Create cache entry ('{global_step}', '{key}')"
+            print(f"{self._verbose_prefix(global_step)}: {message}")
+
+        self._cache[global_step][key] = (value, block_fn)
+
+    def free_cache(self, global_step, virtual_step):
+        """Delete information from cache that is not required anymore.
+
+        Removes empty iterations and unblocked entries from ``self._cache``.
+
+        Args:
+            global_step (int): Current iteration number. Used for verbose output.
+            virtual_step (int): Virtual future iteration number that is used to
+                determine which information can be freed.
+        """
+        self._free_unblocked(global_step, virtual_step)
+        self._free_empty(global_step)
+
+    def _free_unblocked(self, global_step, virtual_step):
+        """Remove unblocked entries from class-internal cache.
+
+        Modifies ``self._cache``.
+
+        Args:
+            global_step (int): Current iteration number. Used for verbose output.
+            virtual_step (int): Virtual future iteration number that is used to
+                determine which information can be freed.
+        """
+        unblocked = []
+
+        for step, info in self._cache.items():
+            for key, (_, block_fn) in info.items():
+                blocked = block_fn(virtual_step)
+
+                if not blocked:
+                    unblocked.append((step, key))
+
+        for (step, key) in unblocked:
+            self._cache[step].pop(key)
+
+            if self._verbose:
+                message = f"Delete cache entry ('{step}', '{key}')"
+                print(f"{self._verbose_prefix(global_step)}: {message}")
+
+    def _free_empty(self, global_step):
+        """Remove empty iteration entries from class-internal cache.
+
+        Modifies ``self._cache``.
+
+        Args:
+            global_step (int): Current iteration number. Used for verbose output.
+        """
+        empty = [key for key, value in self._cache.items() if value == {}]
+
+        for key in empty:
+            self._cache.pop(key)
+
+            if self._verbose:
+                message = f"Delete empty cache ('{key}')"
+                print(f"{self._verbose_prefix(global_step)}: {message}")
+
+    def load_from_cache(self, global_step, key):
+        """Load cached information.
+
+        Args:
+            global_step (int): The iteration number associated with the cache event.
+            key (str): Custom key under which the information is cached.
+
+        Returns:
+            Any: Cached item.
+        """
+        value, _ = self._cache[global_step][key]
+
+        return value
