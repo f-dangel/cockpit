@@ -4,7 +4,7 @@ import pytest
 
 from cockpit import quantities
 from cockpit.quantities import __all__
-from cockpit.quantities.quantity import SingleStepQuantity
+from cockpit.quantities.quantity import SingleStepQuantity, TwoStepQuantity
 from cockpit.utils.schedules import linear
 from tests.test_quantities.settings import PROBLEMS, PROBLEMS_IDS
 from tests.utils.harness import SimpleTestHarness
@@ -37,7 +37,10 @@ def test_quantity_integration_and_track_events(problem, quantity_cls):
         if isinstance(quantity, SingleStepQuantity):
             return schedule(iteration)
         else:
-            shift = quantity_cls._start_end_difference
+            if isinstance(quantity, TwoStepQuantity):
+                shift = quantity._save_shift
+            else:
+                shift = quantity_cls._start_end_difference
             return schedule(iteration) and iteration + shift < iterations
 
     track_events = sorted(i for i in range(iterations) if is_track_event(i))
