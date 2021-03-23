@@ -90,6 +90,10 @@ class CockpitPlotter:
             discard (int, optional): Global step after which information
                 should be discarded.
             debug (bool, optional): Enable debug mode.. Defaults to False.
+
+        Raises:
+            ValueError: Raises ValueError if source is a ``Cockpit`` instance,
+                but no savedir is given.
         """
         problem_info_path = source if isinstance(source, str) else ""
         self.__update_problem_info(problem_info_path)
@@ -340,6 +344,9 @@ class CockpitPlotter:
                 be fetched from.
             discard (int, optional): Global step after which information should be
                 discarded.
+
+        Raises:
+            ValueError: If `source` is neither a ``Cockpit```instance or string.
         """
         if isinstance(source, Cockpit):
             source.update_output()
@@ -372,6 +379,9 @@ class CockpitPlotter:
                 name. Defaults to None.
             screen (str): String that specifies screen figure should be saved.
                 Possible options are ``'primary'`` and ``'secondary'``.
+
+        Raises:
+            ValueError: If screen is neither ``primary`` nor ``secondary``.
         """
         if savename_append is None:
             savename_append = ""
@@ -508,6 +518,12 @@ class CockpitPlotter:
             """Map one-dimension index to coordinates in 2d layout.
 
             Need to take into account the padding around actual plots.
+
+            Args:
+                idx (int): One-dimensional index.
+
+            Returns:
+                tupel: Tupel of x, y coordinates of index in 2d layout.
             """
             assert 0 <= idx < param_groups
             x_unpadded, y_unpadded = divmod(idx, num_cols)

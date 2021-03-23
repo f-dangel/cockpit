@@ -58,7 +58,12 @@ def get_compare_fn(independent_runs):
 def run_harness_get_output(problem, quantities):
     """Instantiate problem, run ``SimpleTestHarness`` using ``quantities``.
 
-    Return list of quantity outputs.
+    Args:
+        problem (tests.utils.Problem): Settings for train loop.
+        quantities (list): List of ``Quantity`` (instances) that will be tracked.
+
+    Returns:
+        list: List of quantity outputs.
     """
     with instantiate(problem):
         testing_harness = SimpleTestHarness(problem)
@@ -77,6 +82,9 @@ def autograd_hessian_columns(loss, params, concat=False):
             parameters.
         concat (bool): If ``True``, flatten and concatenate the columns over all
             parameters.
+
+    Yields:
+        Tensor: Tensor of Hessian columns.
     """
     D = sum(p.numel() for p in params)
     device = loss.device
@@ -103,6 +111,9 @@ def autograd_diag_hessian(loss, params, concat=False):
             parameters.
         concat (bool): If ``True``, flatten and concatenate the columns over all
             parameters.
+
+    Returns:
+        Tensor: Hessian diagonal.
     """
     D = sum(p.numel() for p in params)
     device = loss.device
@@ -125,6 +136,7 @@ def autograd_hessian(loss, params):
     is a ``[D, D]`` tensor, where ``D`` denotes the total number of parameters.
 
     Args:
+        loss (torch.Tensor): Mini-batch loss.
         params ([torch.Tensor]): List of torch.Tensors holding the network's
             parameters.
 
@@ -135,14 +147,15 @@ def autograd_hessian(loss, params):
 
 
 def autograd_hessian_maximum_eigenvalue(loss, params):
-    """Compute the full Hessian via ``torch.autograd``.
-
-    Flatten and concatenate the columns over all parameters.
+    """Compute the largest Hessian eigenvalue via ``torch.autograd``.
 
     Args:
         loss (torch.Tensor): Loss whose Hessian is investigated.
         params ([torch.Tensor]): List of torch.Tensors holding the network's
             parameters.
+
+    Returns:
+        float: Largest eigenvalue of the Hessian.
     """
     hessian = autograd_hessian(loss, params)
 
@@ -161,6 +174,9 @@ def autograd_individual_gradients(losses, params, concat=False):
             parameters.
         concat (bool): If ``True``, flatten and concatenate the gradients over all
             parameters.
+
+    Returns:
+        Tensor: Individual gradients.
     """
     # nesting is [sample, param]
     individual_gradients = [
@@ -198,6 +214,9 @@ def autograd_diagonal_variance(losses, params, concat=False, unbiased=True):
         concat (bool): If ``True``, flatten and concatenate the results over all
             parameters.
         unbiased (bool, optional): Use unbiased estimation. Default value: ``True``.
+
+    Returns:
+        Tensor: Diagonal of the gradient variance.
     """
     individual_gradients = autograd_individual_gradients(losses, params)
 

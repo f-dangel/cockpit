@@ -62,6 +62,10 @@ class EarlyStopping(SingleStepQuantity):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Result of the Early stopping criterion. Training should stop
+                if it is larger than 0.
         """
         B = get_batch_size(global_step)
 

@@ -34,6 +34,9 @@ class AutogradHessMaxEV(HessMaxEV):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Maximum Hessian eigenvalue (of the mini-batch loss).
         """
         self._maybe_warn_dimension(sum(p.numel() for p in params))
 

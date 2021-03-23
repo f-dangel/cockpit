@@ -16,6 +16,9 @@ def fmnist_data(batch_size=64, shuffle=True):
     Args:
         batch_size (int, optional): Batch size. Defaults to 64.
         shuffle (bool, optional): Whether the data should be shuffled. Defaults to True.
+
+    Returns:
+        torch.DataLoader: Dataloader for Fashion-MNIST data.
     """
     # Additionally set the random seed for reproducability
     torch.manual_seed(0)

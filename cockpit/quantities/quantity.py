@@ -57,8 +57,8 @@ class Quantity:
         Args:
             global_step (int): The current iteration number.
 
-        Returns:
-            list: (Potentially empty) list with required BackPACK quantities.
+        Raises:
+            NotImplementedError: If not implemented. Should be defined by subclass.
         """
         raise NotImplementedError
 
@@ -70,9 +70,6 @@ class Quantity:
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
-
-        Returns:
-            None
         """
         if self.should_compute(global_step):
             iteration, result = self.compute(global_step, params, batch_loss)
@@ -97,8 +94,8 @@ class Quantity:
         Args:
             global_step (int): The current iteration number.
 
-        Returns:
-            bool: Truth value whether computations need to be performed.
+        Raises:
+            NotImplementedError: If not implemented. Should be defined by subclass.
         """
         raise NotImplementedError
 
@@ -108,9 +105,6 @@ class Quantity:
         Args:
             global_step (int): The current iteration number.
             result (arbitrary): The result to be stored.
-
-        Returns:
-            None
         """
         self.output[global_step] = result
 
@@ -123,10 +117,8 @@ class Quantity:
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
 
-        Returns:
-            (int, arbitrary): The second value is the result that will be stored at
-                the iteration indicated by the first entry (important for multi-step
-                quantities whose values are computed in later iterations).
+        Raises:
+            NotImplementedError: If not implemented. Should be defined by subclass.
         """
         raise NotImplementedError
 
@@ -140,6 +132,9 @@ class Quantity:
             >>> # information tracked at iteration 3
             >>> global_step = 3
             >>> global_step_output = quantity.get_output()[global_step]
+
+        Returns:
+            dict: Dictionary with the stored results.
         """
         return self.output
 

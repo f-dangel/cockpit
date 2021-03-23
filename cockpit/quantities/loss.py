@@ -14,5 +14,8 @@ class Loss(ByproductQuantity):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Mini-batch loss at the current iteration.
         """
         return batch_loss.item()

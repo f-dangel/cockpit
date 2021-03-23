@@ -34,10 +34,7 @@ def quantities_cls_for_configuration(label):
             are (least to most expensive) ``'economy'``, ``'business'``, ``'full'``.
 
     Returns:
-        [Quantity]: A list of quantity classes used in the specified configuration.
-
-    Raises:
-        KeyError: If ``label`` is an unknown configuration.
+        Quantity: A list of quantity classes used in the specified configuration.
     """
     economy = [
         quantities.Alpha,

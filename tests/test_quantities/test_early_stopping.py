@@ -50,6 +50,9 @@ class AutogradEarlyStopping(EarlyStopping):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Early stopping criterion.
         """
         grad_squared = torch.cat([p.grad.flatten() for p in params]) ** 2
 
