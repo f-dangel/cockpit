@@ -3,7 +3,7 @@
 import pytest
 
 from cockpit.context import get_individual_losses
-from cockpit.quantities import Alpha, AlphaGeneral
+from cockpit.quantities import Alpha, AlphaGeneral, AlphaTwoStep
 from cockpit.quantities.alpha import _exact_variance, _projected_gradient
 from tests.test_quantities.settings import (
     INDEPENDENT_RUNS,
@@ -148,3 +148,19 @@ def test_alpha_general(problem, independent_runs, q_kwargs):
     """
     compare_fn = get_compare_fn(independent_runs)
     compare_fn(problem, (AlphaGeneral, AutogradAlphaGeneral), q_kwargs)
+
+
+@pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
+@pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
+@pytest.mark.parametrize("q_kwargs", QUANTITY_KWARGS, ids=QUANTITY_KWARGS_IDS)
+def test_alpha_two_step(problem, independent_runs, q_kwargs):
+    """Compare BackPACK and ``torch.autograd`` implementation of AlphaTwoStep.
+
+    Args:
+        problem (tests.utils.Problem): Settings for train loop.
+        independent_runs (bool): Whether to use to separate runs to compute the
+            output of every quantity.
+        q_kwargs (dict): Keyword arguments handed over to both quantities.
+    """
+    compare_fn = get_compare_fn(independent_runs)
+    compare_fn(problem, (AlphaTwoStep, AutogradAlphaGeneral), q_kwargs)
