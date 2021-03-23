@@ -16,5 +16,8 @@ class Time(ByproductQuantity):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Current time as given by ``time.time()``.
         """
         return time.time()

@@ -75,6 +75,20 @@ class AutogradAlphaGeneral(AlphaGeneral):
         """Fetch values for quadratic fit. Return as dictionary.
 
         The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
+
+        Args:
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+            pos (str): Whether we are at the start or end of an iteration.
+                One of ``start`` or ``end``.
+            global_step (int): The current iteration number.
+
+        Raises:
+            ValueError: If pos is not one of ``start`` or ``end``.
+
+        Returns:
+            dict: Holding the parameters, (variance of) loss and slope.
         """
         info = {}
 

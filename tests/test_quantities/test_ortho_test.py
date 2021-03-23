@@ -50,6 +50,9 @@ class AutogradOrthoTest(OrthoTest):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            foat: Result of the norm test.
         """
         losses = get_individual_losses(global_step)
         individual_gradients_flat = autograd_individual_gradients(

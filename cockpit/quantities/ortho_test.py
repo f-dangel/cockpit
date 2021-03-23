@@ -41,6 +41,9 @@ class OrthoTest(SingleStepQuantity):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Maximum ν for which the orthogonality test would pass.
         """
         batch_dot = self._fetch_batch_dot_via_batch_grad_transforms(
             params, aggregate=True

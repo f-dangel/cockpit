@@ -43,6 +43,9 @@ class HessTrace(SingleStepQuantity):
         Args:
             global_step (int): The current iteration number.
 
+        Raises:
+            KeyError: If curvature string has unknown associated extension.
+
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
         """
@@ -65,6 +68,9 @@ class HessTrace(SingleStepQuantity):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            list: Trace of the Hessian at the current point.
         """
         return [
             diag_c.sum().item()

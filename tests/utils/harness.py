@@ -23,6 +23,9 @@ class SimpleTestHarness:
     def check_optimizer(self, problem):
         """Raise ``NotImplementedError`` if ``problem``'s optimizer is unsupported.
 
+        Args:
+            problem (string): The (instantiated) problem to test on.
+
         Raises:
             NotImplementedError: If no `opt_kwargs` given for a non-SGD optimizer.
         """

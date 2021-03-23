@@ -368,6 +368,9 @@ class _DeepOBSRunner(PTRunner):
         Args:
             global_step (int): Number of iterations performed in total.
             batch_count (int): Number of mini-batches drawn in the current epoch.
+
+        Raises:
+            NotImplementedError: If not implemented. Should be overwritten by subclass.
         """
         raise NotImplementedError()
 
@@ -377,6 +380,9 @@ class _DeepOBSRunner(PTRunner):
         This method can be used to disable the computation of train/test/valid losses
         and accuracies at the beginning of each epoch. The computation will be switched
         off if this function returns ``False``.
+
+        Raises:
+            NotImplementedError: If not implemented. Should be overwritten by subclass.
         """
         raise NotImplementedError()
 

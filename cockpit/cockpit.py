@@ -25,8 +25,8 @@ class Cockpit:
             quantities (list, optional): List of ``Quantity`` (instances) that will
                 be tracked. Defaults to None, which will use no quantities.
 
-        Returns:
-            None
+        Raises:
+            ValueError: If not all passed parameters have ``required_grad=True``.
         """
         # check parameters
         self.params = list(params)
@@ -51,8 +51,8 @@ class Cockpit:
         Args:
             quantity (Quantity): The quantity to be added.
 
-        Returns:
-            None
+        Raises:
+            ValueError: If passed quantity is not a ``cockpit.quantity``.
         """
         if not isinstance(quantity, quantities.Quantity):
             raise ValueError(
@@ -79,6 +79,9 @@ class Cockpit:
             global_step (int): Current number of iteration.
             custom_exts (list or tuple): Custom BackPACK extensions that will be
                 computed on top.
+
+        Returns:
+            list: List of required BackPACK extensions for the current iteration.
         """
         ext = list(custom_exts)
         for q in self.quantities:
@@ -143,8 +146,12 @@ class Cockpit:
     def _free_backpack_buffers(self, global_step, protected_savefields, verbose=False):
         """Manually free quantities computed by BackPACK to save memory.
 
-        protected_savefields ([str]): List of strings containing attribute names
-            of backpack extensions that will not be deleted after the backward pass
+        Args:
+            global_step (int): Current number of iteration.
+            protected_savefields ([str]): List of strings containing attribute
+                names of backpack extensions that will not be deleted after the
+                backward pass
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
         """
         if verbose:
             print("Freeing BackPACK buffers")
@@ -224,9 +231,6 @@ class Cockpit:
 
         Args:
             logpath (str): Path to a log file without the ``.json`` suffix.
-
-        Returns:
-            None
         """
         self.update_output()
 
@@ -262,6 +266,9 @@ class Cockpit:
             >>> # information tracked at iteration 3 by Hessian max eigenvalue quantity
             >>> key = "HessMaxEV"
             >>> max_ev_global_step_output = cockpit.output[global_step][key]
+
+        Returns:
+            dict: Nested dictionary with the resuts of all tracked quantities.
         """
         self.update_output()
         return self.output
@@ -308,6 +315,16 @@ class Cockpit:
         """Merge multiple ``BatchGradTransform``s into a single one.
 
         Non-uniqye transformations are identified via python's ``id`` function.
+
+        Args:
+            batch_grad_transforms ([BatchGradTransforms]): List of
+                ``BatchGradTransform``s.
+
+        Raises:
+            ValueError: If there is a non-unique transform.
+
+        Returns:
+            BatchGradTransforms: Single transform that includes all transforms.
         """
         transforms = [t.get_transforms() for t in batch_grad_transforms]
 

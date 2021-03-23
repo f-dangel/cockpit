@@ -53,6 +53,12 @@ class AutogradTICDiag(TICDiag):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Raises:
+            NotImplementedError: If curvature is not ``diag_h``.
+
+        Returns:
+            float: TIC when approximation the Hessian with its diagonal.
         """
         losses = get_individual_losses(global_step)
         individual_gradients_flat = autograd_individual_gradients(
@@ -104,6 +110,12 @@ class AutogradTICTrace(TICTrace):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Raises:
+            NotImplementedError: If curvature is not ``diag_h``.
+
+        Returns:
+            float: TIC using a trace approximation.
         """
         losses = get_individual_losses(global_step)
         individual_gradients_flat = autograd_individual_gradients(

@@ -108,6 +108,13 @@ def make_problems_with_ids(settings):
     """Convert settings to problems and ids on all available devices.
 
     Add default for unspecified entries.
+
+    Args:
+        settings (list): List of settings to test.
+
+    Returns:
+        list: List of problems.
+        str: Humanly readable ID of the problem.
     """
     problems = make_problems(settings)
     problems_ids = [p.make_id() for p in problems]
@@ -119,6 +126,12 @@ def make_problems(settings):
     """Convert settings to problems on all available devices.
 
     Add default for unspecified entries.
+
+    Args:
+        settings (list): List of settings to test.
+
+    Returns:
+        list: List of problems.
     """
     problem_dicts = []
 
