@@ -4,23 +4,19 @@ from cockpit.quantities.quantity import TwoStepQuantity
 
 
 class UpdateSize(TwoStepQuantity):
-    """Quantity for tracking parameter update sizes."""
+    """Quantity for tracking parameter update sizes.
 
-    def __init__(self, track_schedule, verbose=False):
-        """Initialize the Quantity by storing the track interval.
+    Attributes:
+        CACHE_KEY (str): String under which the parameters are cached for computation.
+            Default: ``'params'``.
+        SAVE_SHIFT (int): Difference between iteration at which information is computed
+            versus iteration under which it is stored. For instance, if set to ``1``,
+            the information computed at iteration ``n + 1`` is saved under iteration
+            ``n``. Default: ``1``.
+    """
 
-        Crucially, it creates the output dictionary, that is meant to store all
-        values that should be stored.
-
-        Args:
-            track_schedule (callable): Function that maps the ``global_step``
-                to a boolean, which determines if the quantity should be computed.
-            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
-        """
-        save_shift = 1
-        super().__init__(save_shift, track_schedule, verbose=verbose)
-
-        self._cache_key = "params"
+    CACHE_KEY = "params"
+    SAVE_SHIFT = 0
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -53,7 +49,7 @@ class UpdateSize(TwoStepQuantity):
         Returns:
             bool: Whether ``global_step`` is an end point.
         """
-        return self._track_schedule(global_step - self._save_shift)
+        return self._track_schedule(global_step - self.SAVE_SHIFT)
 
     def _compute_start(self, global_step, params, batch_loss):
         """Perform computations at start point (store current parameter values).
@@ -77,9 +73,9 @@ class UpdateSize(TwoStepQuantity):
             Returns:
                 bool: Whether deletion is blocked in the specified iteration
             """
-            return 0 <= step - global_step <= self._save_shift
+            return 0 <= step - global_step <= self.SAVE_SHIFT
 
-        self.save_to_cache(global_step, self._cache_key, params_copy, block_fn)
+        self.save_to_cache(global_step, self.CACHE_KEY, params_copy, block_fn)
 
     def _compute_end(self, global_step, params, batch_loss):
         """Compute and return update size.
@@ -94,7 +90,7 @@ class UpdateSize(TwoStepQuantity):
             [float]: Layer-wise L2-norms of parameter updates.
         """
         params_start = self.load_from_cache(
-            global_step - self._save_shift, self._cache_key
+            global_step - self.SAVE_SHIFT, self.CACHE_KEY
         )
 
         update_size = [

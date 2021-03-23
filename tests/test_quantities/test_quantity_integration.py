@@ -38,7 +38,7 @@ def test_quantity_integration_and_track_events(problem, quantity_cls):
             return schedule(iteration)
         else:
             if isinstance(quantity, TwoStepQuantity):
-                shift = quantity._save_shift
+                shift = quantity.SAVE_SHIFT
             else:
                 shift = quantity_cls._start_end_difference
             return schedule(iteration) and iteration + shift < iterations

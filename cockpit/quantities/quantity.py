@@ -421,24 +421,29 @@ class TwoStepQuantity(Quantity):
     The earlier point is referred to as 'start', while the latter is referred to
     as 'end'.
 
-    Child classes must implement the following methods:
+    Child classes must implement the following:
 
     - ``is_start``, ``is_end``
     - ``_compute_start``, ``_compute_end``
+    - (maybe) adapt ``SAVE_SHIFT``
 
+    Attributes:
+        SAVE_SHIFT (int): Difference between iteration at which information is computed
+            versus iteration under which it is stored. For instance, if set to ``1``,
+            the information computed at iteration ``n + 1`` is saved under iteration
+            ``n``. Default: ``0``.
     """
 
-    def __init__(self, save_shift, track_schedule, verbose=False):
+    SAVE_SHIFT = 0
+
+    def __init__(self, track_schedule, verbose=False):
         """Initialize the Quantity by storing the track interval.
 
         Crucially, it creates the output dictionary, that is meant to store all
-        values that should be stored.
+        values that should be stored, and the cache dictionary to save information
+        between start and end point
 
         Args:
-            save_shift (int): Difference between iteration at which information
-                is computed versus iteration under which it is stored. For instance, if
-                set to ``1``, the information computed at iteration ``n + 1`` is saved
-                under iteration ``n``.
             track_schedule (callable): Function that maps the ``global_step``
                 to a boolean, which determines if the quantity should be computed.
             verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
@@ -446,7 +451,6 @@ class TwoStepQuantity(Quantity):
         super().__init__(track_schedule, verbose=verbose)
 
         self._cache = defaultdict(dict)
-        self._save_shift = save_shift
 
     def compute(self, global_step, params, batch_loss):
         """Evaluate quantity at a step in training.
@@ -465,7 +469,7 @@ class TwoStepQuantity(Quantity):
                 the iteration indicated by the first entry (important for multi-step
                 quantities whose values are computed in later iterations).
         """
-        save_iter = global_step - self._save_shift
+        save_iter = global_step - self.SAVE_SHIFT
         save_result = self._compute(global_step, params, batch_loss)
 
         # assume next iteration already started to discard irrelevant information

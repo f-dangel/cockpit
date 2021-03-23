@@ -4,24 +4,16 @@ from cockpit.quantities.quantity import TwoStepQuantity
 
 
 class Distance(TwoStepQuantity):
-    """Distance from initialization Quantity Class."""
+    """Distance from initialization Quantity Class.
 
-    def __init__(self, track_schedule, verbose=False):
-        """Initialize the Quantity by storing the track interval.
+    Attributes:
+        CACHE_KEY (str): String under which the parameters are cached for computation.
+            Default: ``'params'``.
+        INIT_GLOBAL_STEP (int): Iteration number used as reference. Default: ``0``.
+    """
 
-        Crucially, it creates the output dictionary, that is meant to store all
-        values that should be stored.
-
-        Args:
-            track_schedule (callable): Function that maps the ``global_step``
-                to a boolean, which determines if the quantity should be computed.
-            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
-        """
-        save_shift = 0
-        super().__init__(save_shift, track_schedule, verbose=verbose)
-
-        self._cache_key = "params"
-        self._init_global_step = 0
+    CACHE_KEY = "params"
+    INIT_GLOBAL_STEP = 0
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -45,7 +37,7 @@ class Distance(TwoStepQuantity):
         Returns:
             bool: Whether ``global_step`` is a start point.
         """
-        return global_step == self._init_global_step
+        return global_step == self.INIT_GLOBAL_STEP
 
     def is_end(self, global_step):
         """Return whether current iteration is end point.
@@ -80,9 +72,9 @@ class Distance(TwoStepQuantity):
             Returns:
                 bool: Whether deletion is blocked in the specified iteration
             """
-            return step >= self._init_global_step
+            return step >= self.INIT_GLOBAL_STEP
 
-        self.save_to_cache(global_step, self._cache_key, params_copy, block_fn)
+        self.save_to_cache(global_step, self.CACHE_KEY, params_copy, block_fn)
 
     def _compute_end(self, global_step, params, batch_loss):
         """Compute and return the current distance to initialization.
@@ -96,7 +88,7 @@ class Distance(TwoStepQuantity):
         Returns:
             [float]: Layer-wise L2-distances to initialization.
         """
-        params_init = self.load_from_cache(self._init_global_step, self._cache_key)
+        params_init = self.load_from_cache(self.INIT_GLOBAL_STEP, self.CACHE_KEY)
 
         distance = [
             (p.data - p_init).norm(2).item() for p, p_init in zip(params, params_init)
