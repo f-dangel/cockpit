@@ -2,7 +2,7 @@
 
 from cockpit.quantities.alpha import Alpha, AlphaGeneral
 from cockpit.quantities.cabs import CABS
-from cockpit.quantities.distance import Distance, UpdateSize, UpdateSizeTwoStep
+from cockpit.quantities.distance import Distance
 from cockpit.quantities.early_stopping import EarlyStopping
 from cockpit.quantities.grad_hist import GradHist1d, GradHist2d
 from cockpit.quantities.grad_norm import GradNorm
@@ -17,6 +17,7 @@ from cockpit.quantities.parameters import Parameters
 from cockpit.quantities.quantity import Quantity
 from cockpit.quantities.tic import TICDiag, TICTrace
 from cockpit.quantities.time import Time
+from cockpit.quantities.update_size import UpdateSize
 
 __all__ = [
     "Quantity",

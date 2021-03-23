@@ -1,0 +1,58 @@
+"""Class for tracking the update size."""
+
+from cockpit.quantities.quantity import TwoStepQuantity
+
+
+class UpdateSize(TwoStepQuantity):
+    def __init__(self, track_schedule, verbose=False):
+        """Initialize the Quantity by storing the track interval.
+
+        Crucially, it creates the output dictionary, that is meant to store all
+        values that should be stored.
+
+        Args:
+            track_schedule (callable): Function that maps the ``global_step``
+                to a boolean, which determines if the quantity should be computed.
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
+        """
+        save_shift = 1
+        super().__init__(save_shift, track_schedule, verbose=verbose)
+
+        self._cache_key = "params"
+
+    def extensions(self, global_step):
+        """Return list of BackPACK extensions required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            list: (Potentially empty) list with required BackPACK quantities.
+        """
+        return []
+
+    def is_start(self, global_step):
+        return self._track_schedule(global_step)
+
+    def is_end(self, global_step):
+        return self._track_schedule(global_step - self._save_shift)
+
+    def _compute_start(self, global_step, params, batch_loss):
+        params_copy = [p.data.clone().detach() for p in params]
+
+        def block_fn(step):
+            return 0 <= step - global_step <= self._save_shift
+
+        self.save_to_cache(global_step, self._cache_key, params_copy, block_fn)
+
+    def _compute_end(self, global_step, params, batch_loss):
+        params_start = self.load_from_cache(
+            global_step - self._save_shift, self._cache_key
+        )
+
+        update_size = [
+            (p.data - p_start).norm(2).item()
+            for p, p_start in zip(params, params_start)
+        ]
+
+        return update_size
