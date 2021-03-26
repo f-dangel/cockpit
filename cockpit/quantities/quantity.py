@@ -522,7 +522,7 @@ class TwoStepQuantity(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
 
-        Returns:
+        Returns: # noqa: DAR202
             Any: The quantity's value.
 
         Raises:
@@ -547,7 +547,7 @@ class TwoStepQuantity(Quantity):
         Args:
             global_step (int): The current iteration number.
 
-        Returns:
+        Returns: # noqa: DAR202
             bool: Whether ``global_step`` is a start point.
 
         Raises:
@@ -561,7 +561,7 @@ class TwoStepQuantity(Quantity):
         Args:
             global_step (int): The current iteration number.
 
-        Returns:
+        Returns: # noqa: DAR202
             bool: Whether ``global_step`` is an end point.
 
         Raises:
