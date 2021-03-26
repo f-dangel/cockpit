@@ -13,6 +13,7 @@ from cockpit.quantities.utils_quantities import (
     _layerwise_dot_product,
     _root_sum_of_squares,
 )
+from cockpit.utils.optim import ComputeStep
 
 
 class AlphaTwoStep(TwoStepQuantity):
@@ -40,10 +41,150 @@ class AlphaTwoStep(TwoStepQuantity):
         """
         ext = []
 
-        if self.is_start(global_step) or self.is_end(global_step):
+        start = self.is_start(global_step)
+        end = self.is_end(global_step)
+
+        if start or end:
             ext.append(extensions.BatchGrad())
 
+            if self.__projection_with_backpack(global_step):
+                if start:
+                    ext.append(self._backpack_project_start(global_step))
+                if end:
+                    ext.append(self._backpack_project_end(global_step))
+
         return ext
+
+    def _backpack_project_start(self, start_step):
+        """Return hook that caches optimizer update and projected grads at the start.
+
+        We want to compute dᵀgᵢ / ||d||₂² where d is the search direction and gᵢ are
+        individual gradients. However, this fraction cannot be aggregated among
+        parameters. We have to split the computation into components that can be
+        aggregated, namely dᵀgᵢ and ||d||₂².
+
+        Args:
+            start_step (int): Iteration number of the start point.
+
+        Returns:
+            BatchGradTransform: Transform to compute information to project
+            individual gradients and compute the step length.
+        """
+        block_until = start_step + self.SAVE_SHIFT
+        block_fn = self._make_block_fn(start_step, block_until)
+
+        optimizer = get_optimizer(start_step)
+
+        def hook(grad_batch):
+            """Cache optimizer update and projected gradients.
+
+            Modifies ``self._cache``, creating entries ``update_start`` and
+            ``update_dot_grad_batch_start``.
+
+            Args:
+                grad_batch (torch.Tensor): Result of BackPACK's ``BatchGrad``
+                    extension.
+
+            Returns:
+                dict: Empty dictionary.
+            """
+            param_id = id(grad_batch._param_weakref())
+
+            # TODO Avoid flattening by more sophisticated equation
+            search_dir_flat = (
+                ComputeStep()
+                .compute_update_step(optimizer, [param_id])[param_id]
+                .flatten()
+            )
+
+            grad_batch_flat = grad_batch.data.flatten(start_dim=1)
+            batch_size = grad_batch.shape[0]
+
+            dot_products = torch.einsum(
+                "ni,i->n", batch_size * grad_batch_flat, search_dir_flat
+            )
+
+            # update cache for d
+            key = "update_start"
+            try:
+                update_dict = self.load_from_cache(start_step, key)
+                update_dict[param_id] = search_dir_flat
+            except KeyError:
+                update_dict = {param_id: search_dir_flat}
+            finally:
+                self.save_to_cache(start_step, key, update_dict, block_fn)
+
+            # update cache for dᵀgᵢ
+            key = "update_dot_grad_batch_start"
+            try:
+                update_dot_dict = self.load_from_cache(start_step, key)
+                update_dot_dict[param_id] = dot_products
+            except KeyError:
+                update_dot_dict = {param_id: dot_products}
+            finally:
+                self.save_to_cache(start_step, key, update_dot_dict, block_fn)
+
+            return {}
+
+        return extensions.BatchGradTransforms({"_first_order_projections_start": hook})
+
+    def _backpack_project_end(self, end_step):
+        """Return hook that projects end point gradients onto the start point's update.
+
+        We want to compute dᵀgᵢ / ||d||₂² where d is the search direction and gᵢ are
+        individual gradients. However, this fraction cannot be aggregated among
+        parameters. We have to split the computation into components that can be
+        aggregated, namely dᵀgᵢ and ||d||₂².
+
+        Args:
+            end_step (int): Iteration number of the end point.
+
+        Returns:
+            BatchGradTransform: Transform to compute information to project
+            individual gradients and compute the step length.
+        """
+        start_step = end_step - self.SAVE_SHIFT
+
+        block_fn = self._make_block_fn(end_step, end_step)
+
+        def hook(grad_batch):
+            """Project the gradient onto the end point's update direction.
+
+            Modifies ``self._cache``, aggregating the projected gradients
+            and the squared update step length.
+
+            Args:
+                grad_batch (torch.Tensor): Result of BackPACK's ``BatchGrad``
+                    extension.
+
+            Returns:
+                dict: Empty dictionary.
+            """
+            param_id = id(grad_batch._param_weakref())
+
+            # TODO Avoid flattening by more sophisticated equation
+            search_dir_flat = self.load_from_cache(start_step, "update_start")[param_id]
+
+            grad_batch_flat = grad_batch.data.flatten(start_dim=1)
+            batch_size = grad_batch.shape[0]
+
+            dot_products = torch.einsum(
+                "ni,i->n", batch_size * grad_batch_flat, search_dir_flat
+            )
+
+            # update cache for dᵀgᵢ
+            key = "update_dot_grad_batch_end"
+            try:
+                update_dot_dict = self.load_from_cache(end_step, key)
+                update_dot_dict[param_id] = dot_products
+            except KeyError:
+                update_dot_dict = {param_id: dot_products}
+            finally:
+                self.save_to_cache(end_step, key, update_dot_dict, block_fn)
+
+            return {}
+
+        return extensions.BatchGradTransforms({"_first_order_projections_end": hook})
 
     def is_start(self, global_step):
         """Return whether current iteration is start point.
@@ -68,9 +209,26 @@ class AlphaTwoStep(TwoStepQuantity):
         return self._track_schedule(global_step - self.SAVE_SHIFT)
 
     def __projection_with_backpack(self, global_step):
-        """Return whether the update step projection is computed through BackPACK."""
-        # TODO Install hooks for momentum-free SGD
-        return False
+        """Return whether the update step projection is computed through BackPACK.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            bool: Truth value whether gradient projections and update length
+                have been computed with BackPACK and cached.
+        """
+        try:
+            optimizer = get_optimizer(global_step)
+            computed = ComputeStep().is_sgd_default_kwargs(optimizer)
+        except KeyError:
+            warnings.warn("No 'optimizer' handed in via info")
+            computed = False
+        except NotImplementedError:
+            warnings.warn("No update step implemented for optimizer")
+            computed = False
+
+        return computed
 
     def _compute_start(self, global_step, params, batch_loss):
         """Perform computations at start point (store info for α fit).
@@ -198,8 +356,41 @@ class AlphaTwoStep(TwoStepQuantity):
                 global_step, params, batch_loss, "end", block_until
             )
             self._project_end(global_step)
+        else:
+            self._backpack_project_aggregate(global_step)
 
         return self._compute_alpha(global_step)
+
+    def _backpack_project_aggregate(self, end_step):
+        """Finish up the computations for ``df`` and ``var_df`` at start and end point.
+
+        Modifies ``self._cache``, creating entries ``df_start``, ``var_df_start`` for
+        the start point, and ``df_end``, ``var_df_end`` at the end point.
+
+        Args:
+            end_step (int): Iteration number of end step.
+        """
+        start_step = end_step - self.SAVE_SHIFT
+        block_fn = self._make_block_fn(end_step, end_step)
+
+        # compute the update step
+        updates = self.load_from_cache(start_step, "update_start")
+        update_size = _root_sum_of_squares(
+            [(upd ** 2).sum() for upd in updates.values()]
+        ).item()
+        self.save_to_cache(start_step, "update_size_start", update_size, block_fn)
+
+        points = [[start_step, "start"], [end_step, "end"]]
+
+        for step, p in points:
+            dot_produts = self.load_from_cache(step, f"update_dot_grad_batch_{p}")
+            projections = sum(dp for dp in dot_produts.values()) / update_size
+
+            df = projections.mean().item()
+            df_var = projections.var().item()
+
+            self.save_to_cache(step, f"df_{p}", df, block_fn)
+            self.save_to_cache(step, f"var_df_{p}", df_var, block_fn)
 
     def _project_end(self, end_step):
         """Project first-order information at end step and associated start step.

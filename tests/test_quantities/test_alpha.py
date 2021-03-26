@@ -176,5 +176,10 @@ def test_alpha_two_step(problem, independent_runs, q_kwargs):
             output of every quantity.
         q_kwargs (dict): Keyword arguments handed over to both quantities.
     """
+    atol = 1e-5
+    rtol = 1e-5
+
     compare_fn = get_compare_fn(independent_runs)
-    compare_fn(problem, (AlphaTwoStep, AutogradAlphaGeneral), q_kwargs)
+    compare_fn(
+        problem, (AlphaTwoStep, AutogradAlphaGeneral), q_kwargs, atol=atol, rtol=rtol
+    )
