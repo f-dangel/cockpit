@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from backpack import extensions
 
-from cockpit.context import get_batch_size, get_individual_losses
+from cockpit.context import get_batch_size, get_individual_losses, get_optimizer
 from cockpit.quantities.quantity import Quantity, TwoStepQuantity
 from cockpit.quantities.utils_quantities import (
     _layerwise_dot_product,
@@ -23,9 +23,11 @@ class AlphaTwoStep(TwoStepQuantity):
             versus iteration under which it is stored. For instance, if set to ``1``,
             the information computed at iteration ``n + 1`` is saved under iteration
             ``n``. Default: ``1``.
+        POINTS ([str]): Description of start and end point.
     """
 
     SAVE_SHIFT = 1
+    POINTS = ["start", "end"]
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -65,6 +67,11 @@ class AlphaTwoStep(TwoStepQuantity):
         """
         return self._track_schedule(global_step - self.SAVE_SHIFT)
 
+    def __projection_with_backpack(self, global_step):
+        """Return whether the update step projection is computed through BackPACK."""
+        # TODO Install hooks for momentum-free SGD
+        return False
+
     def _compute_start(self, global_step, params, batch_loss):
         """Perform computations at start point (store info for α fit).
 
@@ -76,9 +83,88 @@ class AlphaTwoStep(TwoStepQuantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
+        block_until = global_step + self.SAVE_SHIFT
+
+        self._save_0th_order_info(global_step, params, batch_loss, "start", block_until)
+
+        # fall back to storing parameters and individual gradients at start/end
+        if self.__projection_with_backpack(global_step) is False:
+            self._save_1st_order_info(
+                global_step, params, batch_loss, "start", block_until
+            )
+
+    def _save_1st_order_info(self, global_step, params, batch_loss, point, block_until):
+        """Store information for projecting 1ˢᵗ order info about the objective in cache.
+
+        Modifies ``self._cache``, creating the fields ``params_*``, ``grad_*``, and
+        ``grad_batch_*``. Parameters are required to compute the update step, the
+        gradients are required to project them onto the step at a later stage.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+            point (str): Description of point, ``'start'`` or ``'end'``.
+            block_until (int): Iteration number until which deletion from cache
+                is blocked.
+        """
+        block_fn = self._make_block_fn(global_step, block_until)
+
+        params_dict = {id(p): p.data.clone().detach() for p in params}
+        self.save_to_cache(global_step, f"params_{point}", params_dict, block_fn)
+
+        grad_dict = {id(p): p.grad.data.clone().detach() for p in params}
+        self.save_to_cache(global_step, f"grad_{point}", grad_dict, block_fn)
+
+        # L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's BatchGrad computes ¹/ₙ ∇ℓᵢ, we have to rescale
+        batch_size = get_batch_size(global_step)
+        grad_batch_dict = {
+            id(p): batch_size * p.grad_batch.data.clone().detach() for p in params
+        }
+        self.save_to_cache(
+            global_step, f"grad_batch_{point}", grad_batch_dict, block_fn
+        )
+
+    def _save_0th_order_info(self, global_step, params, batch_loss, point, block_until):
+        """Store 0ᵗʰ order information about the objective in cache.
+
+        Modifies ``self._cache``, creating entries ``f_*`` and ``var_f_*``.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+            point (str): Description of point, ``'start'`` or ``'end'``.
+            block_until (int): Iteration number until which deletion from cache
+                is blocked.
+        """
+        assert point in self.POINTS, f"Known points: {self.POINTS}. Got {point}"
+
+        block_fn = self._make_block_fn(global_step, block_until)
+
+        f = batch_loss.item()
+        self.save_to_cache(global_step, f"f_{point}", f, block_fn)
+
+        var_f = get_individual_losses(global_step).var().item()
+        self.save_to_cache(global_step, f"var_f_{point}", var_f, block_fn)
+
+    @staticmethod
+    def _make_block_fn(start_step, end_step):
+        """Create a function that blocks cache deletion in interval ``[start; end]``.
+
+        Args:
+            start_step (int): Left boundary of blocked interval
+            end_step (int): Right boundary of blocked interval
+
+        Returns:
+            callable: Block function that can be used as ``block_fn`` argument in
+                ``save_to_cache``.
+        """
 
         def block_fn(step):
-            """Block deletion for current and next iteration.
+            """Block deletion in ``[start; end]``.
 
             Args:
                 step (int): Iteration number.
@@ -86,25 +172,9 @@ class AlphaTwoStep(TwoStepQuantity):
             Returns:
                 bool: Whether deletion is blocked in the specified iteration
             """
-            return 0 <= step - global_step <= self.SAVE_SHIFT
+            return step in range(start_step, end_step + 1)
 
-        # 0ᵗʰ order info
-        f_start = batch_loss.item()
-        self.save_to_cache(global_step, "f_start", f_start, block_fn)
-        var_f_start = get_individual_losses(global_step).var().item()
-        self.save_to_cache(global_step, "var_f_start", var_f_start, block_fn)
-
-        # for projecting gradients along the step direction
-        params_start = {id(p): p.data.clone().detach() for p in params}
-        self.save_to_cache(global_step, "params_start", params_start, block_fn)
-        grad_start = {id(p): p.grad.data.clone().detach() for p in params}
-        self.save_to_cache(global_step, "grad_start", grad_start, block_fn)
-        # L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's BatchGrad computes ¹/ₙ ∇ℓᵢ, we have to rescale
-        batch_size = get_batch_size(global_step)
-        batch_grad_start = {
-            id(p): batch_size * p.grad_batch.data.clone().detach() for p in params
-        }
-        self.save_to_cache(global_step, "batch_grad_start", batch_grad_start, block_fn)
+        return block_fn
 
     def _compute_end(self, global_step, params, batch_loss):
         """Compute and return α.
@@ -118,43 +188,34 @@ class AlphaTwoStep(TwoStepQuantity):
         Returns:
             float: Normalized step size α
         """
+        block_until = global_step
 
-        def block_fn(step):
-            """Block deletion for current step.
+        self._save_0th_order_info(global_step, params, batch_loss, "end", block_until)
 
-            Args:
-                step (int): Iteration number.
+        # fall back to storing parameters and individual gradients at start/end
+        if self.__projection_with_backpack(global_step) is False:
+            self._save_1st_order_info(
+                global_step, params, batch_loss, "end", block_until
+            )
+            self._project_end(global_step)
 
-            Returns:
-                bool: Whether deletion is blocked in the specified iteration
-            """
-            return step == global_step
-
-        # 0ᵗʰ order info
-        f_end = batch_loss.item()
-        self.save_to_cache(global_step, "f_end", f_end, block_fn)
-        var_f_end = get_individual_losses(global_step).var().item()
-        self.save_to_cache(global_step, "var_f_end", var_f_end, block_fn)
-
-        params_end = {id(p): p.data.clone().detach() for p in params}
-        self.save_to_cache(global_step, "params_end", params_end, block_fn)
-        grad_end = {id(p): p.grad.data.clone().detach() for p in params}
-        self.save_to_cache(global_step, "grad_end", grad_end, block_fn)
-        # L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's BatchGrad computes ¹/ₙ ∇ℓᵢ, we have to rescale
-        batch_size = get_batch_size(global_step)
-        batch_grad_end = {
-            id(p): batch_size * p.grad_batch.data.clone().detach() for p in params
-        }
-        self.save_to_cache(global_step, "batch_grad_end", batch_grad_end, block_fn)
-
-        self._cache_end(global_step)
         return self._compute_alpha(global_step)
 
-    def _cache_end(self, end_step):
-        """Cache information at end step."""
+    def _project_end(self, end_step):
+        """Project first-order information at end step and associated start step.
 
+        Assumes that parameters, gradients, and individual gradients are cached
+        at the end step and its associated start point.
+
+        Modifies ``self._cache``, creating the fields ``df_*`` and ``var_df``,
+        as well as ``update_size_start``.
+
+        Args:
+            end_step (int): Iteration number of end step.
+        """
         start_step = end_step - self.SAVE_SHIFT
 
+        # update direction and its length
         start_params = self.load_from_cache(start_step, "params_start")
         end_params = self.load_from_cache(end_step, "params_end")
 
@@ -162,32 +223,29 @@ class AlphaTwoStep(TwoStepQuantity):
             end_params[key] - start_params[key] for key in start_params.keys()
         ]
 
-        def block_fn(step):
-            """Block deletion for current step.
+        update_size = _root_sum_of_squares([s.norm(2).item() for s in search_dir])
 
-            Args:
-                step (int): Iteration number.
+        block_fn = self._make_block_fn(end_step, end_step)
+        self.save_to_cache(start_step, "update_size_start", update_size, block_fn)
 
-            Returns:
-                bool: Whether deletion is blocked in the specified iteration
-            """
-            return step == end_step
+        points = [[start_step, "start"], [end_step, "end"]]
 
-        for step, step_name in zip([start_step, end_step], ["start", "end"]):
-            grad = self.load_from_cache(step, f"grad_{step_name}")
+        # projections
+        for step, p in points:
+            # projected gradient
+            grad = self.load_from_cache(step, f"grad_{p}")
             grad = [grad[key] for key in start_params.keys()]
-
-            batch_grad = self.load_from_cache(step, f"batch_grad_{step_name}")
-            batch_grad = [batch_grad[key] for key in start_params.keys()]
-
-            # 1ˢᵗ order info
             self.save_to_cache(
-                step, f"df_{step_name}", _projected_gradient(grad, search_dir), block_fn
+                step, f"df_{p}", _projected_gradient(grad, search_dir), block_fn
             )
+
+            # projected gradient variance
+            grad_batch = self.load_from_cache(step, f"grad_batch_{p}")
+            grad_batch = [grad_batch[key] for key in start_params.keys()]
             self.save_to_cache(
                 step,
-                f"var_df_{step_name}",
-                _exact_variance(batch_grad, search_dir),
+                f"var_df_{p}",
+                _exact_variance(grad_batch, search_dir),
                 block_fn,
             )
 
@@ -195,28 +253,17 @@ class AlphaTwoStep(TwoStepQuantity):
         """Compute and return alpha, assuming all information has been cached."""
         start_step = end_step - self.SAVE_SHIFT
 
-        f_start = self.load_from_cache(start_step, "f_start")
-        f_end = self.load_from_cache(end_step, "f_end")
+        t = self.load_from_cache(start_step, "update_size_start")
 
-        t = self._compute_step_length(start_step, end_step)
+        points = [[start_step, "start"], [end_step, "end"]]
 
-        df_start = self.load_from_cache(start_step, "df_start")
-        df_end = self.load_from_cache(end_step, "df_end")
-
-        var_f_start = self.load_from_cache(start_step, "var_f_start")
-        var_f_end = self.load_from_cache(end_step, "var_f_end")
-
-        var_df_start = self.load_from_cache(start_step, "var_df_start")
-        var_df_end = self.load_from_cache(end_step, "var_df_end")
+        fs = [self.load_from_cache(step, f"f_{p}") for step, p in points]
+        dfs = [self.load_from_cache(step, f"df_{p}") for step, p in points]
+        var_fs = [self.load_from_cache(step, f"var_f_{p}") for step, p in points]
+        var_dfs = [self.load_from_cache(step, f"var_df_{p}") for step, p in points]
 
         # Compute alpha
-        mu = _fit_quadratic(
-            t,
-            (f_start, f_end),
-            (df_start, df_end),
-            (var_f_start, var_f_end),
-            (var_df_start, var_df_end),
-        )
+        mu = _fit_quadratic(t, fs, dfs, var_fs, var_dfs)
         alpha = _get_alpha(mu, t)
 
         return alpha

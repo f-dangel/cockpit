@@ -28,6 +28,7 @@ __all__ = [
     "GradNorm",
     "Time",
     "Alpha",
+    "AlphaTwoStep",
     "AlphaGeneral",
     "CABS",
     "EarlyStopping",
