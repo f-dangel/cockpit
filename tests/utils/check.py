@@ -27,7 +27,10 @@ def get_compare_function(value1, value2):
     elif isinstance(value1, list) and isinstance(value2, list):
         compare_fn = compare_lists
     else:
-        raise NotImplementedError("No comparison available for this data type.")
+        raise NotImplementedError(
+            "No comparison available for these data types: "
+            + f"{type(value1)}, {type(value2)}."
+        )
 
     return compare_fn
 
