@@ -97,6 +97,7 @@ class SimpleTestHarness:
                         "batch_size": inputs.shape[0],
                         "individual_losses": losses,
                         "loss": loss,
+                        "optimizer": optimizer,
                     },
                 ):
                     loss.backward(create_graph=self.cockpit.create_graph(global_step))
