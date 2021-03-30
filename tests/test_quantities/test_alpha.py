@@ -29,6 +29,7 @@ class AlphaGeneral(Quantity):
     _start_end_difference = 1
 
     def __init__(self, track_schedule, verbose=False):
+        """Store arguments and clear caches at start and end point."""
         super().__init__(track_schedule, verbose=verbose)
         self.clear_info()
 

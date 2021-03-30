@@ -30,7 +30,7 @@ class ComputeStep:
              dict: Mapping between parameters and their updates. Keys are parameter ids
                  and items are ``torch.Tensor``s representing the update.
 
-         Raises:
+        Raises:
              NotImplementedError: If the optimizer's update step is not implemented.
         """
         if ComputeStep.is_sgd_default_kwargs(optimizer):
