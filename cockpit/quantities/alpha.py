@@ -480,6 +480,12 @@ class Alpha(TwoStepQuantity):
         - ``update_size_start``
         - ``f_start``, ``f_end``, ``var_f_start``, ``var_f_end``
         - ``df_start``, ``df_end``, ``var_df_start``, ``var_df_end``
+
+        Args:
+            end_step (int): Iteration number of the end point.
+
+        Returns:
+            float: Local effective step size α.
         """
         start_step = end_step - self.SAVE_SHIFT
 
