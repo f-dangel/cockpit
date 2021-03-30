@@ -72,12 +72,12 @@ class ComputeStep:
 
         Args:
             optimizer (torch.optim.SGD): Zero-momentum default SGD.
+            parameter_ids ([id]): List of parameter ids for which the updates are
+                 computed.
 
         Returns:
             dict: Mapping between parameters and their updates. Keys are parameter ids
                 and items are ``torch.Tensor``s representing the update.
-            parameter_ids ([id]): List of parameter ids for which the updates are
-                 computed.
         """
         updates = {}
 
