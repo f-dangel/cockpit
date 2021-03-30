@@ -13,6 +13,7 @@ from cockpit.quantities.utils_quantities import (
     _layerwise_dot_product,
     _root_sum_of_squares,
 )
+from cockpit.quantities.utils_transforms import get_first_n_alphabet
 from cockpit.utils.optim import ComputeStep
 
 
@@ -152,20 +153,12 @@ class AlphaTwoStep(TwoStepQuantity):
             """
             param_id = id(grad_batch._param_weakref())
 
-            # TODO Avoid flattening by more sophisticated equation
-            search_dir_flat = (
-                ComputeStep()
-                .compute_update_step(optimizer, [param_id])[param_id]
-                .flatten()
-            )
-
-            grad_batch_flat = grad_batch.data.flatten(start_dim=1)
-            batch_size = get_batch_size(start_step)
-
+            search_dir = ComputeStep().compute_update_step(optimizer, [param_id])[
+                param_id
+            ]
             # L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's BatchGrad computes ¹/ₙ ∇ℓᵢ, we have to rescale
-            dot_products = batch_size * torch.einsum(
-                "ni,i->n", grad_batch_flat, search_dir_flat
-            )
+            batch_size = get_batch_size(start_step)
+            dot_products = batch_size * self.batched_dot_product(grad_batch, search_dir)
 
             # update or create cache for ``d``
             key = "update_start"
@@ -174,7 +167,7 @@ class AlphaTwoStep(TwoStepQuantity):
             except KeyError:
                 update_dict = {}
             finally:
-                update_dict[param_id] = search_dir_flat
+                update_dict[param_id] = search_dir
                 self.save_to_cache(start_step, key, update_dict, block_fn)
 
             # update or create cache for ``dᵀgᵢ``
@@ -227,16 +220,10 @@ class AlphaTwoStep(TwoStepQuantity):
             """
             param_id = id(grad_batch._param_weakref())
 
-            # TODO Avoid flattening by more sophisticated equation
-            search_dir_flat = self.load_from_cache(start_step, "update_start")[param_id]
-
-            grad_batch_flat = grad_batch.data.flatten(start_dim=1)
-            batch_size = get_batch_size(end_step)
-
+            search_dir = self.load_from_cache(start_step, "update_start")[param_id]
             # L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's BatchGrad computes ¹/ₙ ∇ℓᵢ, we have to rescale
-            dot_products = batch_size * torch.einsum(
-                "ni,i->n", grad_batch_flat, search_dir_flat
-            )
+            batch_size = get_batch_size(end_step)
+            dot_products = batch_size * self.batched_dot_product(grad_batch, search_dir)
 
             # update or create cache for ``dᵀgᵢ``
             key = "update_dot_grad_batch_end"
@@ -458,6 +445,33 @@ class AlphaTwoStep(TwoStepQuantity):
                 _exact_variance(grad_batch, search_dir),
                 block_fn,
             )
+
+    @staticmethod
+    def batched_dot_product(batched_tensor, tensor):
+        """Compute scalar product between a batched and an unbatched tensor.
+
+        Args:
+            batched_tensor (torch.Tensor): Batched tensor along first axis.
+            tensor (torch.Tensor): Unbatched tensor. All axes are feature dimensions.
+
+        Returns:
+            torch.Tensor: Tensor of shape ``[N]`` where ``N`` is the batch dimension.
+                Contains scalar products for each sample along the batch axis.
+
+        Raises:
+            ValueError: If the batched tensor's trailing dimensions don't match the
+                unbatched tensor's shape.
+        """
+        if tensor.shape != batched_tensor.shape[1:]:
+            raise ValueError(
+                "Tensors don't share same feature dimensions."
+                + f" Got {tensor.shape} and f{batched_tensor.shape}"
+            )
+
+        letters = get_first_n_alphabet(batched_tensor.dim())
+        equation = f"{letters},{letters[1:]}->{letters[0]}"
+
+        return torch.einsum(equation, batched_tensor, tensor)
 
     def _compute_alpha(self, end_step):
         """Compute and return alpha, assuming all information has been cached.
