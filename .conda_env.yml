@@ -1,7 +1,9 @@
 name: cockpit
 dependencies:
-  - pip=19.3.1
-  - python=3.7.6
+  - pip
+  - python
+  - pytorch::pytorch
+  - pytorch::torchvision
   - conda-forge::black
   - conda-forge::darglint
   - conda-forge::flake8
