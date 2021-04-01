@@ -35,7 +35,7 @@ help:
 
 ### TESTING ###
 test:
-	@pytest -vx --cov=cockpit
+	@pytest -vx --cov=cockpit .
 
 ### LINTING & FORMATTING ###
 
