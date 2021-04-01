@@ -79,7 +79,6 @@ jobs:
 
   darglint:
     runs-on: ubuntu-latest
-    if: false
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.7
