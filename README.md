@@ -19,6 +19,7 @@
 
 [![CI](https://github.com/f-dangel/cockpit-paper/actions/workflows/CI.yml/badge.svg)](https://github.com/f-dangel/cockpit-paper/actions/workflows/CI.yml)
 [![Lint](https://github.com/f-dangel/cockpit-paper/actions/workflows/Lint.yml/badge.svg)](https://github.com/f-dangel/cockpit-paper/actions/workflows/Lint.yml)
+[![Coverage](https://coveralls.io/repos/github/f-dangel/cockpit-paper/badge.svg?branch=v1_release&t=piyZHm)](https://coveralls.io/github/f-dangel/cockpit-paper?branch=v1_release)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/f-dangel/cockpit-paper/blob/master/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![arXiv](https://img.shields.io/static/v1?logo=arxiv&logoColor=white&label=Preprint&message=2102.06604&color=B31B1B)](https://arxiv.org/abs/2102.06604)
