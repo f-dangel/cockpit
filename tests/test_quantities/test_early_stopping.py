@@ -5,6 +5,7 @@ import torch
 
 from cockpit.context import get_batch_size, get_individual_losses
 from cockpit.quantities import EarlyStopping
+from tests.test_quantities.adam_settings import ADAM_IDS, ADAM_PROBLEMS
 from tests.test_quantities.settings import (
     INDEPENDENT_RUNS,
     INDEPENDENT_RUNS_IDS,
@@ -82,3 +83,19 @@ def test_early_stopping(problem, independent_runs, q_kwargs):
     compare_fn(
         problem, (EarlyStopping, AutogradEarlyStopping), q_kwargs, rtol=rtol, atol=atol
     )
+
+
+@pytest.mark.parametrize("problem", ADAM_PROBLEMS, ids=ADAM_IDS)
+@pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
+@pytest.mark.parametrize("q_kwargs", QUANTITY_KWARGS, ids=QUANTITY_KWARGS_IDS)
+def test_early_stopping_no_adam(problem, independent_runs, q_kwargs):
+    """Verify Adam is not supported by EarlyStopping criterion.
+
+    Args:
+        problem (tests.utils.Problem): Settings for train loop.
+        independent_runs (bool): Whether to use to separate runs to compute the
+            output of every quantity.
+        q_kwargs (dict): Keyword arguments handed over to both quantities.
+    """
+    with pytest.raises(ValueError):
+        test_early_stopping(problem, independent_runs, q_kwargs)

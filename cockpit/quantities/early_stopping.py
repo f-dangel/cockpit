@@ -1,10 +1,9 @@
 """Class for tracking the EB criterion for early stopping."""
 
-import warnings
-
-from cockpit.context import get_batch_size
+from cockpit.context import get_batch_size, get_optimizer
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
+from cockpit.utils.optim import ComputeStep
 
 
 class EarlyStopping(SingleStepQuantity):
@@ -29,7 +28,6 @@ class EarlyStopping(SingleStepQuantity):
         super().__init__(track_schedule, verbose=verbose)
 
         self._epsilon = epsilon
-        warnings.warn("StoppingCriterion only applies to SGD without momentum.")
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -66,7 +64,13 @@ class EarlyStopping(SingleStepQuantity):
         Returns:
             float: Result of the Early stopping criterion. Training should stop
                 if it is larger than 0.
+
+        Raises:
+            ValueError: If the used optimizer differs from SGD with default parameters.
         """
+        if not ComputeStep.is_sgd_default_kwargs(get_optimizer(global_step)):
+            raise ValueError("This criterion only supports zero-momentum SGD.")
+
         B = get_batch_size(global_step)
 
         grad_squared = self._fetch_grad(params, aggregate=True) ** 2
