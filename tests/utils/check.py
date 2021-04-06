@@ -47,6 +47,12 @@ def compare_ints(int1, int2, rtol=None, atol=None):
 
     ``rtol`` and ``atol`` are ignored in the comparison, but required to keep the
     interface identical among comparison functions.
+
+    Args:
+        int1 (int): First integer.
+        int2 (int): Another integer.
+        rtol (any): Ignored, see above.
+        atol (any): Ignored, see above.
     """
     assert int1 == int2
 
