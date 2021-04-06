@@ -2,8 +2,10 @@
 
 import pytest
 
-from cockpit.context import get_individual_losses
+from cockpit.context import get_individual_losses, get_optimizer
 from cockpit.quantities import CABS
+from cockpit.utils.optim import ComputeStep
+from tests.test_quantities.adam_settings import ADAM_IDS, ADAM_PROBLEMS
 from tests.test_quantities.settings import (
     INDEPENDENT_RUNS,
     INDEPENDENT_RUNS_IDS,
@@ -52,13 +54,20 @@ class AutogradCABS(CABS):
 
         Returns:
             float: Evaluated CABS criterion.
+
+        Raises:
+            ValueError: If the optimizer differs from SGD with default arguments.
         """
+        optimizer = get_optimizer(global_step)
+        if not ComputeStep.is_sgd_default_kwargs(optimizer):
+            raise ValueError("This criterion only supports zero-momentum SGD.")
+
         losses = get_individual_losses(global_step)
         batch_axis = 0
         trace_variance = autograd_diagonal_variance(
             losses, params, concat=True, unbiased=False
         ).sum(batch_axis)
-        lr = self.get_lr()
+        lr = self.get_lr(optimizer)
 
         return (lr * trace_variance / batch_loss).item()
 
@@ -77,3 +86,19 @@ def test_cabs(problem, independent_runs, q_kwargs):
     """
     compare_fn = get_compare_fn(independent_runs)
     compare_fn(problem, (CABS, AutogradCABS), q_kwargs)
+
+
+@pytest.mark.parametrize("problem", ADAM_PROBLEMS, ids=ADAM_IDS)
+@pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
+@pytest.mark.parametrize("q_kwargs", QUANTITY_KWARGS, ids=QUANTITY_KWARGS_IDS)
+def test_cabs_no_adam(problem, independent_runs, q_kwargs):
+    """Verify Adam is not supported by CABS criterion.
+
+    Args:
+        problem (tests.utils.Problem): Settings for train loop.
+        independent_runs (bool): Whether to use to separate runs to compute the
+            output of every quantity.
+        q_kwargs (dict): Keyword arguments handed over to both quantities.
+    """
+    with pytest.raises(ValueError):
+        test_cabs(problem, independent_runs, q_kwargs)
