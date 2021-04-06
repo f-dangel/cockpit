@@ -1,7 +1,6 @@
 """Base class for executing and hooking into a training loop to execute checks."""
 
 
-import torch
 from backpack import extend
 
 from cockpit import Cockpit
@@ -18,37 +17,6 @@ class SimpleTestHarness:
     def __init__(self, problem):
         """Store the instantiated problem."""
         self.problem = problem
-        self.check_optimizer(problem)
-
-    def check_optimizer(self, problem):
-        """Raise ``NotImplementedError`` if ``problem``'s optimizer is unsupported.
-
-        Args:
-            problem (string): The (instantiated) problem to test on.
-
-        Raises:
-            NotImplementedError: If no `opt_kwargs` given for a non-SGD optimizer.
-        """
-        if not self.is_momentum_free_sgd(problem.optimizer):
-            raise NotImplementedError(
-                f"Please use momentum-free SGD. Got {problem.optimizer}"
-            )
-
-    @staticmethod
-    def is_momentum_free_sgd(optimizer):
-        """Return whether optimizer is SGD without momentum."""
-        if not isinstance(optimizer, torch.optim.SGD):
-            return False
-
-        for group in optimizer.param_groups:
-            other_default = (
-                group["dampening"] == 0
-                and group["weight_decay"] == 0
-                and group["nesterov"] is False
-            )
-            zero_momentum = group["momentum"] == 0
-
-            return zero_momentum and other_default
 
     def test(self, cockpit_kwargs, *backpack_exts):
         """Run the test loop.

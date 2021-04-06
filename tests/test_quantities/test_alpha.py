@@ -1,6 +1,7 @@
 """Compare ``Alpha`` and ``AlphaGeneral`` quantities with ``torch.autograd``."""
 
 import pytest
+import torch
 
 from cockpit.context import get_individual_losses
 from cockpit.quantities import Alpha, Quantity
@@ -20,6 +21,9 @@ from tests.test_quantities.settings import (
     QUANTITY_KWARGS_IDS,
 )
 from tests.test_quantities.utils import autograd_individual_gradients, get_compare_fn
+from tests.utils.data import load_toy_data
+from tests.utils.models import load_toy_model
+from tests.utils.problem import make_problems_with_ids
 
 
 class AlphaGeneral(Quantity):
@@ -210,7 +214,25 @@ class AutogradAlphaGeneral(AlphaGeneral):
         return info
 
 
-@pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
+ADAM_SETTINGS = [
+    {
+        "data_fn": lambda: load_toy_data(batch_size=4),
+        "model_fn": load_toy_model,
+        "individual_loss_function_fn": lambda: torch.nn.CrossEntropyLoss(
+            reduction="none"
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "iterations": 5,
+        "optimizer_fn": lambda parameters: torch.optim.Adam(parameters, lr=0.01),
+    },
+]
+
+ADAM_PROBLEMS, ADAM_IDS = make_problems_with_ids(ADAM_SETTINGS)
+
+
+@pytest.mark.parametrize(
+    "problem", PROBLEMS + ADAM_PROBLEMS, ids=PROBLEMS_IDS + ADAM_IDS
+)
 @pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
 @pytest.mark.parametrize("q_kwargs", QUANTITY_KWARGS, ids=QUANTITY_KWARGS_IDS)
 def test_alpha(problem, independent_runs, q_kwargs):
