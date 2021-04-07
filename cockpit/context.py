@@ -58,6 +58,11 @@ def get_batch_size(global_step):
     return CockpitCTX.get("batch_size", global_step)
 
 
+def get_optimizer(global_step):
+    """Return the optimizer at the current iteration."""
+    return CockpitCTX.get("optimizer", global_step)
+
+
 def get_loss(global_step):
     """Return the mini-batch loss at the current iteration."""
     loss = CockpitCTX.get("loss", global_step)

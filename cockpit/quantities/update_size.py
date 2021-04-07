@@ -1,19 +1,22 @@
-"""Class for tracking distance from initialization."""
+"""Class for tracking the update size."""
 
 from cockpit.quantities.quantity import TwoStepQuantity
 
 
-class Distance(TwoStepQuantity):
-    """Distance from initialization Quantity Class.
+class UpdateSize(TwoStepQuantity):
+    """Quantity for tracking parameter update sizes.
 
     Attributes:
         CACHE_KEY (str): String under which the parameters are cached for computation.
             Default: ``'params'``.
-        INIT_GLOBAL_STEP (int): Iteration number used as reference. Default: ``0``.
+        SAVE_SHIFT (int): Difference between iteration at which information is computed
+            versus iteration under which it is stored. For instance, if set to ``1``,
+            the information computed at iteration ``n + 1`` is saved under iteration
+            ``n``. Default: ``1``.
     """
 
     CACHE_KEY = "params"
-    INIT_GLOBAL_STEP = 0
+    SAVE_SHIFT = 0
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -29,15 +32,13 @@ class Distance(TwoStepQuantity):
     def is_start(self, global_step):
         """Return whether current iteration is start point.
 
-        Only the initializtion (first iteration) is a start point.
-
         Args:
             global_step (int): The current iteration number.
 
         Returns:
             bool: Whether ``global_step`` is a start point.
         """
-        return global_step == self.INIT_GLOBAL_STEP
+        return self._track_schedule(global_step)
 
     def is_end(self, global_step):
         """Return whether current iteration is end point.
@@ -48,10 +49,10 @@ class Distance(TwoStepQuantity):
         Returns:
             bool: Whether ``global_step`` is an end point.
         """
-        return self._track_schedule(global_step)
+        return self._track_schedule(global_step - self.SAVE_SHIFT)
 
     def _compute_start(self, global_step, params, batch_loss):
-        """Perform computations at start point (store initial parameter values).
+        """Perform computations at start point (store current parameter values).
 
         Modifies ``self._cache``.
 
@@ -64,7 +65,7 @@ class Distance(TwoStepQuantity):
         params_copy = [p.data.clone().detach() for p in params]
 
         def block_fn(step):
-            """Block deletion of parameters for all non-negative iterations.
+            """Block deletion of parameters for current and next iteration.
 
             Args:
                 step (int): Iteration number.
@@ -72,12 +73,12 @@ class Distance(TwoStepQuantity):
             Returns:
                 bool: Whether deletion is blocked in the specified iteration
             """
-            return step >= self.INIT_GLOBAL_STEP
+            return 0 <= step - global_step <= self.SAVE_SHIFT
 
         self.save_to_cache(global_step, self.CACHE_KEY, params_copy, block_fn)
 
     def _compute_end(self, global_step, params, batch_loss):
-        """Compute and return the current distance from initialization.
+        """Compute and return update size.
 
         Args:
             global_step (int): The current iteration number.
@@ -86,12 +87,15 @@ class Distance(TwoStepQuantity):
             batch_loss (torch.Tensor): Mini-batch loss from current step.
 
         Returns:
-            [float]: Layer-wise L2-distances to initialization.
+            [float]: Layer-wise L2-norms of parameter updates.
         """
-        params_init = self.load_from_cache(self.INIT_GLOBAL_STEP, self.CACHE_KEY)
+        params_start = self.load_from_cache(
+            global_step - self.SAVE_SHIFT, self.CACHE_KEY
+        )
 
-        distance = [
-            (p.data - p_init).norm(2).item() for p, p_init in zip(params, params_init)
+        update_size = [
+            (p.data - p_start).norm(2).item()
+            for p, p_start in zip(params, params_start)
         ]
 
-        return distance
+        return update_size

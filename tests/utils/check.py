@@ -24,10 +24,15 @@ def get_compare_function(value1, value2):
     """Return the function used to compare ``value1`` with ``value2``."""
     if isinstance(value1, float) and isinstance(value2, float):
         compare_fn = compare_floats
+    elif isinstance(value1, int) and isinstance(value2, int):
+        compare_fn = compare_ints
     elif isinstance(value1, list) and isinstance(value2, list):
         compare_fn = compare_lists
     else:
-        raise NotImplementedError("No comparison available for this data type.")
+        raise NotImplementedError(
+            "No comparison available for these data types: "
+            + f"{type(value1)}, {type(value2)}."
+        )
 
     return compare_fn
 
@@ -35,6 +40,21 @@ def get_compare_function(value1, value2):
 def compare_floats(float1, float2, rtol=1e-5, atol=1e-7):
     """Compare two floats."""
     assert numpy.isclose(float1, float2, atol=atol, rtol=rtol), f"{float1} ≠ {float2}"
+
+
+def compare_ints(int1, int2, rtol=None, atol=None):
+    """Compare two integers.
+
+    ``rtol`` and ``atol`` are ignored in the comparison, but required to keep the
+    interface identical among comparison functions.
+
+    Args:
+        int1 (int): First integer.
+        int2 (int): Another integer.
+        rtol (any): Ignored, see above.
+        atol (any): Ignored, see above.
+    """
+    assert int1 == int2
 
 
 def compare_lists(list1, list2, rtol=1e-5, atol=1e-7):

@@ -1,10 +1,17 @@
-"""Compare ``Alpha`` and ``AlphaGeneral`` quantities with ``torch.autograd``."""
+"""Compare ``Alpha`` quantity with ``torch.autograd``."""
 
 import pytest
+import torch
 
 from cockpit.context import get_individual_losses
-from cockpit.quantities import Alpha, AlphaGeneral
-from cockpit.quantities.alpha import _exact_variance, _projected_gradient
+from cockpit.quantities import Alpha, Quantity
+from cockpit.quantities.alpha import (
+    _exact_variance,
+    _fit_quadratic,
+    _get_alpha,
+    _projected_gradient,
+    _root_sum_of_squares,
+)
 from tests.test_quantities.settings import (
     INDEPENDENT_RUNS,
     INDEPENDENT_RUNS_IDS,
@@ -14,6 +21,83 @@ from tests.test_quantities.settings import (
     QUANTITY_KWARGS_IDS,
 )
 from tests.test_quantities.utils import autograd_individual_gradients, get_compare_fn
+from tests.utils.data import load_toy_data
+from tests.utils.models import load_toy_model
+from tests.utils.problem import make_problems_with_ids
+
+
+class AlphaGeneral(Quantity):
+    """General α computation. Computes update by storing parameters at start/end."""
+
+    _positions = ["start", "end"]
+    _start_end_difference = 1
+
+    def __init__(self, track_schedule, verbose=False):
+        """Store arguments and clear caches at start and end point."""
+        super().__init__(track_schedule, verbose=verbose)
+        self.clear_info()
+
+    def clear_info(self):
+        """Reset information of start and end points."""
+        self._start_info = {}
+        self._end_info = {}
+
+    def _compute_alpha(self):
+        """Compute and return alpha, assuming all quantities have been stored."""
+        t = self._compute_step_length()
+        fs = self._get_info("f")
+        dfs = self._get_info("df")
+        var_fs = self._get_info("var_f")
+        var_dfs = self._get_info("var_df")
+
+        # Compute alpha
+        mu = _fit_quadratic(t, fs, dfs, var_fs, var_dfs)
+        alpha = _get_alpha(mu, t)
+
+        return alpha
+
+    def _compute_step_length(self):
+        """Return distance between start and end point."""
+        start_params, end_params = self._get_info("params")
+
+        dists = [
+            (end_params[key] - start_params[key]).norm(2).item()
+            for key in start_params.keys()
+        ]
+
+        return _root_sum_of_squares(dists)
+
+    def _get_info(self, key, start=True, end=True):
+        """Return list with the requested information at start and/or end point.
+
+        Args:
+            key (str): Label of the information requested for start and end point
+                of the quadratic fit.
+            start (bool, optional): Whether to get info at start. Defaults to `True`.
+            end (bool, optional): Whether to get info at end. Defaults to `True`.
+
+        Returns:
+            list: Requested information.
+        """
+        start_value, end_value = None, None
+
+        if start:
+            start_value = self._start_info[key]
+        if end:
+            end_value = self._end_info[key]
+
+        return [start_value, end_value]
+
+    def _is_position(self, global_step, pos):
+        """Return whether current iteration is the start/end of a quadratic fit."""
+        if pos == "start":
+            step = global_step
+        elif pos == "end":
+            step = global_step - self._start_end_difference
+        else:
+            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
+
+        return self._track_schedule(step)
 
 
 class AutogradAlphaGeneral(AlphaGeneral):
@@ -42,7 +126,6 @@ class AutogradAlphaGeneral(AlphaGeneral):
         """
         return any(self._is_position(global_step, pos) for pos in ["start", "end"])
 
-    # TODO Use parent class track method after refactoring it
     def track(self, global_step, params, batch_loss):
         """Evaluate the current parameter distances.
 
@@ -110,7 +193,6 @@ class AutogradAlphaGeneral(AlphaGeneral):
             raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
 
         # compute all quantities used in fit
-        # TODO Restructure base class and move to other function
         if pos == "end":
             start_params, _ = self._get_info("params", end=False)
             end_params = info["params"]
@@ -132,7 +214,25 @@ class AutogradAlphaGeneral(AlphaGeneral):
         return info
 
 
-@pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
+ADAM_SETTINGS = [
+    {
+        "data_fn": lambda: load_toy_data(batch_size=4),
+        "model_fn": load_toy_model,
+        "individual_loss_function_fn": lambda: torch.nn.CrossEntropyLoss(
+            reduction="none"
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "iterations": 5,
+        "optimizer_fn": lambda parameters: torch.optim.Adam(parameters, lr=0.01),
+    },
+]
+
+ADAM_PROBLEMS, ADAM_IDS = make_problems_with_ids(ADAM_SETTINGS)
+
+
+@pytest.mark.parametrize(
+    "problem", PROBLEMS + ADAM_PROBLEMS, ids=PROBLEMS_IDS + ADAM_IDS
+)
 @pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
 @pytest.mark.parametrize("q_kwargs", QUANTITY_KWARGS, ids=QUANTITY_KWARGS_IDS)
 def test_alpha(problem, independent_runs, q_kwargs):
@@ -144,21 +244,8 @@ def test_alpha(problem, independent_runs, q_kwargs):
             output of every quantity.
         q_kwargs (dict): Keyword arguments handed over to both quantities.
     """
+    atol = 1e-5
+    rtol = 1e-5
+
     compare_fn = get_compare_fn(independent_runs)
-    compare_fn(problem, (Alpha, AutogradAlphaGeneral), q_kwargs)
-
-
-@pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
-@pytest.mark.parametrize("independent_runs", INDEPENDENT_RUNS, ids=INDEPENDENT_RUNS_IDS)
-@pytest.mark.parametrize("q_kwargs", QUANTITY_KWARGS, ids=QUANTITY_KWARGS_IDS)
-def test_alpha_general(problem, independent_runs, q_kwargs):
-    """Compare BackPACK and ``torch.autograd`` implementation of AlphaGeneral.
-
-    Args:
-        problem (tests.utils.Problem): Settings for train loop.
-        independent_runs (bool): Whether to use to separate runs to compute the
-            output of every quantity.
-        q_kwargs (dict): Keyword arguments handed over to both quantities.
-    """
-    compare_fn = get_compare_fn(independent_runs)
-    compare_fn(problem, (AlphaGeneral, AutogradAlphaGeneral), q_kwargs)
+    compare_fn(problem, (Alpha, AutogradAlphaGeneral), q_kwargs, atol=atol, rtol=rtol)

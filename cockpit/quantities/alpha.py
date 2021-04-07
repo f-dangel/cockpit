@@ -7,35 +7,242 @@ import numpy as np
 import torch
 from backpack import extensions
 
-from cockpit.context import get_batch_size, get_individual_losses
-from cockpit.quantities.quantity import Quantity
+from cockpit.context import get_batch_size, get_individual_losses, get_optimizer
+from cockpit.quantities.quantity import TwoStepQuantity
 from cockpit.quantities.utils_quantities import (
     _layerwise_dot_product,
     _root_sum_of_squares,
 )
+from cockpit.quantities.utils_transforms import get_first_n_alphabet
+from cockpit.utils.optim import ComputeStep
 
 
-class _Alpha(Quantity):
-    """Base class for α computation."""
+class Alpha(TwoStepQuantity):
+    """Normalized step length α on a noise-aware quadratic loss landscape fit.
 
-    _positions = ["start", "end"]
-    _start_end_difference = 1
+    The fit uses zero- and first-order information, including uncertainties, between
+    two consecutive iterations which are referred to as ``'start'`` and ``'end'`` point,
+    respectively. This information needs to be projected onto the update step.
 
-    def __init__(self, track_schedule, verbose=False):
-        super().__init__(track_schedule, verbose=verbose)
-        self.clear_info()
+    Note:
+        This quantity requires the optimizer be specified in the ``'optimizer'``
+        ``info`` entry of a ``cockpit(...)`` context.
 
-    def clear_info(self):
-        """Reset information of start and end points."""
-        self._start_info = {}
-        self._end_info = {}
+    Note:
+        For SGD with default parameters the projections onto the search direction can
+        be performed during a backward pass without storing large tensors between start
+        and end point.
 
-    # TODO Rewrite to use parent class track method
-    def track(self, global_step, params, batch_loss):
-        """Evaluate the current parameter distances.
+    Attributes:
+        SAVE_SHIFT (int): Difference between iteration at which information is computed
+            versus iteration under which it is stored. For instance, if set to ``1``,
+            the information computed at iteration ``n + 1`` is saved under iteration
+            ``n``. Default: ``1``.
+        POINTS ([str]): Description of start and end point.
+    """
 
-        We track both the distance to the initialization, as well as the size of
-        the last parameter update.
+    SAVE_SHIFT = 1
+    POINTS = ["start", "end"]
+
+    def extensions(self, global_step):
+        """Return list of BackPACK extensions required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            list: (Potentially empty) list with required BackPACK quantities.
+        """
+        ext = []
+
+        start = self.is_start(global_step)
+        end = self.is_end(global_step)
+
+        if start or end:
+            ext.append(extensions.BatchGrad())
+
+            if self.__projection_with_backpack(global_step):
+                if start:
+                    ext.append(self._project_with_backpack_start(global_step))
+                if end:
+                    ext.append(self._project_with_backpack_end(global_step))
+
+        return ext
+
+    def is_start(self, global_step):
+        """Return whether current iteration is start point.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            bool: Whether ``global_step`` is a start point.
+        """
+        return self._track_schedule(global_step)
+
+    def is_end(self, global_step):
+        """Return whether current iteration is end point.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            bool: Whether ``global_step`` is an end point.
+        """
+        return self._track_schedule(global_step - self.SAVE_SHIFT)
+
+    def __projection_with_backpack(self, global_step):
+        """Return whether the update step projection is computed through BackPACK.
+
+        Currently, this can only be done for SGD with default parameters.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            bool: Truth value whether gradient projections and update length info
+                are computed with BackPACK.
+        """
+        try:
+            optimizer = get_optimizer(global_step)
+            computed = ComputeStep().is_sgd_default_kwargs(optimizer)
+        except KeyError:
+            warnings.warn("No 'optimizer' handed in via info")
+            computed = False
+        except NotImplementedError:
+            warnings.warn("No update step implemented for optimizer")
+            computed = False
+
+        return computed
+
+    def _project_with_backpack_start(self, start_step):
+        """Return hook that computes gradient info at start with known search direction.
+
+        We want to compute ``dᵀgᵢ / ||d||₂²`` where ``d`` is the search direction and
+        ``gᵢ`` are individual gradients. The information needs to be decomposed such
+        that it can later be aggregated over parameters. Hence, the following
+        operations are carried out for each parameter:
+
+        - Compute and cache ``d`` under ``'update_start'``
+        - Compute and cache ``dᵀgᵢ`` under ``'update_dot_grad_batch_start'``
+
+        Remaining computations are finished up in ``_project_with_backpack_finalize``.
+
+        Args:
+            start_step (int): Iteration number of the start point.
+
+        Returns:
+            BatchGradTransform: Extension executed by BackPACK during a backward pass
+                to perform the gradient projections.
+        """
+        block_fn = self._make_block_fn(start_step, start_step + self.SAVE_SHIFT)
+        optimizer = get_optimizer(start_step)
+
+        def hook(grad_batch):
+            """Cache optimizer update and projected gradients.
+
+            Modifies ``self._cache``, creating entries ``update_start`` and
+            ``update_dot_grad_batch_start``.
+
+            Args:
+                grad_batch (torch.Tensor): Result of BackPACK's ``BatchGrad``
+                    extension.
+
+            Returns:
+                dict: Empty dictionary.
+            """
+            param_id = id(grad_batch._param_weakref())
+
+            search_dir = ComputeStep().compute_update_step(optimizer, [param_id])[
+                param_id
+            ]
+            # L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's BatchGrad computes ¹/ₙ ∇ℓᵢ, we have to rescale
+            batch_size = get_batch_size(start_step)
+            dot_products = batch_size * self.batched_dot_product(grad_batch, search_dir)
+
+            # update or create cache for ``d``
+            key = "update_start"
+            try:
+                update_dict = self.load_from_cache(start_step, key)
+            except KeyError:
+                update_dict = {}
+            finally:
+                update_dict[param_id] = search_dir
+                self.save_to_cache(start_step, key, update_dict, block_fn)
+
+            # update or create cache for ``dᵀgᵢ``
+            key = "update_dot_grad_batch_start"
+            try:
+                update_dot_dict = self.load_from_cache(start_step, key)
+            except KeyError:
+                update_dot_dict = {}
+            finally:
+                update_dot_dict[param_id] = dot_products
+                self.save_to_cache(start_step, key, update_dot_dict, block_fn)
+
+            return {}
+
+        return extensions.BatchGradTransforms({"_first_order_projections_start": hook})
+
+    def _project_with_backpack_end(self, end_step):
+        """Return hook that computes gradient info at end with known search direction.
+
+        We want to compute ``dᵀgᵢ / ||d||₂²`` where ``d`` is the search direction at
+        the start and ``gᵢ`` are individual gradients at the end. The information needs
+        to be decomposed such that it can later be aggregated over parameters. Hence,
+        the following operations are carried out for each parameter:
+
+        - Compute and cache ``dᵀgᵢ`` under ``'update_dot_grad_batch_end'``
+
+        Remaining computations are finished up in ``_project_with_backpack_finalize``.
+
+        Args:
+            end_step (int): Iteration number of the end point.
+
+        Returns:
+            BatchGradTransform: Extension executed by BackPACK during a backward pass
+                to perform the gradient projections.
+        """
+        block_fn = self._make_block_fn(end_step, end_step)
+        start_step = end_step - self.SAVE_SHIFT
+
+        def hook(grad_batch):
+            """Project the end point gradients onto the start point's update direction.
+
+            Modifies ``self._cache``, creating entry ``update_dot_grad_batch_end``.
+
+            Args:
+                grad_batch (torch.Tensor): Result of BackPACK's ``BatchGrad``
+                    extension.
+
+            Returns:
+                dict: Empty dictionary.
+            """
+            param_id = id(grad_batch._param_weakref())
+
+            search_dir = self.load_from_cache(start_step, "update_start")[param_id]
+            # L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's BatchGrad computes ¹/ₙ ∇ℓᵢ, we have to rescale
+            batch_size = get_batch_size(end_step)
+            dot_products = batch_size * self.batched_dot_product(grad_batch, search_dir)
+
+            # update or create cache for ``dᵀgᵢ``
+            key = "update_dot_grad_batch_end"
+            try:
+                update_dot_dict = self.load_from_cache(end_step, key)
+            except KeyError:
+                update_dot_dict = {}
+            finally:
+                update_dot_dict[param_id] = dot_products
+                self.save_to_cache(end_step, key, update_dot_dict, block_fn)
+
+            return {}
+
+        return extensions.BatchGradTransforms({"_first_order_projections_end": hook})
+
+    def _compute_start(self, global_step, params, batch_loss):
+        """Perform computations at start point (store info for α fit).
+
+        Modifies ``self._cache``.
 
         Args:
             global_step (int): The current iteration number.
@@ -43,329 +250,259 @@ class _Alpha(Quantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        if self._is_position(global_step, pos="end"):
-            self._end_info = self._fetch_values(params, batch_loss, "end", global_step)
+        until = global_step + self.SAVE_SHIFT
+        point = "start"
 
-            alpha = self._compute_alpha()
+        self._save_0th_order_info(global_step, params, batch_loss, point, until)
 
-            if self._verbose:
-                print(f"[Step {global_step}] Alpha: {alpha:.4f}")
+        # fall back to storing parameters and individual gradients at start/end
+        if not self.__projection_with_backpack(global_step):
+            self._save_1st_order_info(global_step, params, batch_loss, point, until)
 
-            self.output[global_step - self._start_end_difference] = alpha
-            self.clear_info()
+    def _save_0th_order_info(self, global_step, params, batch_loss, point, until):
+        """Store 0ᵗʰ-order information about the objective in cache.
 
-        if self._is_position(global_step, pos="start"):
-            self._start_info = self._fetch_values(
-                params, batch_loss, "start", global_step
+        Modifies ``self._cache``, creating entries ``f_*`` and ``var_f_*``.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+            point (str): Description of point, ``'start'`` or ``'end'``.
+            until (int): Iteration number until which deletion from cache is blocked.
+        """
+        block_fn = self._make_block_fn(global_step, until)
+
+        f = batch_loss.item()
+        self.save_to_cache(global_step, f"f_{point}", f, block_fn)
+
+        var_f = get_individual_losses(global_step).var().item()
+        self.save_to_cache(global_step, f"var_f_{point}", var_f, block_fn)
+
+    def _save_1st_order_info(self, global_step, params, batch_loss, point, until):
+        """Store information for projecting 1ˢᵗ-order info about the objective in cache.
+
+        This is the go-to approach if the update step at the start point +projections
+        cannot be computed automatically through BackPACK.
+
+        Modifies ``self._cache``, creating the fields ``params_*``, ``grad_*``, and
+        ``grad_batch_*``. Parameters are required to compute the update step, the
+        gradients are required to project them onto the step at a later stage.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+            point (str): Description of point, ``'start'`` or ``'end'``.
+            until (int): Iteration number until which deletion from cache is blocked.
+        """
+        block_fn = self._make_block_fn(global_step, until)
+
+        params_dict = {id(p): p.data.clone().detach() for p in params}
+        self.save_to_cache(global_step, f"params_{point}", params_dict, block_fn)
+
+        grad_dict = {id(p): p.grad.data.clone().detach() for p in params}
+        self.save_to_cache(global_step, f"grad_{point}", grad_dict, block_fn)
+
+        # L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's BatchGrad computes ¹/ₙ ∇ℓᵢ, we have to rescale
+        batch_size = get_batch_size(global_step)
+        grad_batch_dict = {
+            id(p): batch_size * p.grad_batch.data.clone().detach() for p in params
+        }
+        self.save_to_cache(
+            global_step, f"grad_batch_{point}", grad_batch_dict, block_fn
+        )
+
+    @staticmethod
+    def _make_block_fn(start_step, end_step):
+        """Create a function that blocks cache deletion in interval ``[start; end]``.
+
+        Args:
+            start_step (int): Left boundary of blocked interval
+            end_step (int): Right boundary of blocked interval
+
+        Returns:
+            callable: Block function that can be used as ``block_fn`` argument in
+                ``save_to_cache``.
+        """
+
+        def block_fn(step):
+            """Block deletion in ``[start; end]``.
+
+            Args:
+                step (int): Iteration number.
+
+            Returns:
+                bool: Whether deletion is blocked in the specified iteration
+            """
+            return step in range(start_step, end_step + 1)
+
+        return block_fn
+
+    def _compute_end(self, global_step, params, batch_loss):
+        """Compute and return α.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            float: Normalized step size α
+        """
+        point = "end"
+        until = global_step
+
+        self._save_0th_order_info(global_step, params, batch_loss, point, until)
+
+        if self.__projection_with_backpack(global_step):
+            self._project_with_backpack_finalize(global_step)
+        # fall back to storing parameters and individual gradients at start/end
+        else:
+            self._save_1st_order_info(global_step, params, batch_loss, point, until)
+            self._project_end(global_step)
+
+        return self._compute_alpha(global_step)
+
+    def _project_with_backpack_finalize(self, end_step):
+        """Finish up the computations for ``df`` and ``var_df`` at start and end point.
+
+        We need ``dᵀgᵢ / ||d||₂²`` (at start and end) and ``||d||₂²`` (at start) from
+        the parameter-wise quantities ``dᵀgᵢ`` (at start and end) and ``d`` (at start).
+        Thus, the following operations are performed:
+
+        - Compute ``||d||₂²`` and cache under ``update_size_start``
+        - Compute ``dᵀgᵢ / ||d||₂²`` with individual gradients at the start point, cache
+          mean in ``df_start`` and variance in ``var_df_start``.
+        - Compute ``dᵀgᵢ / ||d||₂²`` with individual gradients at the end point, cache
+          mean in ``df_end`` and variance in ``var_df_end``.
+
+        Args:
+            end_step (int): Iteration number of end step.
+        """
+        block_fn = self._make_block_fn(end_step, end_step)
+        start_step = end_step - self.SAVE_SHIFT
+
+        # compute the update step
+        updates = self.load_from_cache(start_step, "update_start")
+        update_size = sum((upd ** 2).sum() for upd in updates.values()).sqrt().item()
+        self.save_to_cache(start_step, "update_size_start", update_size, block_fn)
+
+        for step, p in [[start_step, "start"], [end_step, "end"]]:
+            dot_produts = self.load_from_cache(step, f"update_dot_grad_batch_{p}")
+            projections = sum(dp for dp in dot_produts.values()) / update_size
+
+            df = projections.mean().item()
+            self.save_to_cache(step, f"df_{p}", df, block_fn)
+
+            df_var = projections.var().item()
+            self.save_to_cache(step, f"var_df_{p}", df_var, block_fn)
+
+    def _project_end(self, end_step):
+        """Project first-order information at end step and associated start step.
+
+        Assumes that parameters, gradients, and individual gradients are cached
+        at the end step and its associated start point.
+
+        Modifies ``self._cache``, creating the fields ``df_*`` and ``var_df``,
+        as well as ``update_size_start``.
+
+        Args:
+            end_step (int): Iteration number of end step.
+        """
+        start_step = end_step - self.SAVE_SHIFT
+
+        # update direction and its length
+        start_params = self.load_from_cache(start_step, "params_start")
+        end_params = self.load_from_cache(end_step, "params_end")
+
+        search_dir = [
+            end_params[key] - start_params[key] for key in start_params.keys()
+        ]
+        update_size = sum((s ** 2).sum() for s in search_dir).sqrt().item()
+
+        block_fn = self._make_block_fn(end_step, end_step)
+        self.save_to_cache(start_step, "update_size_start", update_size, block_fn)
+
+        # projections
+        for step, p in [[start_step, "start"], [end_step, "end"]]:
+            # projected gradient
+            grad = self.load_from_cache(step, f"grad_{p}")
+            grad = [grad[key] for key in start_params.keys()]
+            self.save_to_cache(
+                step, f"df_{p}", _projected_gradient(grad, search_dir), block_fn
             )
 
-    def _fetch_values(self, params, batch_loss, pos, global_step):
-        """Fetch values for quadratic fit. Return as dictionary.
+            # projected gradient variance
+            grad_batch = self.load_from_cache(step, f"grad_batch_{p}")
+            grad_batch = [grad_batch[key] for key in start_params.keys()]
+            self.save_to_cache(
+                step,
+                f"var_df_{p}",
+                _exact_variance(grad_batch, search_dir),
+                block_fn,
+            )
 
-        The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
+    @staticmethod
+    def batched_dot_product(batched_tensor, tensor):
+        """Compute scalar product between a batched and an unbatched tensor.
 
         Args:
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-            pos (str): Whether we are at the start or end of an iteration.
-                One of ``start`` or ``end``.
-            global_step (int): The current iteration number.
+            batched_tensor (torch.Tensor): Batched tensor along first axis.
+            tensor (torch.Tensor): Unbatched tensor. All axes are feature dimensions.
+
+        Returns:
+            torch.Tensor: Tensor of shape ``[N]`` where ``N`` is the batch dimension.
+                Contains scalar products for each sample along the batch axis.
 
         Raises:
-            NotImplementedError: If not defined. Should be implemented by subclass.
+            ValueError: If the batched tensor's trailing dimensions don't match the
+                unbatched tensor's shape.
         """
-        raise NotImplementedError
+        if tensor.shape != batched_tensor.shape[1:]:
+            raise ValueError(
+                "Tensors don't share same feature dimensions."
+                + f" Got {tensor.shape} and f{batched_tensor.shape}"
+            )
 
-    def _compute_alpha(self):
-        """Compute and return alpha, assuming all quantities have been stored."""
-        t = self._compute_step_length()
-        fs = self._get_info("f")
-        dfs = self._get_info("df")
-        var_fs = self._get_info("var_f")
-        var_dfs = self._get_info("var_df")
+        letters = get_first_n_alphabet(batched_tensor.dim())
+        equation = f"{letters},{letters[1:]}->{letters[0]}"
+
+        return torch.einsum(equation, batched_tensor, tensor)
+
+    def _compute_alpha(self, end_step):
+        """Compute and return alpha, assuming all information has been cached.
+
+        Requires the following cached entries:
+        - ``update_size_start``
+        - ``f_start``, ``f_end``, ``var_f_start``, ``var_f_end``
+        - ``df_start``, ``df_end``, ``var_df_start``, ``var_df_end``
+
+        Args:
+            end_step (int): Iteration number of the end point.
+
+        Returns:
+            float: Local effective step size α.
+        """
+        start_step = end_step - self.SAVE_SHIFT
+
+        t = self.load_from_cache(start_step, "update_size_start")
+
+        points = [[start_step, "start"], [end_step, "end"]]
+
+        fs = [self.load_from_cache(step, f"f_{p}") for step, p in points]
+        dfs = [self.load_from_cache(step, f"df_{p}") for step, p in points]
+        var_fs = [self.load_from_cache(step, f"var_f_{p}") for step, p in points]
+        var_dfs = [self.load_from_cache(step, f"var_df_{p}") for step, p in points]
 
         # Compute alpha
         mu = _fit_quadratic(t, fs, dfs, var_fs, var_dfs)
         alpha = _get_alpha(mu, t)
 
         return alpha
-
-    def _compute_step_length(self):
-        """Return distance between start and end point."""
-        start_params, end_params = self._get_info("params")
-
-        dists = [
-            (end_params[key] - start_params[key]).norm(2).item()
-            for key in start_params.keys()
-        ]
-
-        return _root_sum_of_squares(dists)
-
-    def _get_info(self, key, start=True, end=True):
-        """Return list with the requested information at start and/or end point.
-
-        Args:
-            key (str): Label of the information requested for start and end point
-                of the quadratic fit.
-            start (bool, optional): Whether to get info at start. Defaults to `True`.
-            end (bool, optional): Whether to get info at end. Defaults to `True`.
-
-        Returns:
-            list: Requested information.
-        """
-        start_value, end_value = None, None
-
-        if start:
-            start_value = self._start_info[key]
-        if end:
-            end_value = self._end_info[key]
-
-        return [start_value, end_value]
-
-    def _is_position(self, global_step, pos):
-        """Return whether current iteration is the start/end of a quadratic fit."""
-        if pos == "start":
-            step = global_step
-        elif pos == "end":
-            step = global_step - self._start_end_difference
-        else:
-            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
-
-        return self._track_schedule(step)
-
-
-class AlphaGeneral(_Alpha):
-    """Compute α but requires storing individual gradients."""
-
-    def extensions(self, global_step):
-        """Return list of BackPACK extensions required for the computation.
-
-        Args:
-            global_step (int): The current iteration number.
-
-        Returns:
-            list: (Potentially empty) list with required BackPACK quantities.
-        """
-        ext = []
-
-        if self._is_position(global_step, "start") or self._is_position(
-            global_step, "end"
-        ):
-            ext.append(extensions.BatchGrad())
-
-        return ext
-
-    def _fetch_values(self, params, batch_loss, pos, global_step):
-        """Fetch values for quadratic fit. Return as dictionary.
-
-        The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
-
-        Args:
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-            pos (str): Whether we are at the start or end of an iteration.
-                One of ``start`` or ``end``.
-            global_step (int): The current iteration number.
-
-        Raises:
-            ValueError: If position is not one of ``start`` or ``end``.
-
-        Returns:
-            dict: Holding the parameters, (variance of) loss and slope.
-        """
-        info = {}
-
-        if pos in ["start", "end"]:
-            # 0ᵗʰ order info
-            info["f"] = batch_loss.item()
-            info["var_f"] = get_individual_losses(global_step).var().item()
-
-            # temporary information required to compute quantities used in fit
-            info["params"] = {id(p): p.data.clone().detach() for p in params}
-            info["grad"] = {id(p): p.grad.data.clone().detach() for p in params}
-            # L = ¹/ₙ ∑ᵢ ℓᵢ, BackPACK's computes ¹/ₙ ∇ℓᵢ, we have to rescale
-            batch_size = get_batch_size(global_step)
-            info["batch_grad"] = {
-                id(p): batch_size * p.grad_batch.data.clone().detach() for p in params
-            }
-
-        else:
-            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
-
-        # compute all quantities used in fit
-        # TODO Restructure base class and move to other function
-        if pos == "end":
-            start_params, _ = self._get_info("params", end=False)
-            end_params = info["params"]
-
-            search_dir = [
-                end_params[key] - start_params[key] for key in start_params.keys()
-            ]
-
-            for info_dict in [self._start_info, info]:
-                grad = [info_dict["grad"][key] for key in start_params.keys()]
-                batch_grad = [
-                    info_dict["batch_grad"][key] for key in start_params.keys()
-                ]
-
-                # 1ˢᵗ order info
-                info_dict["df"] = _projected_gradient(grad, search_dir)
-                info_dict["var_df"] = _exact_variance(batch_grad, search_dir)
-
-        return info
-
-
-class Alpha(_Alpha):
-    """Optimized α Quantity Class. Does not require storing individual gradients."""
-
-    def extensions(self, global_step):
-        """Return list of BackPACK extensions required for the computation.
-
-        Args:
-            global_step (int): The current iteration number.
-
-        Returns:
-            list: (Potentially empty) list with required BackPACK quantities.
-        """
-        ext = []
-
-        if self._is_position(global_step, "start"):
-            ext.append(self._start_search_dir_projection_info())
-        if self._is_position(global_step, "end"):
-            ext.append(self._end_search_dir_projection_info())
-
-        return ext
-
-    def _fetch_values(self, params, batch_loss, pos, global_step):
-        """Fetch values for quadratic fit. Return as dictionary.
-
-        The entry "search_dir" is only initialized if ``pos`` is ``"start"``.
-
-        Args:
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-            pos (str): Whether we are at the start or end of an iteration.
-                One of ``start`` or ``end``.
-            global_step (int): The current iteration number.
-
-        Returns:
-            dict: Holding the parameters, (variance of) loss and slope.
-        """
-        info = {}
-
-        info["params"] = {id(p): p.data.clone().detach() for p in params}
-
-        # 0ᵗʰ order info
-        info["f"] = batch_loss.item()
-        info["var_f"] = get_individual_losses(global_step).var().item()
-
-        # 1ˢᵗ order info
-        info["df"], info["var_df"] = self._fetch_df_and_var_df(params, pos)
-
-        return info
-
-    def _start_search_dir_projection_info(self):
-        """Compute information for individual gradient projections onto search dir.
-
-        The search direction at a start point depends on the optimizer.
-
-        We want to compute dᵀgᵢ / ||d||₂² where d is the search direction and gᵢ are
-        individual gradients. However, this fraction cannot be aggregated among
-        parameters. We have to split the computation into components that can be
-        aggregated, namely dᵀgᵢ and ||d||₂².
-
-        Returns:
-            BatchGradTransform: Transform to compute information to project
-            individual gradients.
-        """
-
-        def compute_start_projection_info(batch_grad):
-            """Compute information to project individual gradients onto the gradient."""
-            batch_size = batch_grad.shape[0]
-
-            # TODO Currently only correctly implemented for SGD! Make more general
-            warnings.warn(
-                "Alpha will only be correct if optimizer is SGD with momentum 0"
-            )
-            search_dir_flat = -1 * (batch_grad.data.sum(0).flatten())
-            batch_grad_flat = batch_grad.data.flatten(start_dim=1)
-
-            search_dir_l2_squared = (search_dir_flat ** 2).sum()
-            dot_products = torch.einsum(
-                "ni,i->n", batch_size * batch_grad_flat, search_dir_flat
-            )
-
-            return {
-                "dot_products": dot_products,
-                "search_dir_l2_squared": search_dir_l2_squared,
-            }
-
-        return extensions.BatchGradTransforms(
-            {"start_projection_info": compute_start_projection_info}
-        )
-
-    def _end_search_dir_projection_info(self):
-        """Compute information for individual gradient projections onto search dir.
-
-        The search direction at an end point is inferred from the model parameters.
-
-        We want to compute dᵀgᵢ / ||d||₂² where d is the search direction and gᵢ are
-        individual gradients. However, this fraction cannot be aggregated among
-        parameters. We have to split the computation into components that can be
-        aggregated, namely dᵀgᵢ and ||d||₂².
-
-        Returns:
-            BatchGradTransform: Transform to compute information to project
-            individual gradients.
-        """
-
-        def compute_end_projection_info(batch_grad):
-            """Compute information to project individual gradients onto the gradient."""
-            batch_size = batch_grad.shape[0]
-
-            end_param = batch_grad._param_weakref()
-            start_param = self._get_info("params", end=False)[0][id(end_param)]
-
-            search_dir_flat = (end_param.data - start_param).flatten()
-            batch_grad_flat = batch_grad.data.flatten(start_dim=1)
-
-            search_dir_l2_squared = (search_dir_flat ** 2).sum()
-            dot_products = torch.einsum(
-                "ni,i->n", batch_size * batch_grad_flat, search_dir_flat
-            )
-
-            return {
-                "dot_products": dot_products,
-                "search_dir_l2_squared": search_dir_l2_squared,
-            }
-
-        return extensions.BatchGradTransforms(
-            {"end_projection_info": compute_end_projection_info}
-        )
-
-    def _fetch_df_and_var_df(self, params, pos):
-        """Compute projected gradient and variance from after-backward quantities."""
-        if pos == "start":
-            key = "start_projection_info"
-        elif pos == "end":
-            key = "end_projection_info"
-        else:
-            raise ValueError(f"Invalid position '{pos}'. Expect {self._positions}.")
-
-        dot_products = sum(p.grad_batch_transforms[key]["dot_products"] for p in params)
-        search_dir_l2_squared = sum(
-            p.grad_batch_transforms[key]["search_dir_l2_squared"] for p in params
-        )
-
-        projections = dot_products / search_dir_l2_squared.sqrt()
-
-        df = projections.mean().item()
-        df_var = projections.var().item()
-
-        return df, df_var
 
 
 # TODO Move inside class
