@@ -36,9 +36,9 @@ class CockpitPlotter:
         self._set_plotting_params()
         self._set_layout_params()
 
-    def __update_problem_info(self, logpath):
-        """Try extracting and storing info about model, optimizer, dataset from path."""
-        for key, value in utils_plotting._split_logpath(logpath).items():
+    def __update_problem_info(self, source):
+        """Try extracting and storing info about model, optimizer, dataset."""
+        for key, value in utils_plotting._extract_problem_info(source).items():
             setattr(self, key, value)
 
     def _set_layout_params(self):
@@ -68,6 +68,7 @@ class CockpitPlotter:
         block=False,
         show_log_iter=False,
         discard=None,
+        plot_title=None,
         debug=False,
     ):
         """Plot the cockpit for the current state of the log file.
@@ -89,14 +90,17 @@ class CockpitPlotter:
                 a log scale for the iterations. Defaults to False.
             discard (int, optional): Global step after which information
                 should be discarded.
+            plot_title (str, optional): Cockpit's  plot title. Defauts to None.
+                In this case Cockpit tries to infer the optimizer/problem/etc.
+                from the logpath and show it as the title. Which can be manually
+                overwritten with by passing this string.
             debug (bool, optional): Enable debug mode.. Defaults to False.
 
         Raises:
             ValueError: Raises ValueError if source is a ``Cockpit`` instance,
                 but no savedir is given.
         """
-        problem_info_path = source if isinstance(source, str) else ""
-        self.__update_problem_info(problem_info_path)
+        self.__update_problem_info(source)
         self._set_backend(show_plot)
         self.debug = debug
 
@@ -141,7 +145,7 @@ class CockpitPlotter:
         self._plot_performance(self.grid_spec[1, 1:])
 
         # Post Process Title, Legend etc.
-        self._post_process_plot()
+        self._post_process_plot(plot_title)
 
         if self._secondary_screen:
             self._plot_secondary_screen()
@@ -406,19 +410,14 @@ class CockpitPlotter:
 
         fig.savefig(file_path)
 
-    def _post_process_plot(self):
+    def _post_process_plot(self, plot_title):
         """Process the plotting figure, by adding a title, legend, etc."""
         # Set Title
-        self.fig.suptitle(
-            "Cockpit for " + self.optimizer, fontsize="xx-large", fontweight="bold"
-        )
-
-        # # Set Legend
-        # ax = self.fig.add_subplot(self.grid_spec[0, 0])
-        # ax.legend(han, leg, loc="upper left", ncol=2)
-        # ax.set_frame_on(False)
-        # ax.get_xaxis().set_visible(False)
-        # ax.get_yaxis().set_visible(False)
+        if not plot_title:
+            plot_title = (
+                "Cockpit for " + self.optimizer if self.optimizer else "Cockpit"
+            )
+        self.fig.suptitle(plot_title, fontsize="xx-large", fontweight="bold")
 
     def _plot_secondary_screen(self):
         """Plot a second figure with experimental quantities."""

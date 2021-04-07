@@ -115,6 +115,9 @@ class Cockpit:
         if info is None:
             info = {}
 
+        if "optimizer" in info:
+            self._optimizer_name = type(info["optimizer"]).__name__
+
         return BackwardCTX(self, global_step, exts, info, debug=debug)
 
     def track(self, global_step, protected_savefields=()):

@@ -1,39 +1,46 @@
 """Utility functions for the CockpitPlotter."""
 
-import warnings
-
 import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
 
 
-def _split_logpath(logpath):
+def _extract_problem_info(source):
     """Split the logpath to identify test problem, data set, etc.
 
     Args:
-        logpath (str): Full logpath to the JSON file.
+        source (Cockpit or str): ``Cockpit`` instance, or string containing the
+                path to a .json log produced with ``Cockpit.write``, where
+                information will be fetched from.
 
     Returns:
         [dict]: Dictioniary of logpath, testproblem, optimizer, etc.
     """
-    try:
+    if isinstance(source, str):
+        # Split logpath if possible
+        try:
+            dicty = {
+                "logpath": source + ".json",
+                "optimizer": source.split("/")[-3],
+                "testproblem": source.split("/")[-4],
+                "dataset": source.split("/")[-4].split("_", 1)[0],
+                "model": source.split("/")[-4].split("_", 1)[1],
+            }
+        except Exception:
+            dicty = {
+                "logpath": source + ".json",
+                "optimizer": "",
+                "testproblem": "",
+                "dataset": "",
+                "model": "",
+            }
+    else:
+        # Source is Cockpit instance
         dicty = {
-            "logpath": logpath + ".json",
-            "optimizer": logpath.split("/")[-3],
-            "testproblem": logpath.split("/")[-4],
-            "dataset": logpath.split("/")[-4].split("_", 1)[0],
-            "model": logpath.split("/")[-4].split("_", 1)[1],
-        }
-    except Exception:
-        warnings.warn(
-            "Could not extract information about optimizer, dataset and model."
-            + "Setting them to unknown."
-        )
-        dicty = {
-            "logpath": logpath + ".json",
-            "optimizer": "unknown_optimizer",
-            "testproblem": "unknown_testproblem",
-            "dataset": "unknown_dataset",
-            "model": "unknown_model",
+            "logpath": "",
+            "optimizer": source._optimizer_name,
+            "testproblem": "",
+            "dataset": "",
+            "model": "",
         }
     return dicty
 
