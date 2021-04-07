@@ -177,6 +177,7 @@ class _DeepOBSRunner(PTRunner):
                             batch_loss,
                         ),
                         "loss": batch_loss,
+                        "optimizer": opt,
                     }
 
                     # COCKPIT: Use necessary BackPACK extensions and track #

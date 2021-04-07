@@ -2,10 +2,10 @@
 
 import torch
 from backpack import extend
+from utils.utils_examples import fmnist_data
 
 from cockpit import Cockpit, CockpitPlotter
 from cockpit.utils.configuration import configuration
-from examples.utils.utils_examples import fmnist_data
 
 # Build Fashion-MNIST classifier
 fmnist_data = fmnist_data()
@@ -37,6 +37,7 @@ for inputs, labels in iter(fmnist_data):
             "batch_size": inputs.shape[0],
             "individual_losses": losses,
             "loss": loss,
+            "optimizer": opt,
         },
     ):
         loss.backward(create_graph=cockpit.create_graph(global_step))

@@ -1,9 +1,9 @@
 """An example of using Cockpit with DeepOBS."""
 
 from torch.optim import SGD
+from utils.deepobs_runner import DeepOBSRunner
 
 from cockpit.utils import configuration, schedules
-from examples.utils.deepobs_runner import DeepOBSRunner
 
 optimizer = SGD
 hyperparams = {"lr": {"type": float, "default": 0.001}}

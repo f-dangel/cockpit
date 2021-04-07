@@ -1,5 +1,6 @@
 """Test whether the example scripts run."""
 
+import os
 import pathlib
 import runpy
 import sys
@@ -18,13 +19,14 @@ for s in scripts:
 
 
 @patch("time.sleep")
-@pytest.mark.parametrize("scripts", scripts_str, ids=scripts_id)
-def test_example_scripts(mock, scripts):
+@pytest.mark.parametrize("script", scripts_str, ids=scripts_id)
+def test_example_scripts(mock, script):
     """Run a single example script.
 
     Args:
         mock (str): Call that should be replaced by a mock object.
-        scripts (str): Script that should be run.
+        script (str): Script that should be run.
     """
+    sys.path.append(os.path.dirname(script))
     del sys.argv[1:]  # Clear CLI arguments from pytest
-    runpy.run_path(str(scripts))
+    runpy.run_path(str(script))
