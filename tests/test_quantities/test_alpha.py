@@ -1,4 +1,4 @@
-"""Compare ``Alpha`` and ``AlphaGeneral`` quantities with ``torch.autograd``."""
+"""Compare ``Alpha`` quantity with ``torch.autograd``."""
 
 import pytest
 import torch

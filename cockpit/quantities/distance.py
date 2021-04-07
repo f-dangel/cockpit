@@ -1,4 +1,4 @@
-"""Class for tracking distance to initialization."""
+"""Class for tracking distance from initialization."""
 
 from cockpit.quantities.quantity import TwoStepQuantity
 
@@ -77,7 +77,7 @@ class Distance(TwoStepQuantity):
         self.save_to_cache(global_step, self.CACHE_KEY, params_copy, block_fn)
 
     def _compute_end(self, global_step, params, batch_loss):
-        """Compute and return the current distance to initialization.
+        """Compute and return the current distance from initialization.
 
         Args:
             global_step (int): The current iteration number.
