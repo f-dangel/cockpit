@@ -1,7 +1,6 @@
 """Compare ``Alpha`` quantity with ``torch.autograd``."""
 
 import pytest
-import torch
 
 from cockpit.context import get_individual_losses
 from cockpit.quantities import Alpha, Quantity
@@ -12,6 +11,7 @@ from cockpit.quantities.alpha import (
     _projected_gradient,
     _root_sum_of_squares,
 )
+from tests.test_quantities.adam_settings import ADAM_IDS, ADAM_PROBLEMS
 from tests.test_quantities.settings import (
     INDEPENDENT_RUNS,
     INDEPENDENT_RUNS_IDS,
@@ -21,9 +21,6 @@ from tests.test_quantities.settings import (
     QUANTITY_KWARGS_IDS,
 )
 from tests.test_quantities.utils import autograd_individual_gradients, get_compare_fn
-from tests.utils.data import load_toy_data
-from tests.utils.models import load_toy_model
-from tests.utils.problem import make_problems_with_ids
 
 
 class AlphaGeneral(Quantity):
@@ -212,22 +209,6 @@ class AutogradAlphaGeneral(AlphaGeneral):
                 info_dict["var_df"] = _exact_variance(batch_grad, search_dir)
 
         return info
-
-
-ADAM_SETTINGS = [
-    {
-        "data_fn": lambda: load_toy_data(batch_size=4),
-        "model_fn": load_toy_model,
-        "individual_loss_function_fn": lambda: torch.nn.CrossEntropyLoss(
-            reduction="none"
-        ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
-        "iterations": 5,
-        "optimizer_fn": lambda parameters: torch.optim.Adam(parameters, lr=0.01),
-    },
-]
-
-ADAM_PROBLEMS, ADAM_IDS = make_problems_with_ids(ADAM_SETTINGS)
 
 
 @pytest.mark.parametrize(

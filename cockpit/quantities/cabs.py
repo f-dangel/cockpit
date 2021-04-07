@@ -1,8 +1,9 @@
 """Class for tracking the CABS criterion for adaptive batch size."""
 
-from cockpit.context import get_batch_size
+from cockpit.context import get_batch_size, get_optimizer
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
+from cockpit.utils.optim import ComputeStep
 
 
 class CABS(SingleStepQuantity):
@@ -16,27 +17,24 @@ class CABS(SingleStepQuantity):
           Coupling adaptive batch sizes with learning rates (2017).
     """
 
-    def __init__(self, track_schedule, verbose=False, lr=1.0):
-        """Initialize.
+    def get_lr(self, optimizer):
+        """Extract the learning rate.
 
         Args:
-            track_schedule (callable): Function that maps the ``global_step``
-                to a boolean, which determines if the quantity should be computed.
-            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
-            lr (float): Learning rate. Defaults to 1.0.
-            verbose (bool): Turns on verbose mode. Defaults to ``False``.
+            optimizer (torch.optim.Optimizer): A PyTorch optimizer.
+
+        Returns:
+            float: Learning rate
+
+        Raises:
+            ValueError: If the learning rate varies over parameter groups.
         """
-        super().__init__(track_schedule, verbose=verbose)
+        lrs = {group["lr"] for group in optimizer.param_groups}
 
-        self.set_lr(lr)
+        if len(lrs) != 1:
+            raise ValueError(f"Found non-unique learning rates {lrs}")
 
-    def set_lr(self, lr):
-        """Set value for current learning rate."""
-        self._lr = lr
-
-    def get_lr(self):
-        """Get value for current learning rate."""
-        return self._lr
+        return lrs.pop()
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -70,9 +68,16 @@ class CABS(SingleStepQuantity):
 
         Returns:
             float: Batch size suggested by CABS.
+
+        Raises:
+            ValueError: If the optimizer differs from SGD with default arguments.
         """
+        optimizer = get_optimizer(global_step)
+        if not ComputeStep.is_sgd_default_kwargs(optimizer):
+            raise ValueError("This criterion only supports zero-momentum SGD.")
+
         B = get_batch_size(global_step)
-        lr = self.get_lr()
+        lr = self.get_lr(optimizer)
 
         grad_squared = self._fetch_grad(params, aggregate=True) ** 2
         # # compensate BackPACK's 1/B scaling
