@@ -2,7 +2,7 @@
 Cockpit
 =======
 
-|CI Status| |Lint Status| |License| |Code Style| |arXiv|
+|CI Status| |Lint Status| |Coverage| |License| |Code Style| |arXiv|
 
 ----
 
@@ -67,6 +67,10 @@ Indices
 .. |Lint Status| image:: https://github.com/f-dangel/cockpit-paper/actions/workflows/Lint.yml/badge.svg
     :target: https://github.com/f-dangel/cockpit-paper/actions/workflows/Lint.yml
     :alt: Lint Status
+
+.. |Coverage| image:: https://coveralls.io/repos/github/f-dangel/cockpit-paper/badge.svg?branch=v1_release&t=piyZHm
+    :target: https://coveralls.io/github/f-dangel/cockpit-paper?branch=v1_release
+    :alt: CI Status
 
 .. |License| image:: https://img.shields.io/badge/License-MIT-green.svg
     :target: https://github.com/f-dangel/cockpit-paper/blob/master/LICENSE

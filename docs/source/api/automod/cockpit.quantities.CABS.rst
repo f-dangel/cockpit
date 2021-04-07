@@ -13,8 +13,8 @@ CABS
       ~CABS.compute
       ~CABS.create_graph
       ~CABS.extensions
+      ~CABS.get_lr
       ~CABS.get_output
-      ~CABS.set_lr
       ~CABS.should_compute
       ~CABS.track
 
@@ -23,7 +23,7 @@ CABS
    .. automethod:: compute
    .. automethod:: create_graph
    .. automethod:: extensions
+   .. automethod:: get_lr
    .. automethod:: get_output
-   .. automethod:: set_lr
    .. automethod:: should_compute
    .. automethod:: track
