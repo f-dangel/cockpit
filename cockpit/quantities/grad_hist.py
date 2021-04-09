@@ -211,7 +211,6 @@ class GradHist2d(SingleStepQuantity):
         ymax=2,
         min_yrange=1e-6,
         ybins=50,
-        save_memory=True,
         which="histogram2d",
         adapt_schedule=None,
         adapt_policy="abs_max",
@@ -239,8 +238,6 @@ class GradHist2d(SingleStepQuantity):
             min_yrange (float, optional): Lower bound for limit difference
                 along y axis. Defaults to 1e-6.
             ybins (int, optional): Number of bins in y-direction. Defaults to 50.
-            save_memory (bool, optional): Sacrifice binning runtime for less
-                memory. Defaults to True.
             which (str, optional): Which histogram function should be used.
                 Performance varies strongly among different methods, and also
                 depend on the data being histogram-ed. Choices:
@@ -281,7 +278,6 @@ class GradHist2d(SingleStepQuantity):
         self._ymax = ymax
         self._min_yrange = min_yrange
         self._ybins = ybins
-        self._save_memory = save_memory
 
         numpy.histogram2d.__name__ = "numpy_histogram2d"
         self.histogram_functions = {
@@ -448,56 +444,6 @@ class GradHist2d(SingleStepQuantity):
 
         return batch_grad_clamped, param_clamped
 
-    def __hist_save_mem(self, batch_grad_clamped, param_clamped):
-        """Compute histogram and save memory.
-
-        Note:
-            Don't hand in sequences of arrays for ``bins`` as this way the
-            histogram functions do not know that the bins are uniform. They
-            will then call a sort algorithm, which is expensive.
-
-        Args:
-            batch_grad_clamped (Tensor): Clamped BatchGradients.
-            param_clamped (Tensor): Clamped parameters.
-
-        Returns:
-            Tensor or NumpyArray: Histogram.
-        """
-        batch_grad_clamped = batch_grad_clamped.flatten(start_dim=1)
-        param_clamped = param_clamped.flatten()
-        hist = torch.zeros(
-            size=(self._xbins, self._ybins),
-            device=param_clamped.device,
-        )
-
-        batch_size = batch_grad_clamped.shape[0]
-
-        if self._which == "numpy":
-            batch_grad_clamped = batch_grad_clamped.cpu().numpy()
-            param_clamped = param_clamped.cpu().numpy()
-            hist = hist.cpu().numpy()
-
-        hist_bins = (self._xbins, self._ybins)
-        hist_range = ((self._xmin, self._xmax), (self._ymin, self._ymax))
-        hist_func = self.histogram_functions[self._which]
-
-        if self._verbose:
-            print(f"Using hist_func: {hist_func.__name__}")
-
-        for n in range(batch_size):
-            if self._which == "numpy":
-                args = (batch_grad_clamped[n], param_clamped)
-            else:
-                args = (torch.stack((batch_grad_clamped[n], param_clamped)),)
-
-            h = hist_func(*args, bins=hist_bins, range=hist_range)[0]
-            hist += h
-
-        if self._which == "numpy":
-            hist = torch.from_numpy(hist)
-
-        return hist
-
     def __hist_own_opt(self, batch_grad_clamped, param_clamped):
         """Custom optimized (individual gradient, parameter) 2d histogram."""
         hist_bins = (self._xbins, self._ybins)
@@ -552,7 +498,7 @@ class GradHist2d(SingleStepQuantity):
         if self._which == "numpy":
             hist = torch.from_numpy(hist)
 
-        return hist
+        return hist.float()
 
     def _compute_histogram(self, batch_grad):
         """Transform individual gradients and parameters into a 2d histogram.
@@ -579,8 +525,6 @@ class GradHist2d(SingleStepQuantity):
 
         if self._which == "histogram2d_opt":
             return self.__hist_own_opt(batch_grad_clamped, param_clamped)
-        if self._save_memory:
-            hist = self.__hist_save_mem(batch_grad_clamped, param_clamped)
         else:
             hist = self.__hist_high_mem(batch_grad_clamped, param_clamped)
 
