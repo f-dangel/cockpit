@@ -31,6 +31,8 @@ def get_compare_function(value1, value2):
         compare_fn = compare_lists
     elif isinstance(value1, torch.Tensor) and isinstance(value2, torch.Tensor):
         compare_fn = compare_tensors
+    elif isinstance(value1, tuple) and isinstance(value2, tuple):
+        compare_fn = compare_tuples
     else:
         raise NotImplementedError(
             "No comparison available for these data types: "
@@ -38,6 +40,15 @@ def get_compare_function(value1, value2):
         )
 
     return compare_fn
+
+
+def compare_tuples(tuple1, tuple2, rtol=1e-5, atol=1e-7):
+    """Compare two tuples"""
+    assert len(tuple1) == len(tuple2), "Different number of entries"
+
+    for value1, value2 in zip(tuple1, tuple2):
+        compare_fn = get_compare_function(value1, value2)
+        compare_fn(value1, value2, rtol=rtol, atol=atol)
 
 
 def compare_tensors(tensor1, tensor2, rtol=1e-5, atol=1e-7):

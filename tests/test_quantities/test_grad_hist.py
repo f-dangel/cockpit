@@ -120,180 +120,67 @@ class AutogradGradHist2d(GradHist2d):
             bool: ``True`` if the computation graph shall not be deleted,
                 else ``False``.
         """
-        return self.should_compute(global_step) or self._adapt_schedule(global_step)
+        return self.should_compute(global_step)
 
-    # TODO Rewrite to use parent class track method
-    def track(self, global_step, params, batch_loss):
-        """Compute the two-dimensional histogram at the current iteration.
-
-        Args:
-            global_step (int): The current iteration number.
-            params ([torch.Tensor]): List of torch.Tensors holding the network's
-                parameters.
-            batch_loss (torch.Tensor): Mini-batch loss from current step.
-        """
-        if self.should_compute(global_step):
-            self._compute_aggregated(global_step, params, batch_loss)
-
-            if self._keep_individual:
-                self._compute_individual(global_step, params, batch_loss)
-
-        self._update_limits(global_step, params, batch_loss)
-
-    def _compute_aggregated(self, global_step, params, batch_loss):
+    def _compute(self, global_step, params, batch_loss):
         """Aggregate histogram data over parameters and save to output."""
-        x_edges, y_edges = self._get_current_bin_edges()
 
-        losses = get_individual_losses(global_step)
-        individual_gradients = autograd_individual_gradients(losses, params)
+        individual_losses = get_individual_losses(global_step)
+        individual_gradients = autograd_individual_gradients(individual_losses, params)
+        layerwise = [
+            self._compute_histogram(p, igrad)
+            for p, igrad in zip(params, individual_gradients)
+        ]
 
-        hist = None
+        hist = sum(out[0] for out in layerwise)
+        edges = layerwise[0][1]
 
-        for igrad, param in zip(individual_gradients, params):
-            param_hist = self._compute_histogram(param, igrad)
+        result = {"hist": hist, "edges": edges}
 
-            hist = param_hist if hist is None else hist + param_hist
+        if self._keep_individual:
+            result["param_groups"] = len(params)
 
-        self.output[global_step]["hist_2d"] = hist.tolist()
-        self.output[global_step]["x_edges"] = x_edges.cpu().numpy().tolist()
-        self.output[global_step]["y_edges"] = y_edges.cpu().numpy().tolist()
+            for idx, (hist, edges) in enumerate(layerwise):
+                result[f"param_{idx}"] = {"hist": hist, "edges": edges}
 
-        if self._verbose:
-            print(
-                f"[Step {global_step}] AutogradGradHist2d"
-                + f" x_edges 0,...,4: {x_edges[:5]}"
-            )
-            print(
-                f"[Step {global_step}] AutogradGradHist2d"
-                + f" y_edges 0,...,4: {y_edges[:5]}"
-            )
-            print(
-                f"[Step {global_step}] AutogradGradHist2d"
-                + f" counts [0,...,4][0,...,4]: {hist[:5,:5]}"
-            )
-        print(hist.max())
+        return result
 
     def _compute_histogram(self, param, individual_gradients):
         """Compute bin counts of individual gradient elements."""
-        hist_bins = (self._xbins, self._ybins)
-        hist_range = ((self._xmin, self._xmax), (self._ymin, self._ymax))
+        batch_size = individual_gradients.shape[0]
 
-        batch_axis = 0
-        batch_size = individual_gradients.shape[batch_axis]
-        individual_gradients_clamped, param_clamped = self.__preprocess(
-            individual_gradients.data, param.data
-        )
+        data = [individual_gradients, param]
+
+        for dim, data_dim in enumerate(data):
+            lower, upper = self._range[dim]
+            bins = self._bins[dim]
+
+            # Histogram implementation does not include the limits, clip to bin center
+            bin_size = (upper - lower) / bins
+            data[dim] = torch.clamp(
+                data_dim, min=lower + bin_size / 2, max=upper - bin_size / 2
+            )
 
         hist = None
+        edges = None
 
         for b in range(batch_size):
-            igrad = individual_gradients_clamped[b].flatten()
 
-            hist_b, _, _ = numpy.histogram2d(
-                igrad.detach().cpu().numpy(),
-                param_clamped.flatten().detach().cpu().numpy(),
-                bins=hist_bins,
-                range=hist_range,
+            hist_b, xedges, yedges = numpy.histogram2d(
+                data[0][b].detach().flatten().numpy(),
+                data[1].detach().flatten().numpy(),
+                bins=self._bins,
+                range=self._range,
             )
+
+            hist_b = torch.from_numpy(hist_b).long()
+            xedges = torch.from_numpy(xedges).float()
+            yedges = torch.from_numpy(yedges).float()
 
             hist = hist_b if hist is None else hist + hist_b
+            edges = (xedges, yedges) if edges is None else edges
 
-        return hist.astype(float)
-
-    def __preprocess(self, batch_grad, param):
-        """Scale and clamp the data used for histograms."""
-        # clip to interval, elements outside [xmin, xmax] would be ignored
-        xmin, xmax = self._xmin, self._xmax
-        ymin, ymax = self._ymin, self._ymax
-
-        # PyTorch implementation has different comparison conventions
-        if True:
-            xedges, yedges = self._get_current_bin_edges()
-            xbin_size, ybin_size = xedges[1] - xedges[0], yedges[1] - yedges[0]
-            xepsilon, yepsilon = xbin_size / 2, ybin_size / 2
-
-            xmin, xmax = xmin + xepsilon, xmax - xepsilon
-            ymin, ymax = ymin + yepsilon, ymax - yepsilon
-        batch_grad_clamped = torch.clamp(batch_grad, xmin, xmax)
-        param_clamped = torch.clamp(param, ymin, ymax)
-
-        return batch_grad_clamped, param_clamped
-
-    def _update_limits(self, global_step, params, batch_loss):
-        """Update limits for next histogram computation."""
-        if self._adapt_schedule(global_step):
-            self._update_x_limits(params, global_step)
-            self._update_y_limits(params)
-
-            if self._verbose:
-                print(
-                    f"[Step {global_step}] AutogradGradHist2d"
-                    + f" new x limits: ({self._xmin:.4f}, {self._xmax:.4f})",
-                )
-                print(
-                    f"[Step {global_step}] AutogradGradHist2d"
-                    + f" new y limits: ({self._ymin:.4f}, {self._ymax:.4f})",
-                )
-
-    def _update_x_limits(self, params, global_step):
-        """Update the histogram's x limits."""
-        losses = get_individual_losses(global_step)
-        individual_gradients = autograd_individual_gradients(losses, params)
-
-        if self._adapt_policy == "abs_max":
-            pad_factor = 1 + self._xpad
-            abs_max = float(max(igrad.abs().max() for igrad in individual_gradients))
-            xmin, xmax = -pad_factor * abs_max, pad_factor * abs_max
-
-        elif self._adapt_policy == "min_max":
-            min_val = float(min(igrad.min() for igrad in individual_gradients))
-            max_val = float(max(igrad.max() for igrad in individual_gradients))
-            span = max_val - min_val
-
-            xmin = min_val - self._xpad * span
-            xmax = max_val + self._xpad * span
-
-        else:
-            raise ValueError("Invalid adaptation policy")
-
-        if xmax - xmin < self._min_xrange:
-            warnings.warn(
-                "Adaptive x limits are almost identical, using a small range instead."
-            )
-            center = (xmax + xmin) / 2
-            xmin = center - self._min_xrange / 2
-            xmax = center + self._min_xrange / 2
-
-        self._xmin, self._xmax = xmin, xmax
-
-    def _update_y_limits(self, params):
-        """Update the histogram's y limits."""
-        if self._adapt_policy == "abs_max":
-            pad_factor = 1 + self._ypad
-            abs_max = float(max(p.data.abs().max() for p in params))
-
-            ymin, ymax = -pad_factor * abs_max, pad_factor * abs_max
-
-        elif self._adapt_policy == "min_max":
-            min_val = float(min(p.data.min() for p in params))
-            max_val = float(max(p.data.max() for p in params))
-            span = max_val - min_val
-
-            ymin = min_val - self._ypad * span
-            ymax = max_val + self._ypad * span
-
-        else:
-            raise ValueError("Invalid adaptation policy")
-
-        if ymax - ymin < self._min_yrange:
-            warnings.warn(
-                "Adaptive y limits are almost identical, using a small range instead."
-            )
-            center = (ymax + ymin) / 2
-            ymin = center - self._min_yrange / 2
-            ymax = center + self._min_yrange / 2
-
-        self._ymin, self._ymax = ymin, ymax
+        return hist, edges
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=PROBLEMS_IDS)
@@ -329,10 +216,8 @@ def test_grad_hist2d_few_bins_cpu(problem, independent_runs, q_kwargs):
             output of every quantity.
         q_kwargs (dict): Keyword arguments handed over to both quantities.
     """
-    q_extra_kwargs = {
-        "xbins": 4,
-        "ybins": 5,
-    }
+    q_extra_kwargs = {"bins": (4, 5)}
+    q_extra_kwargs = {"bins": (8, 5), "range": ((-0.01, 0.01), (-0.02, 0.02))}
     combined_q_kwargs = {**q_kwargs, **q_extra_kwargs}
 
     compare_fn = get_compare_fn(independent_runs)
