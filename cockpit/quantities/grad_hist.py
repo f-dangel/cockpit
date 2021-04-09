@@ -16,18 +16,17 @@ from cockpit.quantities.utils_hists import (
 
 
 class GradHist1d(SingleStepQuantity):
-    """One-dimensional histogram of individual gradient elements."""
+    """One-dimensional histogram of individual gradient elements.
+
+    Outlier elements are clipped to lie in the visible range.
+    """
 
     def __init__(
         self,
         track_schedule,
         verbose=False,
-        xmin=-2,
-        xmax=2,
         bins=100,
-        adapt_schedule=None,
-        pad=0.2,
-        remove_outliers=False,
+        range=(-2, 2),
     ):
         """Initialize the 1D Histogram of individual gradient elements.
 
@@ -35,34 +34,14 @@ class GradHist1d(SingleStepQuantity):
             track_schedule (callable): Function that maps the ``global_step``
                 to a boolean, which determines if the quantity should be computed.
             verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
-            xmin (float): Lower clipping bound for individual gradients in histogram.
-            xmax (float): Upper clipping bound for individual gradients in histogram.
             bins (int): Number of bins
-            adapt_schedule (callable): Function that maps ``global_step`` to a boolean
-                that indicates if the limits should be updated. If ``None``, adapt
-                only at step 0.
-            pad (float): Relative padding added to the limits
-            remove_outliers (bool): Whether outliers should be removed. If ``False``,
-                they show up in the edge bins.
+            range ((float, float), optional): Lower and upper limit of the bin range.
+                Default: ``(-2, 2)``.
         """
         super().__init__(track_schedule, verbose=verbose)
 
-        self._xmin = xmin
-        self._xmax = xmax
+        self._range = range
         self._bins = bins
-        self._pad = pad
-
-        if adapt_schedule is None:
-
-            def default_adapt_schedule(global_step):
-                """Adapt at the very first step."""
-                return global_step == 0
-
-            self._adapt_schedule = default_adapt_schedule
-        else:
-            self._adapt_schedule = adapt_schedule
-
-        self._remove_outliers = remove_outliers
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -82,43 +61,25 @@ class GradHist1d(SingleStepQuantity):
                 )
             )
 
-        if self._adapt_schedule(global_step):
-            ext.append(
-                extensions.BatchGradTransforms(
-                    transforms={"grad_batch_abs_max": transform_grad_batch_abs_max}
-                )
-            )
-
         return ext
 
-    # TODO Rewrite to use parent class track method
-    def track(self, global_step, params, batch_loss):
-        """Evaluate the individual gradient histogram at the current point.
+    def _compute(self, global_step, params, batch_loss):
+        """Evaluate the individual gradient histogram.
 
         Args:
             global_step (int): The current iteration number.
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            dict: Entry ``'hist'`` holds the histogram, entry ``'edges'`` holds
+                the bin limits.
         """
-        if self.should_compute(global_step):
-            edges = self._get_current_bin_edges()
-            hist = sum(p.grad_batch_transforms["hist_1d"] for p in params)
+        hist = sum(p.grad_batch_transforms["hist_1d"][0] for p in params)
+        edges = params[0].grad_batch_transforms["hist_1d"][1]
 
-            self.output[global_step]["hist_1d"] = hist.cpu().numpy().tolist()
-            self.output[global_step]["edges"] = edges.cpu().numpy().tolist()
-
-            if self._verbose:
-                print(
-                    f"[Step {global_step}] BatchGradHistogram1d"
-                    + f" edges 0,...,4: {edges[:5]}"
-                )
-                print(
-                    f"[Step {global_step}] BatchGradHistogram1d"
-                    + f" counts 0,...,4: {hist[:5]}"
-                )
-
-        self._update_limits(global_step, params, batch_loss)
+        return {"hist": hist, "edges": edges}
 
     def _compute_histogram(self, batch_grad):
         """Transform individual gradients into histogram data.
@@ -133,59 +94,20 @@ class GradHist1d(SingleStepQuantity):
                 where `N` denotes the batch size.
 
         Returns:
-            Tensor: Histogram represented as a tensor
+            (torch.Tensor, torch.Tensor): First tensor represents histogram counts,
+                second tensor are bin edges. Both are on the input's device.
         """
-        # NOTE ``batch_grad`` is 1/B ∇ℓᵢ so we need to compensate the 1/B. Instead of
-        # multiplying ``batch_grad`` with the batch size, we instead scale the histogram
-        # range to avoid an additional copy of batch_grad
+        # NOTE ``batch_grad`` is 1/B ∇ℓᵢ so we need to compensate the 1/B
         B = batch_grad.shape[0]
+        individual_gradients = B * batch_grad
 
-        return torch.histc(
-            self.__preprocess(batch_grad),
-            bins=self._bins,
-            min=self._xmin / B,
-            max=self._xmax / B,
-        )
+        start, end = self._range
+        individual_gradients = torch.clamp(individual_gradients, start, end)
 
-    def __preprocess(self, batch_grad):
-        """Clip to histogram range if outliers should not be removed."""
-        # NOTE ``batch_grad`` is 1/B ∇ℓᵢ so we need to compensate the 1/B. Instead of
-        # multiplying ``batch_grad`` with the batch size, we instead scale the histogram
-        # range to avoid an additional copy of batch_grad
-        if self._remove_outliers:
-            return batch_grad
-        else:
-            B = batch_grad.shape[0]
+        hist = torch.histc(individual_gradients, bins=self._bins, min=start, max=end)
+        edges = torch.linspace(start, end, self._bins + 1, device=batch_grad.device)
 
-            # clip to interval, elements outside [xmin / B, xmax / B] would be ignored
-            return torch.clamp(batch_grad.data, self._xmin / B, self._xmax / B)
-
-    def _update_limits(self, global_step, params, batch_loss):
-        """Update limits for next histogram computation."""
-        if self._adapt_schedule(global_step):
-            pad_factor = 1.0 + self._pad
-            abs_max = pad_factor * max(
-                p.grad_batch_transforms["grad_batch_abs_max"] for p in params
-            )
-
-            if abs_max == 0.0:
-                warnings.warn(
-                    "Adaptive x limits are identical, using a small range instead."
-                )
-                epsilon = 1e-6
-                abs_max += epsilon
-
-            self._xmin, self._xmax = -abs_max, abs_max
-
-            if self._verbose:
-                print(
-                    f"[Step {global_step}] BatchGradHistogram1d"
-                    + f" new limits: ({self._xmin:.4f}, {self._xmax:.4f})",
-                )
-
-    def _get_current_bin_edges(self):
-        """Return current edge values of bins."""
-        return torch.linspace(self._xmin, self._xmax, steps=self._bins + 1)
+        return hist, edges
 
 
 class GradHist2d(SingleStepQuantity):

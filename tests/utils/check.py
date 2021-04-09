@@ -1,6 +1,7 @@
 """Utility functions to compare results of two implementations."""
 
 import numpy
+import torch
 
 
 def compare_outputs(output1, output2, rtol=1e-5, atol=1e-7):
@@ -28,6 +29,8 @@ def get_compare_function(value1, value2):
         compare_fn = compare_ints
     elif isinstance(value1, list) and isinstance(value2, list):
         compare_fn = compare_lists
+    elif isinstance(value1, torch.Tensor) and isinstance(value2, torch.Tensor):
+        compare_fn = compare_tensors
     else:
         raise NotImplementedError(
             "No comparison available for these data types: "
@@ -35,6 +38,11 @@ def get_compare_function(value1, value2):
         )
 
     return compare_fn
+
+
+def compare_tensors(tensor1, tensor2, rtol=1e-5, atol=1e-7):
+    """Compare two tensors."""
+    assert torch.allclose(tensor1, tensor2, rtol=rtol, atol=atol)
 
 
 def compare_floats(float1, float2, rtol=1e-5, atol=1e-7):

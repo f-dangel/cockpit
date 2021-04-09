@@ -45,80 +45,50 @@ class AutogradGradHist1d(GradHist1d):
             bool: ``True`` if the computation graph shall not be deleted,
                 else ``False``.
         """
-        return self.should_compute(global_step) or self._adapt_schedule(global_step)
+        return self.should_compute(global_step)
 
-    # TODO Rewrite to use parent class track method
-    def track(self, global_step, params, batch_loss):
-        """Evaluate the trace of the Hessian at the current point.
+    def _compute(self, global_step, params, batch_loss):
+        """Evaluate the individual gradient histogram.
 
         Args:
             global_step (int): The current iteration number.
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
+
+        Returns:
+            dict: Entry ``'hist'`` holds the histogram, entry ``'edges'`` holds
+                the bin limits.
         """
-        if self.should_compute(global_step):
-            edges = self._get_current_bin_edges().cpu().numpy()
+        individual_losses = get_individual_losses(global_step)
+        individual_gradients = autograd_individual_gradients(
+            individual_losses, params, concat=True
+        )
+        hist, edges = self._compute_histogram(individual_gradients)
 
-            losses = get_individual_losses(global_step)
-            individual_gradients = autograd_individual_gradients(
-                losses, params, concat=False
-            )
-            hist = sum(
-                self._compute_histogram(igrad.detach().cpu().numpy())
-                for igrad in individual_gradients
-            )
-
-            self.output[global_step]["hist_1d"] = hist.tolist()
-            self.output[global_step]["edges"] = edges.tolist()
-
-            if self._verbose:
-                print(
-                    f"[Step {global_step}] AutogradGradHist1d"
-                    + f" edges 0,...,4: {edges[:5]}"
-                )
-                print(
-                    f"[Step {global_step}] AutogradGradHist1d"
-                    + f" counts 0,...,4: {hist[:5]}"
-                )
-
-        self._update_limits(global_step, params, batch_loss)
+        return {"hist": hist.float(), "edges": edges}
 
     def _compute_histogram(self, individual_gradients):
-        """Compute bin counts of individual gradient elements."""
-        hist, _ = numpy.histogram(
-            individual_gradients, bins=self._bins, range=(self._xmin, self._xmax)
-        )
+        """Compute bin counts of individual gradient elements.
 
-        return hist.astype(float)
+        Args:
+            individual_gradients (torch.Tensor): Tensor holding individual gradients.
 
-    def _update_limits(self, global_step, params, batch_loss):
-        """Update limits for next histogram computation."""
-        if self._adapt_schedule(global_step):
-            pad_factor = 1.0 + self._pad
+        Returns:
+            (torch.Tensor, torch.Tensor): First tensor represents histogram counts,
+                second tensor are bin edges. Both are on the input's device.
+        """
+        data = torch.clamp(individual_gradients, *self._range).detach().cpu().numpy()
 
-            losses = get_individual_losses(global_step)
-            individual_gradients = autograd_individual_gradients(
-                losses, params, concat=False
-            )
-            abs_max = float(
-                pad_factor * max(igrad.abs().max() for igrad in individual_gradients)
-            )
+        hist, edges = numpy.histogram(data, bins=self._bins, range=self._range)
 
-            if abs_max == 0.0:
-                warnings.warn(
-                    "Adaptive x limits are identical, using a small range instead."
-                )
-                epsilon = 1e-6
-                abs_max += epsilon
+        # convert to torch and load to device
+        device = individual_gradients.device
 
-            self._xmin, self._xmax = -abs_max, abs_max
+        hist = torch.from_numpy(hist).to(device)
+        edges = torch.from_numpy(edges).to(device)
 
-            if self._verbose:
-                print(
-                    f"[Step {global_step}] AutogradGradHist1d"
-                    + f" new limits: ({self._xmin:.4f}, {self._xmax:.4f})",
-                )
+        return hist, edges
 
 
 class AutogradGradHist2d(GradHist2d):
