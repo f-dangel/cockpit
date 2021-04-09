@@ -18,7 +18,7 @@ from cockpit.quantities.utils_hists import (
 class GradHist1d(SingleStepQuantity):
     """One-dimensional histogram of individual gradient elements.
 
-    Outlier elements are clipped to lie in the visible range.
+    Outliers are clipped to lie in the visible range.
     """
 
     def __init__(
@@ -27,6 +27,7 @@ class GradHist1d(SingleStepQuantity):
         verbose=False,
         bins=100,
         range=(-2, 2),
+        adapt=None,
     ):
         """Initialize the 1D Histogram of individual gradient elements.
 
@@ -37,11 +38,14 @@ class GradHist1d(SingleStepQuantity):
             bins (int): Number of bins
             range ((float, float), optional): Lower and upper limit of the bin range.
                 Default: ``(-2, 2)``.
+            adapt (BinAdaptation): Policy for adapting the bin limits. Per default,
+                no adaptation is performed.
         """
         super().__init__(track_schedule, verbose=verbose)
 
         self._range = range
         self._bins = bins
+        self._adapt = adapt
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -61,7 +65,30 @@ class GradHist1d(SingleStepQuantity):
                 )
             )
 
+        if self._adapt is not None:
+            ext += self._adapt.extensions(global_step)
+
         return ext
+
+    def track(self, global_step, params, batch_loss):
+        """Perform scheduled computations and store result.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+        """
+        result = super().track(global_step, params, batch_loss)
+
+        # update limits
+        if self._adapt is not None:
+            if self._adapt.should_compute(global_step):
+                self._range = self._adapt.compute(
+                    global_step, params, batch_loss, self._range
+                )
+
+        return result
 
     def _compute(self, global_step, params, batch_loss):
         """Evaluate the individual gradient histogram.

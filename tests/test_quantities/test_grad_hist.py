@@ -45,7 +45,12 @@ class AutogradGradHist1d(GradHist1d):
             bool: ``True`` if the computation graph shall not be deleted,
                 else ``False``.
         """
-        return self.should_compute(global_step)
+        if self._adapt is None:
+            should_adapt = False
+        else:
+            should_adapt = self._adapt.should_compute(global_step)
+
+        return self.should_compute(global_step) or should_adapt
 
     def _compute(self, global_step, params, batch_loss):
         """Evaluate the individual gradient histogram.
