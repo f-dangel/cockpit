@@ -74,9 +74,9 @@ class CockpitPlotter:
         """Plot the cockpit for the current state of the log file.
 
         Args:
-            source (Cockpit or str): ``Cockpit`` instance, or string containing the path
-                to a .json log produced with ``Cockpit.write``, where information will
-                be fetched from.
+            source (Cockpit or str): ``Cockpit`` instance, or string
+                containing the path to a .json log produced with ``Cockpit.write``,
+                where information will be fetched from.
             savedir (str): Directory where to save the plot.
             show_plot (bool, optional): Whether the plot should be shown on
                 screen. Defaults to True.

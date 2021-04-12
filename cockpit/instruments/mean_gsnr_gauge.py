@@ -9,9 +9,9 @@ def mean_gsnr_gauge(self, fig, gridspec):
     """Mean GSNR gauge, showing the mean GSNR versus iteration.
 
     Args:
-        self (cockpit.plotter): The cockpit plotter requesting this instrument.
-        fig (matplotlib.figure): Figure of the Cockpit.
-        gridspec (matplotlib.gridspec): GridSpec where the instrument should be
+        self (CockpitPlotter): The cockpit plotter requesting this instrument.
+        fig (matplotlib.figure.Figure): Figure of the Cockpit.
+        gridspec (matplotlib.gridspec.GridSpec): GridSpec where the instrument should be
             placed
     """
     # Plot Trace vs iteration

@@ -244,26 +244,28 @@ class GradHist2d(SingleStepQuantity):
             which (str, optional): Which histogram function should be used.
                 Performance varies strongly among different methods, and also
                 depend on the data being histogram-ed. Choices:
+
                 - ``'numpy'``: Load to CPU and use ``numpy`` implementation.
-                - ``'histogramdd'``: Use torch implementation that is currently under
-                  review for being merged.
-                - ``histogram2d``: Use custom torch implementation which uses ``put_``
-                  instead of ``bincount``.
-                - ``histogram2d_opt``: Use custom optimized torch implementation which
-                  works without expanding the parameter values and saves some memory.
-                  Will be unaffected by ``save_memory``.
-                Defaults to "histogram2d".
+                - ``'histogramdd'``: Use torch implementation that is currently
+                  under review for being merged.
+                - ``histogram2d``: Use custom torch implementation which uses
+                  ``put_`` instead of ``bincount``.
+                - ``histogram2d_opt``: Use custom optimized torch implementation
+                  which works without expanding the parameter values and saves
+                  some memory. Will be unaffected by ``save_memory``.
+
+                Defaults to ``'histogram2d'``.
             adapt_schedule (callable, optional): Function that maps ``global_step``
                 to a boolean that indicates if the limits should be updated.
                 If ``None``, adapt every time the histogram is recomputed.
                 Defaults to None.
             adapt_policy (str, optional): Strategy to adapt the histogram limits.
                 Options are:
+
                 - "abs_max": Sets interval to range between negative and positive
                   maximum absolute value (+ padding).
                 - "min_max": Sets interval range between minimum and maximum value
-                  (+ padding).
-                  Defaults to "abs_max".
+                  (+ padding). Defaults to "abs_max".
             xpad (float, optional): Relative padding added to the x limits.
                 Defaults to 0.2.
             ypad (float, optional): Relative padding added to the y limits.

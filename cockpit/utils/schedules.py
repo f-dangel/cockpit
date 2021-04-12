@@ -11,7 +11,7 @@ def linear(interval, offset=0):
         offset (int, optional): Offset of tracking. Defaults to 0.
 
     Returns:
-        func: Function that given the global_step returns whether it should track.
+        callable: Function that given the global_step returns whether it should track.
     """
     docstring = "Track at iterations {" + f"{offset} + n * {interval} " + "| n >= 0}."
 
@@ -38,7 +38,7 @@ def logarithmic(start, end, steps=300, base=10, init=True):
         init (bool, optional): Whether 0 should be included. Defaults to True.
 
     Returns:
-        func: Function that given the global_step returns whether it should track.
+        callable: Function that given the global_step returns whether it should track.
     """
     # TODO Compute match and avoid array lookup
     scheduled_steps = torch.logspace(start, end, steps, base=base, dtype=int)

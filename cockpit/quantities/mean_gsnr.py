@@ -9,13 +9,12 @@ from cockpit.quantities.utils_transforms import BatchGradTransforms_SumGradSquar
 class MeanGSNR(SingleStepQuantity):
     """Mean GSNR Quantitiy Class.
 
-    Mean gradient signal-to-noise ratio.
+    Note: Mean gradient signal-to-noise ratio as defined by
 
-    Reference:
-        Understanding Why Neural Networks Generalize Well Through
-        GSNR of Parameters
-        by Jinlong Liu, Guoqing Jiang, Yunzhi Bai, Ting Chen, Huayan Wang
-        (2020)
+        - Liu, J., et al.
+          Understanding Why Neural Networks Generalize Well Through GSNR of
+          Parameters (2020).
+          https://arxiv.org/abs/2001.07384
     """
 
     def __init__(self, track_schedule, verbose=False, epsilon=1e-5):

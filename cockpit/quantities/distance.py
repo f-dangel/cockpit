@@ -4,16 +4,14 @@ from cockpit.quantities.quantity import TwoStepQuantity
 
 
 class Distance(TwoStepQuantity):
-    """Distance from initialization Quantity Class.
-
-    Attributes:
-        CACHE_KEY (str): String under which the parameters are cached for computation.
-            Default: ``'params'``.
-        INIT_GLOBAL_STEP (int): Iteration number used as reference. Default: ``0``.
-    """
+    """Distance from initialization Quantity Class."""
 
     CACHE_KEY = "params"
+    """str: String under which the parameters are cached for computation.
+       Default: ``'params'``.
+    """
     INIT_GLOBAL_STEP = 0
+    """int: Iteration number used as reference. Defaults to ``0``."""
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.

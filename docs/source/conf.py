@@ -10,13 +10,14 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
+import os
+import sys
 from datetime import datetime
 
 from pkg_resources import DistributionNotFound, get_distribution
+
+sys.path.insert(0, os.path.abspath("../"))
+
 
 # -- Project information -----------------------------------------------------
 
@@ -45,11 +46,13 @@ finally:
 # ones.
 extensions = [
     "m2r2",
-    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_automodapi.automodapi",
     "sphinx_rtd_theme",
+    "sphinx_copybutton",
+    "notfound.extension",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -70,7 +73,35 @@ napoleon_google_docstring = True
 automodapi_toctreedirnm = "api/automod"
 automodapi_writereprocessed = False
 automodsumm_inherited_members = True
+numpydoc_show_class_members = False
 
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = "sphinx"
+
+# -- Intersphinx configuration ----------------------------------------------
+
+# Whenever Sphinx encounters a cross-reference that has no matching target in the
+# current documentation set, it looks for targets in 'intersphinx_mapping'. A reference
+# like :py:class:`zipfile.ZipFile` can then link to the Python documentation for the
+# ZipFile class.
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "PyTorch": ("https://pytorch.org/docs/master/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/dev", None),
+}
+
+# -- Notfound configuration ----------------------------------------------
+notfound_context = {
+    "title": "Page Not Found",
+    "body": """
+<h1>Page Not Found</h1>
+<p>Sorry, we couldn't find that page.</p>
+<p>Try using the search box or go to the homepage.</p>
+""",
+}
 
 # -- Options for HTML output -------------------------------------------------
 

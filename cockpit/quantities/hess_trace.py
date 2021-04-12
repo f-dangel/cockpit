@@ -21,17 +21,17 @@ class HessTrace(SingleStepQuantity):
         values that should be stored.
 
         Note:
-            The curvature options "diag_h" and "diag_ggn_exact" are more expensive than
-            "diag_ggn_mc", but more precise. For a classification task with ``C``
-            classes, the former require that ``C`` times more information be backpropa-
-            gated through the computation graph.
+            The curvature options ``"diag_h"`` and ``"diag_ggn_exact"`` are more
+            expensive than ``"diag_ggn_mc"``, but more precise. For a classification
+            task with ``C`` classes, the former require that ``C`` times more
+            information be backpropagated through the computation graph.
 
         Args:
             track_schedule (callable): Function that maps the ``global_step``
                 to a boolean, which determines if the quantity should be computed.
             verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             curvature (string): Which diagonal curvature approximation should be used.
-                Options are "diag_h", "diag_ggn_exact", "diag_ggn_mc".
+                Options are ``"diag_h"``, ``"diag_ggn_exact"``, ``"diag_ggn_mc"``.
         """
         super().__init__(track_schedule, verbose=verbose)
 

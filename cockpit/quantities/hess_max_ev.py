@@ -23,8 +23,9 @@ class HessMaxEV(SingleStepQuantity):
                 to a boolean, which determines if the quantity should be computed.
             verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             use_power (bool): If ``True``, uses a power iteration that works on GPUs.
-                If ``True``, use ``scipy.sparse.linalg.eigsh`` for eigenvalue computa-
-                tion (requires transfers from GPU to CPU and ``torch`` to ``numpy``.)
+                If ``True``, use :func:`scipy.sparse.linalg.eigsh`  for eigenvalue
+                computation (requires transfers from GPU to CPU and
+                ``torch`` to ``numpy``.)
         """
         super().__init__(track_schedule, verbose=verbose)
 
@@ -38,7 +39,7 @@ class HessMaxEV(SingleStepQuantity):
 
         Returns:
             bool: ``True`` if the computation graph shall not be deleted,
-                else ``False``.
+            else ``False``.
         """
         return self.should_compute(global_step)
 
@@ -136,7 +137,7 @@ class HVPLinearOperator(BaseLinearOperator):
 
         Returns:
             (torch.Tensor): Maximum eigenvalue. Warns if maximum number of iterations
-                was reached and returns the potentially unconverged estimate.
+            was reached and returns the potentially unconverged estimate.
         """
 
         def converged(old, new):
