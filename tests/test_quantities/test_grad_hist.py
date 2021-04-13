@@ -1,7 +1,5 @@
 """Compare ``GradHist{1,2}d`` quantities with ``torch.autograd``."""
 
-import warnings
-
 import numpy
 import pytest
 import torch
@@ -124,7 +122,6 @@ class AutogradGradHist2d(GradHist2d):
 
     def _compute(self, global_step, params, batch_loss):
         """Aggregate histogram data over parameters and save to output."""
-
         individual_losses = get_individual_losses(global_step)
         individual_gradients = autograd_individual_gradients(individual_losses, params)
         layerwise = [

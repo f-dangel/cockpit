@@ -43,7 +43,7 @@ def get_compare_function(value1, value2):
 
 
 def compare_tuples(tuple1, tuple2, rtol=1e-5, atol=1e-7):
-    """Compare two tuples"""
+    """Compare two tuples."""
     assert len(tuple1) == len(tuple2), "Different number of entries"
 
     for value1, value2 in zip(tuple1, tuple2):

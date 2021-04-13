@@ -1,18 +1,10 @@
 """Histograms of individual gradient transformations."""
 
-import warnings
-
 import torch
 from backpack import extensions
 
 from cockpit.quantities.quantity import SingleStepQuantity
-from cockpit.quantities.utils_hists import (
-    histogram2d,
-    transform_grad_batch_abs_max,
-    transform_grad_batch_min_max,
-    transform_param_abs_max,
-    transform_param_min_max,
-)
+from cockpit.quantities.utils_hists import histogram2d
 
 
 class GradHist1d(SingleStepQuantity):
