@@ -30,6 +30,8 @@ preview_dict = {
     "HessMaxEV": [[20, 10.15], [26.5, 12.75]],
     "HessTrace": [[20, 7.75], [26.5, 10.25]],
     "TIC": [[20, 5.1], [26.5, 7.75]],
+    "Hist1d": [[11.75, 7.75], [19, 10.25]],
+    "Hist2d": [[11.75, 5.1], [18.5, 7.75]],
 }
 
 for instrument in preview_dict:
@@ -37,3 +39,10 @@ for instrument in preview_dict:
         os.path.join(HERE_DIR, FILE_PATH, SAVE_PATH, instrument),
         bbox_inches=Bbox(preview_dict[instrument]),
     )
+
+
+# plt.savefig(
+#     os.path.join(HERE_DIR, FILE_PATH, SAVE_PATH, "cockpit.png"),
+#     format="png",
+#     bbox_inches=Bbox([[11.75, 5.1], [18.5, 7.75]]),
+# )

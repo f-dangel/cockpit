@@ -14,6 +14,9 @@ def histogram_2d_gauge(
 ):
     """Two-dimensional histogram of the individual gradient and parameter elements.
 
+    .. image:: ../../_static/instrument_previews/Hist2d.png
+        :alt: Preview Hist2d Gauge
+
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure.Figure): Figure of the Cockpit.
