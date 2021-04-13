@@ -4,6 +4,7 @@ import json
 import os
 from collections import defaultdict
 
+import torch
 from backpack import backpack_deactivate_io
 from backpack.extensions import BatchGradTransforms
 from backpack.extensions.backprop_extension import BackpropExtension
@@ -235,16 +236,15 @@ class Cockpit:
         Args:
             logpath (str): Path to a log file without the ``.json`` suffix.
         """
-        self.update_output()
-
-        # Dump to file
         logpath_with_suffix = logpath + ".json"
         print(f"[cockpit] writing output to {logpath_with_suffix}")
 
         os.makedirs(os.path.dirname(logpath_with_suffix), exist_ok=True)
 
+        processed = self._make_json_serializable(self.get_output())
+
         with open(logpath_with_suffix, "w") as json_file:
-            json.dump(self.output, json_file, indent=4, sort_keys=True)
+            json.dump(processed, json_file, indent=4, sort_keys=True)
 
     def update_output(self):
         """Fetch outputs from tracked quantities into ``self.output``."""
@@ -271,7 +271,7 @@ class Cockpit:
             >>> max_ev_global_step_output = cockpit.output[global_step][key]
 
         Returns:
-            dict: Nested dictionary with the resuts of all tracked quantities.
+            dict: Nested dictionary with the results of all tracked quantities.
         """
         self.update_output()
         return self.output
@@ -300,6 +300,40 @@ class Cockpit:
                 ext_dict[type(e)] = True
 
         return no_duplicate_ext
+
+    # TODO Fix data format (see https://github.com/f-dangel/cockpit-paper/issues/214)
+    def _make_json_serializable(self, dictionary):
+        """Convert all values to a json-compatible format.
+
+        Args:
+            dictionary (dict): A dictionary
+
+        Returns:
+            dict: Dictionary with json-compatible values.
+        """
+        converted = {}
+
+        for key, value in dictionary.items():
+            if isinstance(value, torch.Tensor):
+                compatible = value.cpu().numpy().tolist()
+            elif isinstance(value, dict):
+                compatible = self._make_json_serializable(value)
+            elif isinstance(value, (int, float)):
+                compatible = value
+            elif isinstance(value, (list, tuple)):
+                compatible = []
+
+                for item in value:
+                    if isinstance(item, torch.Tensor):
+                        compatible.append(item.cpu().numpy().tolist())
+                    else:
+                        compatible.append(item)
+            else:
+                raise NotImplementedError(f"Unknown type {type(value)}: {value}")
+
+            converted[key] = compatible
+
+        return converted
 
     @classmethod
     def _process_multiple_batch_grad_transforms(cls, ext):
