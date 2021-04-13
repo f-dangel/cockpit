@@ -13,6 +13,9 @@ from cockpit.instruments.utils_instruments import _beautify_plot, check_data
 def alpha_gauge(self, fig, gridspec):
     """Showing a distribution of the alpha values since the last plot.
 
+    .. image:: ../../_static/instrument_previews/Alpha.png
+        :alt: Preview Alpha Gauge
+
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure.Figure): Figure of the Cockpit.

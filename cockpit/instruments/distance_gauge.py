@@ -9,6 +9,9 @@ from cockpit.quantities.utils_quantities import _root_sum_of_squares
 def distance_gauge(self, fig, gridspec):
     """Showing the parameter L2-distance to the initialization versus iteration.
 
+    .. image:: ../../_static/instrument_previews/Distances.png
+        :alt: Preview Distances Gauge
+
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure.Figure): Figure of the Cockpit.

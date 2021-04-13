@@ -9,6 +9,9 @@ from cockpit.quantities.utils_quantities import _root_sum_of_squares
 def grad_norm_gauge(self, fig, gridspec):
     """Showing the gradient norm versus iteration.
 
+    .. image:: ../../_static/instrument_previews/GradientNorm.png
+        :alt: Preview GradientNorm Gauge
+
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure.Figure): Figure of the Cockpit.

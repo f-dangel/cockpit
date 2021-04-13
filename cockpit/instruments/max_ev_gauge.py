@@ -8,6 +8,9 @@ from cockpit.instruments.utils_instruments import check_data, create_basic_plot
 def max_ev_gauge(self, fig, gridspec):
     """Showing the largest eigenvalue of the Hessian versus iteration.
 
+    .. image:: ../../_static/instrument_previews/HessMaxEV.png
+        :alt: Preview HessMaxEV Gauge
+
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure.Figure): Figure of the Cockpit.

@@ -14,6 +14,9 @@ from cockpit.instruments.utils_instruments import (
 def hyperparameter_gauge(self, fig, gridspec):
     """Hyperparameter gauge, currently showing the learning rate over time.
 
+    .. image:: ../../_static/instrument_previews/Hyperparameters.png
+        :alt: Preview Hyperparameter Gauge
+
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure.Figure): Figure of the Cockpit.

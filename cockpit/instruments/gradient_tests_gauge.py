@@ -11,6 +11,9 @@ from cockpit.instruments.utils_instruments import check_data
 def gradient_tests_gauge(self, fig, gridspec):
     """Gauge, showing the the status of several gradient tests.
 
+    .. image:: ../../_static/instrument_previews/GradientTests.png
+        :alt: Preview GradientTests Gauge
+
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure.Figure): Figure of the Cockpit.
