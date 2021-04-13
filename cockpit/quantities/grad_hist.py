@@ -142,6 +142,7 @@ class GradHist2d(SingleStepQuantity):
         verbose=False,
         bins=(40, 50),
         range=((-1, 1), (-2, 2)),
+        adapt=(None, None),
         keep_individual=False,
     ):
         """Initialize the 2D Histogram of individual gradient elements over parameters.
@@ -156,13 +157,17 @@ class GradHist2d(SingleStepQuantity):
                 y direction. Default ``((-1, 1), (-2, 2))``.
             min_xrange (float, optional): Lower bound for limit difference along
                 x axis. Defaults to 1e-6.
+            adapt ((BinAdaptation or None, BinAdaptation or None), optional): Policy
+                for adapting the bin limits in x and y direction. Per default, no
+                adaptation is performed.
             keep_individual (bool, optional):  Whether to keep individual
                 parameter histograms. Defaults to False.
         """
         super().__init__(track_schedule, verbose=verbose)
 
-        self._range = range
+        self._range = list(range)
         self._bins = bins
+        self._adapt = adapt
         self._keep_individual = keep_individual
 
     def extensions(self, global_step):
@@ -186,7 +191,32 @@ class GradHist2d(SingleStepQuantity):
                 )
             )
 
+        for adapt in self._adapt:
+            if adapt is not None:
+                ext += adapt.extensions(global_step)
+
         return ext
+
+    def track(self, global_step, params, batch_loss):
+        """Perform scheduled computations and store result.
+
+        Args:
+            global_step (int): The current iteration number.
+            params ([torch.Tensor]): List of torch.Tensors holding the network's
+                parameters.
+            batch_loss (torch.Tensor): Mini-batch loss from current step.
+        """
+        result = super().track(global_step, params, batch_loss)
+
+        # update limits
+        for dim, adapt in enumerate(self._adapt):
+            if adapt is not None:
+                if adapt.should_compute(global_step):
+                    self._range[dim] = adapt.compute(
+                        global_step, params, batch_loss, self._range
+                    )
+
+        return result
 
     def _compute(self, global_step, params, batch_loss):
         """Aggregate histogram data over parameters and save to output."""

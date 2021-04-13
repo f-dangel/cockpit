@@ -118,7 +118,11 @@ class AutogradGradHist2d(GradHist2d):
             bool: ``True`` if the computation graph shall not be deleted,
                 else ``False``.
         """
-        return self.should_compute(global_step)
+        should_adapt = any(
+            a.should_compute(global_step) for a in self._adapt if a is not None
+        )
+
+        return self.should_compute(global_step) or should_adapt
 
     def _compute(self, global_step, params, batch_loss):
         """Aggregate histogram data over parameters and save to output."""
@@ -160,19 +164,20 @@ class AutogradGradHist2d(GradHist2d):
 
         hist = None
         edges = None
+        device = individual_gradients.device
 
         for b in range(batch_size):
 
             hist_b, xedges, yedges = numpy.histogram2d(
-                data[0][b].detach().flatten().numpy(),
-                data[1].detach().flatten().numpy(),
+                data[0][b].detach().flatten().cpu().numpy(),
+                data[1].detach().flatten().cpu().numpy(),
                 bins=self._bins,
                 range=self._range,
             )
 
-            hist_b = torch.from_numpy(hist_b).long()
-            xedges = torch.from_numpy(xedges).float()
-            yedges = torch.from_numpy(yedges).float()
+            hist_b = torch.from_numpy(hist_b).long().to(device)
+            xedges = torch.from_numpy(xedges).float().to(device)
+            yedges = torch.from_numpy(yedges).float().to(device)
 
             hist = hist_b if hist is None else hist + hist_b
             edges = (xedges, yedges) if edges is None else edges
