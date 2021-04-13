@@ -8,6 +8,9 @@ from cockpit.instruments.utils_instruments import check_data, create_basic_plot
 def mean_gsnr_gauge(self, fig, gridspec):
     """Mean GSNR gauge, showing the mean GSNR versus iteration.
 
+    .. image:: ../../_static/instrument_previews/MeanGSNR.png
+        :alt: Preview MeanGSNR Gauge
+
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure.Figure): Figure of the Cockpit.

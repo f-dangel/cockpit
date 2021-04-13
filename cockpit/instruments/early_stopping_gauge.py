@@ -14,6 +14,9 @@ def early_stopping_gauge(self, fig, gridspec):
     - Mahsereci, M., Balles, L., Lassner, C., & Hennig, P.,
       Early stopping without a validation set (2017).
 
+    .. image:: ../../_static/instrument_previews/EarlyStopping.png
+        :alt: Preview EarlyStopping Gauge
+
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.
         fig (matplotlib.figure.Figure): Figure of the Cockpit.
