@@ -47,6 +47,22 @@ class BinAdaptation(SingleStepQuantity):
         raise NotImplementedError
 
 
+class NoAdaptation(BinAdaptation):
+    """Leave histogram bin ranges unaffected."""
+
+    def __init__(self, verbose=False):
+        """Never adapt the bins by using a schedule that is never triggered.
+
+        Args:
+            verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
+        """
+
+        def track_schedule(global_step):
+            """No scheduled computations."""
+            return False
+
+        super().__init__(track_schedule, verbose=verbose)
+
 
 class _AbsMax(BinAdaptation):
     """Base class for bin adaptation based on a maximum absolute value.

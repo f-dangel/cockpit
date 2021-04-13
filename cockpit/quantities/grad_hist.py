@@ -3,6 +3,7 @@
 import torch
 from backpack import extensions
 
+from cockpit.quantities.bin_adaptation import NoAdaptation
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_hists import histogram2d
 
@@ -37,7 +38,7 @@ class GradHist1d(SingleStepQuantity):
 
         self._range = range
         self._bins = bins
-        self._adapt = adapt
+        self._adapt = NoAdaptation(verbose=verbose) if adapt is None else adapt
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.
@@ -57,8 +58,7 @@ class GradHist1d(SingleStepQuantity):
                 )
             )
 
-        if self._adapt is not None:
-            ext += self._adapt.extensions(global_step)
+        ext += self._adapt.extensions(global_step)
 
         return ext
 
@@ -74,11 +74,10 @@ class GradHist1d(SingleStepQuantity):
         result = super().track(global_step, params, batch_loss)
 
         # update limits
-        if self._adapt is not None:
-            if self._adapt.should_compute(global_step):
-                self._range = self._adapt.compute(
-                    global_step, params, batch_loss, self._range
-                )
+        if self._adapt.should_compute(global_step):
+            self._range = self._adapt.compute(
+                global_step, params, batch_loss, self._range
+            )
 
         return result
 
@@ -167,7 +166,7 @@ class GradHist2d(SingleStepQuantity):
 
         self._range = list(range)
         self._bins = bins
-        self._adapt = adapt
+        self._adapt = [NoAdaptation(verbose=verbose) if a is None else a for a in adapt]
         self._keep_individual = keep_individual
 
     def extensions(self, global_step):
@@ -192,8 +191,7 @@ class GradHist2d(SingleStepQuantity):
             )
 
         for adapt in self._adapt:
-            if adapt is not None:
-                ext += adapt.extensions(global_step)
+            ext += adapt.extensions(global_step)
 
         return ext
 
@@ -210,11 +208,10 @@ class GradHist2d(SingleStepQuantity):
 
         # update limits
         for dim, adapt in enumerate(self._adapt):
-            if adapt is not None:
-                if adapt.should_compute(global_step):
-                    self._range[dim] = adapt.compute(
-                        global_step, params, batch_loss, self._range
-                    )
+            if adapt.should_compute(global_step):
+                self._range[dim] = adapt.compute(
+                    global_step, params, batch_loss, self._range
+                )
 
         return result
 

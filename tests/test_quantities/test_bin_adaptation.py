@@ -116,7 +116,7 @@ def test_grad_hist2d_adapted(problem, q_kwargs):
         adapt=(
             GradAbsMax(adapt_schedule, verbose=True),
             ParamAbsMax(adapt_schedule, verbose=True),
-        )
+        ),
     )
     output1 = run_harness_get_output(problem, [q1])[0]
 
@@ -125,7 +125,7 @@ def test_grad_hist2d_adapted(problem, q_kwargs):
         adapt=(
             AutogradGradAbsMax(adapt_schedule, verbose=True),
             AutogradParamAbsMax(adapt_schedule, verbose=True),
-        )
+        ),
     )
     output2 = run_harness_get_output(problem, [q2])[0]
 
