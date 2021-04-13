@@ -26,7 +26,8 @@ class BinAdaptation(SingleStepQuantity):
 
         if self._verbose:
             print(
-                f"{self._verbose_prefix(global_step)}:" + f" New limits: {start}, {end}"
+                f"{self._verbose_prefix(global_step)}:"
+                + f" New limits: {start:.5f}, {end:.5f}"
             )
 
         return start, end
