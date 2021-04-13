@@ -51,6 +51,17 @@ class BinAdaptation(SingleStepQuantity):
 class NoAdaptation(BinAdaptation):
     """Leave histogram bin ranges unaffected."""
 
+    def extensions(self, global_step):
+        """Return list of BackPACK extensions required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            list: (Potentially empty) list with required BackPACK quantities.
+        """
+        return []
+
     def __init__(self, verbose=False):
         """Never adapt the bins by using a schedule that is never triggered.
 
