@@ -1,11 +1,11 @@
 """Plotting Part of the Cockpit."""
 
 import glob
-import json
 import os
 import warnings
 from collections import defaultdict
 
+import json_tricks
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -358,7 +358,7 @@ class CockpitPlotter:
         elif isinstance(source, str):
             with open(source + ".json") as f:
                 # defaultdict to be consistent with fetching from Cockpit
-                data = defaultdict(dict, json.load(f))
+                data = defaultdict(dict, json_tricks.load(f))
         else:
             raise ValueError(f"Source must be Cockpit or path to .json. Got {source}")
 

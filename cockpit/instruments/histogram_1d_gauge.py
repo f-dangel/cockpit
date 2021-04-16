@@ -2,8 +2,6 @@
 
 import warnings
 
-import numpy as np
-
 from cockpit.instruments.utils_instruments import _beautify_plot, check_data
 
 
@@ -71,8 +69,8 @@ def _get_histogram_data(tracking_data):
     clean_data = tracking_data.GradHist1d.dropna()
     last_step_data = clean_data[clean_data.index[-1]]
 
-    vals = np.array(last_step_data["hist"].cpu())
-    bins = np.array(last_step_data["edges"].cpu())
+    vals = last_step_data["hist"]
+    bins = last_step_data["edges"]
 
     width = bins[1] - bins[0]
 
