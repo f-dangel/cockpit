@@ -63,6 +63,20 @@ class Quantity:
         """
         raise NotImplementedError
 
+    def extension_hooks(self, global_step):
+        """Return list of BackPACK extension hooks required for the computation.
+
+        This method may be overwritten by descendants.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            [callable]: List of required BackPACK extension hooks for the current
+                iteration.
+        """
+        return []
+
     def track(self, global_step, params, batch_loss):
         """Perform scheduled computations and store result.
 

@@ -33,6 +33,18 @@ class AutogradGradHist1d(GradHist1d):
         """
         return []
 
+    def extension_hooks(self, global_step):
+        """Return list of BackPACK extension hooks required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            [callable]: List of required BackPACK extension hooks for the current
+                iteration.
+        """
+        return []
+
     def create_graph(self, global_step):
         """Return whether access to the forward pass computation graph is needed.
 
@@ -105,6 +117,18 @@ class AutogradGradHist2d(GradHist2d):
 
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
+        """
+        return []
+
+    def extension_hooks(self, global_step):
+        """Return list of BackPACK extension hooks required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            [callable]: List of required BackPACK extension hooks for the current
+                iteration.
         """
         return []
 

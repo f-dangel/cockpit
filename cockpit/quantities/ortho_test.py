@@ -1,7 +1,9 @@
 """Class for tracking the Orthogonality Test."""
 
+from backpack.extensions import BatchGrad
+
 from cockpit.quantities.quantity import SingleStepQuantity
-from cockpit.quantities.utils_transforms import BatchGradTransforms_BatchDotGrad
+from cockpit.quantities.utils_transforms import BatchGradTransformsHook_BatchDotGrad
 
 
 class OrthoTest(SingleStepQuantity):
@@ -26,9 +28,26 @@ class OrthoTest(SingleStepQuantity):
         ext = []
 
         if self.should_compute(global_step):
-            ext.append(BatchGradTransforms_BatchDotGrad())
+            ext.append(BatchGrad())
 
         return ext
+
+    def extension_hooks(self, global_step):
+        """Return list of BackPACK extension hooks required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            [callable]: List of required BackPACK extension hooks for the current
+                iteration.
+        """
+        hooks = []
+
+        if self.should_compute(global_step):
+            hooks.append(BatchGradTransformsHook_BatchDotGrad())
+
+        return hooks
 
     def _compute(self, global_step, params, batch_loss):
         """Track the practical version of the orthogonality test.

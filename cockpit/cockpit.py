@@ -4,12 +4,12 @@ import os
 from collections import defaultdict
 
 import json_tricks
-from backpack import backpack_deactivate_io
-from backpack.extensions import BatchGradTransforms
+from backpack import disable
 from backpack.extensions.backprop_extension import BackpropExtension
 
 from cockpit import quantities
 from cockpit.context import BackwardCTX, get_loss
+from cockpit.quantities.utils_transforms import BatchGradTransformsHook
 
 
 class Cockpit:
@@ -83,14 +83,45 @@ class Cockpit:
         Returns:
             list: List of required BackPACK extensions for the current iteration.
         """
+        # TODO A user could introduce a bug here by running an extension which is
+        # also required by one quantity, but uses different hyperparameters (for
+        # instance the user picks ``DiagGGNMC(mc_samples=2)`` the Hessian trace
+        # quantity uses ``DiagGGNMC(mc_samples=1)``.). Catching such a corner case
+        # requires hyperparameter comparison of extensions. Considering the large
+        # amount of required boilerplate, this is left for the future
         ext = list(custom_exts)
         for q in self.quantities:
             ext += q.extensions(global_step)
 
-        ext = self._process_multiple_batch_grad_transforms(ext)
         ext = self._process_duplicate_extensions(ext)
 
         return ext
+
+    def _get_extension_hook(self, global_step):
+        """Build BackPACK extension hook for the current iteration.
+
+        Args:
+            global_step (int): Current number of iteration.
+
+        Returns:
+            callable or None: BackPACK extension hook for the current iteration.
+                ``None`` indicates no hook.
+        """
+        hooks = []
+
+        for q in self.quantities:
+            hooks += q.extension_hooks(global_step)
+
+        # Currently expects only ``BatchGradTransformsHook``s
+        # This changes with https://github.com/f-dangel/cockpit-paper/issues/142
+        assert all(isinstance(h, BatchGradTransformsHook) for h in hooks)
+
+        if len(hooks) == 0:
+            hook = None
+        else:
+            hook = self._merge_batch_grad_transform_hooks(hooks)
+
+        return hook
 
     def __call__(self, global_step, *exts, info=None, debug=False):
         """Returns the backpack extensions that should be used in this iteration.
@@ -142,7 +173,7 @@ class Cockpit:
         after_cleanup = [
             q for q in self.quantities if isinstance(q, quantities.HessMaxEV)
         ]
-        with backpack_deactivate_io():
+        with disable():
             for q in after_cleanup:
                 q.track(global_step, self.params, batch_loss)
 
@@ -159,12 +190,16 @@ class Cockpit:
         if verbose:
             print("Freeing BackPACK buffers")
 
-        ext = self._get_extensions(global_step)
+        savefields = [ext.savefield for ext in self._get_extensions(global_step)]
+
+        # TODO Determine hook savefields through ``ParameterExtensionHook`` and trigger
+        # deletion. This can only happen after hooks have been introduced for all
+        # quantities, see https://github.com/f-dangel/cockpit-paper/issues/142
+        savefields.append("grad_batch_transforms")
 
         for param in self.params:
-            for e in ext:
+            for field in savefields:
                 try:
-                    field = e.savefield
                     if field not in protected_savefields:
                         delattr(param, field)
 
@@ -276,9 +311,8 @@ class Cockpit:
     def _process_duplicate_extensions(self, ext):
         """Remove duplicate BackPACK extensions.
 
-        TODO Once we notice two instances of the same extensions, we just remove
-        the latter one. This could be problematic if those extensions use different
-        inputs (e.g. number of samples for MC extensions).
+        Note:
+            Two extensions are considered equal if they are of the same class.
 
         Args:
             ext ([backpack.extensions]): A list of BackPACK extensions,
@@ -298,35 +332,24 @@ class Cockpit:
 
         return no_duplicate_ext
 
-    @classmethod
-    def _process_multiple_batch_grad_transforms(cls, ext):
-        """Handle multiple occurrences of ``BatchGradTransforms`` by combining them."""
-        transforms = [e for e in ext if isinstance(e, BatchGradTransforms)]
-        no_transforms = [e for e in ext if not isinstance(e, BatchGradTransforms)]
-
-        processed_transforms = no_transforms
-        if transforms:
-            processed_transforms.append(cls._merge_batch_grad_transforms(transforms))
-
-        return processed_transforms
-
     @staticmethod
-    def _merge_batch_grad_transforms(batch_grad_transforms):
-        """Merge multiple ``BatchGradTransform``s into a single one.
+    def _merge_batch_grad_transform_hooks(batch_grad_transform_hooks):
+        """Merge multiple ``BatchGradTransformHook``s, removing duplicate transforms.
 
-        Non-uniqye transformations are identified via python's ``id`` function.
+        Note:
+            Two transformations are identical if they have the same ``id``.
 
         Args:
-            batch_grad_transforms ([BatchGradTransforms]): List of
-                ``BatchGradTransform``s.
+            batch_grad_transform_hooks ([BatchGradTransformsHook]): List of
+                ``BatchGradTransformHook``s.
 
         Raises:
             ValueError: If there is a non-unique transform.
 
         Returns:
-            BatchGradTransforms: Single transform that includes all transforms.
+            BatchGradTransformsHook: Single transform that includes all transforms.
         """
-        transforms = [t.get_transforms() for t in batch_grad_transforms]
+        transforms = [t._transforms for t in batch_grad_transform_hooks]
 
         key_function_pairs = []
         for t in transforms:
@@ -347,4 +370,4 @@ class Cockpit:
             else:
                 combined_transforms[key] = functions[0]
 
-        return BatchGradTransforms(combined_transforms)
+        return BatchGradTransformsHook(combined_transforms)

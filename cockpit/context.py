@@ -2,7 +2,7 @@
 
 import warnings
 
-from backpack import backpack, backpack_deactivate_io
+from backpack import backpack, disable
 
 
 class CockpitCTX:
@@ -103,15 +103,18 @@ class BackwardCTX:
 
         # choose context
         ext = cp._get_extensions(global_step, custom_exts=custom_exts)
+        ext_hook = cp._get_extension_hook(global_step)
+
         if ext:
-            self.ctx = backpack(*ext, debug=debug)
+            self.ctx = backpack(*ext, extension_hook=ext_hook, debug=debug)
         else:
-            self.ctx = backpack_deactivate_io()
+            self.ctx = disable()
 
         if debug:
             print(f"[DEBUG, step {global_step}]")
             print(f" ↪Quantities  : {cp.quantities}")
             print(f" ↪Extensions  : {ext}")
+            print(f" ↪Hooks       : {ext_hook}")
             print(f" ↪Create graph: {cp.create_graph}")
 
     def __enter__(self):

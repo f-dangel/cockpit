@@ -45,6 +45,18 @@ class AutogradGradAbsMax(GradAbsMax):
         """
         return []
 
+    def extension_hooks(self, global_step):
+        """Return list of BackPACK extension hooks required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            [callable]: List of required BackPACK extension hooks for the current
+                iteration.
+        """
+        return []
+
     def _get_abs_max(self, global_step, params, batch_loss, range):
         """Compute the maximum absolute value of individual gradient elements.
 
