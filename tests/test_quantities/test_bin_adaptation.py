@@ -53,7 +53,7 @@ class AutogradGradAbsMax(GradAbsMax):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
-            range ((float, float)): Current bin limits.
+            range (float, float): Current bin limits.
 
         Returns:
             float: Maximum absolute value of individual gradients.

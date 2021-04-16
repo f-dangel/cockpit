@@ -17,7 +17,7 @@ class BinAdaptation(SingleStepQuantity):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
-            range ((float, float)): Current bin limits.
+            range (float, float): Current bin limits.
 
         Returns:
             (float, float): New bin ranges.
@@ -40,10 +40,13 @@ class BinAdaptation(SingleStepQuantity):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
-            range ((float, float)): Current bin limits.
+            range (float, float): Current bin limits.
 
-        Returns:
+        Returns: # noqa: DAR202
             (float, float): New bin ranges.
+
+        Raises:
+            NotImplementedError: Must be implemented by descendants.
         """
         raise NotImplementedError
 
@@ -107,7 +110,7 @@ class _AbsMax(BinAdaptation):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
-            range ((float, float)): Current bin limits.
+            range (float, float): Current bin limits.
 
         Returns:
             (float, float): New bin ranges.
@@ -127,7 +130,7 @@ class _AbsMax(BinAdaptation):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
-            range ((float, float)): Current bin limits.
+            range (float, float): Current bin limits.
 
         Returns: # noqa: DAR202
             float: Maximum absolute value used to compute the new bin limits.
@@ -173,7 +176,7 @@ class GradAbsMax(_AbsMax):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
-            range ((float, float)): Current bin limits.
+            range (float, float): Current bin limits.
 
         Returns:
             float: Maximum absolute value of individual gradients.
@@ -207,7 +210,7 @@ class ParamAbsMax(_AbsMax):
             params ([torch.Tensor]): List of torch.Tensors holding the network's
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
-            range ((float, float)): Current bin limits.
+            range (float, float): Current bin limits.
 
         Returns:
             float: Maximum absolute value of parameters.

@@ -29,7 +29,7 @@ class GradHist1d(SingleStepQuantity):
                 to a boolean, which determines if the quantity should be computed.
             verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             bins (int): Number of bins
-            range ((float, float), optional): Lower and upper limit of the bin range.
+            range (float, float, optional): Lower and upper limit of the bin range.
                 Default: ``(-2, 2)``.
             adapt (BinAdaptation): Policy for adapting the bin limits. Per default,
                 no adaptation is performed.
@@ -71,15 +71,13 @@ class GradHist1d(SingleStepQuantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        result = super().track(global_step, params, batch_loss)
+        super().track(global_step, params, batch_loss)
 
         # update limits
         if self._adapt.should_compute(global_step):
             self._range = self._adapt.compute(
                 global_step, params, batch_loss, self._range
             )
-
-        return result
 
     def _compute(self, global_step, params, batch_loss):
         """Evaluate the individual gradient histogram.
@@ -131,8 +129,8 @@ class GradHist1d(SingleStepQuantity):
 class GradHist2d(SingleStepQuantity):
     """Two-dimensional histogram of individual gradient elements over parameters.
 
-    Individual gradient values are binned among the x-axis, parameter values are
-    binned among the y-axis.
+    Individual gradient values are binned on the x-axis, parameter values are
+    binned on the y-axis.
     """
 
     def __init__(
@@ -150,15 +148,13 @@ class GradHist2d(SingleStepQuantity):
             track_schedule (callable): Function that maps the ``global_step``
                 to a boolean, which determines if the quantity should be computed.
             verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
-            bins ((int, int)): Number of bins in x and y direction. Default:
+            bins (int, int): Number of bins in x and y direction. Default:
                 ``(40, 50)``
-            range (((float, float), (float, float)), optional): Bin limits in x and
+            range (float, float, float, float, optional): Bin limits in x and
                 y direction. Default ``((-1, 1), (-2, 2))``.
-            min_xrange (float, optional): Lower bound for limit difference along
-                x axis. Defaults to 1e-6.
-            adapt ((BinAdaptation or None, BinAdaptation or None), optional): Policy
-                for adapting the bin limits in x and y direction. Per default, no
-                adaptation is performed.
+            adapt (BinAdaptation or None, BinAdaptation or None, optional): Policy
+                for adapting the bin limits in x and y direction. ``None``indicates no
+                adaptation. Default value: ``(None, None)``.
             keep_individual (bool, optional):  Whether to keep individual
                 parameter histograms. Defaults to False.
         """
@@ -174,9 +170,6 @@ class GradHist2d(SingleStepQuantity):
 
         Args:
             global_step (int): The current iteration number.
-
-        Raises:
-            ValueError: If unknown adaption policy.
 
         Returns:
             list: (Potentially empty) list with required BackPACK quantities.
@@ -204,7 +197,7 @@ class GradHist2d(SingleStepQuantity):
                 parameters.
             batch_loss (torch.Tensor): Mini-batch loss from current step.
         """
-        result = super().track(global_step, params, batch_loss)
+        super().track(global_step, params, batch_loss)
 
         # update limits
         for dim, adapt in enumerate(self._adapt):
@@ -212,8 +205,6 @@ class GradHist2d(SingleStepQuantity):
                 self._range[dim] = adapt.compute(
                     global_step, params, batch_loss, self._range
                 )
-
-        return result
 
     def _compute(self, global_step, params, batch_loss):
         """Aggregate histogram data over parameters and save to output."""

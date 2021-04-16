@@ -310,6 +310,10 @@ class Cockpit:
 
         Returns:
             dict: Dictionary with json-compatible values.
+
+        Raises:
+            NotImplementedError: If the dictionary contains values whose type
+                conversions is unsupported.
         """
         converted = {}
 
