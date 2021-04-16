@@ -32,17 +32,16 @@ class Alpha(TwoStepQuantity):
         For SGD with default parameters the projections onto the search direction can
         be performed during a backward pass without storing large tensors between start
         and end point.
-
-    Attributes:
-        SAVE_SHIFT (int): Difference between iteration at which information is computed
-            versus iteration under which it is stored. For instance, if set to ``1``,
-            the information computed at iteration ``n + 1`` is saved under iteration
-            ``n``. Default: ``1``.
-        POINTS ([str]): Description of start and end point.
     """
 
     SAVE_SHIFT = 1
+    """int: Difference between iteration at which information is computed
+            versus iteration under which it is stored. For instance, if set to ``1``,
+            the information computed at iteration ``n + 1`` is saved under iteration
+            ``n``. Default: ``1``.
+    """
     POINTS = ["start", "end"]
+    """[str]:  Description of start and end point."""
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.

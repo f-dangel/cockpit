@@ -10,7 +10,14 @@ from tests.test_quantities.settings import PROBLEMS, PROBLEMS_IDS
 from tests.utils.harness import SimpleTestHarness
 from tests.utils.problem import instantiate
 
-QUANTITIES = [getattr(quantities, q) for q in __all__ if q != "Quantity"]
+QUANTITIES = [
+    getattr(quantities, q)
+    for q in __all__
+    if q != "Quantity"
+    and q != "SingleStepQuantity"
+    and q != "TwoStepQuantity"
+    and q != "ByproductQuantity"
+]
 IDS = [q_cls.__name__ for q_cls in QUANTITIES]
 
 

@@ -43,6 +43,7 @@ To install **Cockpit** simply run
    api/plotter
    api/quantities
    api/instruments
+   api/utils
 
 .. toctree::
    :maxdepth: 1
@@ -51,13 +52,7 @@ To install **Cockpit** simply run
    GitHub Repository <https://github.com/f-dangel/cockpit-paper>
    other/contributors
    other/license
-
-
-Indices
-"""""""
-
-* :ref:`genindex`
-* :ref:`modindex`
+   other/changelog
 
 
 .. |CI Status| image:: https://github.com/f-dangel/cockpit-paper/actions/workflows/CI.yml/badge.svg

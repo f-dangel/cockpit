@@ -47,7 +47,7 @@ class Quantity:
 
         Returns:
             bool: ``True`` if the computation graph shall not be deleted,
-                else ``False``.
+            else ``False``.
         """
         return False
 
@@ -152,7 +152,7 @@ class Quantity:
 
         Returns:
             [torch.Tensor] if ``aggregate`` is False: List of same length as ``params``
-                with items of same shape containing the gradients.
+            with items of same shape containing the gradients.
             torch.Tensor if ``aggregate`` is True: Gradient of vectorized parameters.
         """
         grads = [p.grad for p in params]
@@ -177,7 +177,7 @@ class Quantity:
 
         Returns:
             [torch.Tensor] if ``aggregate`` is False: List of same length as ``params``
-                with scalar items containing block-wise gradient squared norms.
+            with scalar items containing block-wise gradient squared norms.
             torch.Tensor if ``aggregate`` is True: A scalar, the squared gradient norm.
         """
         grad_l2_squared = [p.grad.pow(2).sum() for p in params]
@@ -203,11 +203,11 @@ class Quantity:
 
         Returns:
             [torch.Tensor] if ``aggregate`` is False: List of same length as ``params``
-                with items of shape ``[N, *]`` containing block-wise individual
-                gradients. Here, ``*`` denotes the shape of the associated parameter
-                block.
+            with items of shape ``[N, *]`` containing block-wise individual
+            gradients. Here, ``*`` denotes the shape of the associated parameter
+            block.
             torch.Tensor if ``aggregate`` is True: A vector of shape ``[N, D]`` with
-                individual gradients for the vectorized model parameters.
+            individual gradients for the vectorized model parameters.
         """
         grad_batch = [p.grad_batch for p in params]
 
@@ -231,9 +231,9 @@ class Quantity:
 
         Returns:
             [torch.Tensor] if ``aggregate`` is False: List of same length as ``params``
-                with tensors of shape ``[N]`` each.
+            with tensors of shape ``[N]`` each.
             torch.Tensor if ``aggregate`` is True: A tensor of shape ``[N]``, containing
-                the individual gradient squared norm.
+            the individual gradient squared norm.
         """
         batch_l2 = [p.batch_l2 for p in params]
 
@@ -268,9 +268,9 @@ class Quantity:
 
         Returns:
             [torch.Tensor] if ``aggregate`` is False: List of same length as ``params``
-                with tensors of shape ``[N, N]`` each.
+            with tensors of shape ``[N, N]`` each.
             torch.Tensor if ``aggregate`` is True: A tensor of shape ``[N, N]``.
-                containing pairwise dot products of aggregated individual gradients.
+            containing pairwise dot products of aggregated individual gradients.
         """
         batch_dot_grad = [p.batch_dot for p in params]
 
@@ -305,9 +305,9 @@ class Quantity:
 
         Returns:
             [torch.Tensor] if ``aggregate`` is False: List of same length as ``params``
-                with items of same shape containing the gradient's second moment.
+            with items of same shape containing the gradient's second moment.
             torch.Tensor if ``aggregate`` is True: Gradient second moment of vectorized
-                parameters.
+            parameters.
         """
         sum_grad_squared = [p.sum_grad_squared for p in params]
 
@@ -343,9 +343,9 @@ class Quantity:
 
         Returns:
             [torch.Tensor] if ``aggregate`` is False: List of same length as ``params``
-                with items of same shape containing the diagonal curvatures.
+            with items of same shape containing the diagonal curvatures.
             torch.Tensor if ``aggregate`` is True: Diagonal curvature of vectorized
-                parameters.
+            parameters.
         """
         diag_curvature = [getattr(p, savefield) for p in params]
 
@@ -386,8 +386,8 @@ class SingleStepQuantity(Quantity):
 
         Returns:
             (int, arbitrary): The second value is the result that will be stored at
-                the iteration indicated by the first entry (important for multi-step
-                quantities whose values are computed in later iterations).
+            the iteration indicated by the first entry (important for multi-step
+            quantities whose values are computed in later iterations).
         """
         return (global_step, self._compute(global_step, params, batch_loss))
 
@@ -421,15 +421,14 @@ class TwoStepQuantity(Quantity):
     - ``is_start``, ``is_end``
     - ``_compute_start``, ``_compute_end``
     - (maybe) adapt ``SAVE_SHIFT``
-
-    Attributes:
-        SAVE_SHIFT (int): Difference between iteration at which information is computed
-            versus iteration under which it is stored. For instance, if set to ``1``,
-            the information computed at iteration ``n + 1`` is saved under iteration
-            ``n``. Default: ``0``.
     """
 
     SAVE_SHIFT = 0
+    """int: Difference between iteration at which information is computed versus 
+       iteration under which it is stored. For instance, if set to ``1``, the 
+       information computed at iteration ``n + 1`` is saved under iteration ``n``. 
+       Defaults to ``0``.
+    """
 
     def __init__(self, track_schedule, verbose=False):
         """Initialize the Quantity by storing the track interval.
@@ -461,8 +460,8 @@ class TwoStepQuantity(Quantity):
 
         Returns:
             (int, arbitrary): The second value is the result that will be stored at
-                the iteration indicated by the first entry (important for multi-step
-                quantities whose values are computed in later iterations).
+            the iteration indicated by the first entry (important for multi-step
+            quantities whose values are computed in later iterations).
         """
         save_iter = global_step - self.SAVE_SHIFT
         save_result = self._compute(global_step, params, batch_loss)
@@ -484,7 +483,7 @@ class TwoStepQuantity(Quantity):
 
         Returns:
             Any: Result of the computation. If ``None``, the step served to compute
-                intermediate information rather than computing the quantity's value.
+            intermediate information rather than computing the quantity's value.
         """
         if self.is_start(global_step):
             self._compute_start(global_step, params, batch_loss)

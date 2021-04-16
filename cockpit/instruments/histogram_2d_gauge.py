@@ -14,12 +14,15 @@ def histogram_2d_gauge(
 ):
     """Two-dimensional histogram of the individual gradient and parameter elements.
 
+    .. image:: ../../_static/instrument_previews/Hist2d.png
+        :alt: Preview Hist2d Gauge
+
     Args:
-        self (cockpit.plotter): The cockpit plotter requesting this instrument.
-        fig (matplotlib.figure): Figure of the Cockpit.
-        gridspec (matplotlib.gridspec): GridSpec where the instrument should be
+        self (CockpitPlotter): The cockpit plotter requesting this instrument.
+        fig (matplotlib.figure.Figure): Figure of the Cockpit.
+        gridspec (matplotlib.gridspec.GridSpec): GridSpec where the instrument should be
             placed
-        transformation (method): Some map applied to the bin values as a
+        transformation (callable): Some map applied to the bin values as a
             transformation for the plot. Defaults to `None` which means no
             transformation.
         marginals (bool): Whether to plot the marginal histograms as well.

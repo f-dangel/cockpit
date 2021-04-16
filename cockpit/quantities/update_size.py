@@ -4,19 +4,18 @@ from cockpit.quantities.quantity import TwoStepQuantity
 
 
 class UpdateSize(TwoStepQuantity):
-    """Quantity for tracking parameter update sizes.
-
-    Attributes:
-        CACHE_KEY (str): String under which the parameters are cached for computation.
-            Default: ``'params'``.
-        SAVE_SHIFT (int): Difference between iteration at which information is computed
-            versus iteration under which it is stored. For instance, if set to ``1``,
-            the information computed at iteration ``n + 1`` is saved under iteration
-            ``n``. Default: ``1``.
-    """
+    """Quantity for tracking parameter update sizes."""
 
     CACHE_KEY = "params"
+    """str: String under which the parameters are cached for computation.
+       Default: ``'params'``.
+    """
     SAVE_SHIFT = 0
+    """int: Difference between iteration at which information is computed versus 
+       iteration under which it is stored. For instance, if set to ``1``, the 
+       information computed at iteration ``n + 1`` is saved under iteration ``n``. 
+       Defaults to ``1``.
+    """
 
     def extensions(self, global_step):
         """Return list of BackPACK extensions required for the computation.

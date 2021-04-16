@@ -8,10 +8,13 @@ from cockpit.instruments.utils_instruments import check_data, create_basic_plot
 def trace_gauge(self, fig, gridspec):
     """Trace gauge, showing the trace of the Hessian versus iteration.
 
+    .. image:: ../../_static/instrument_previews/HessTrace.png
+        :alt: Preview HessTrace Gauge
+
     Args:
-        self (cockpit.plotter): The cockpit plotter requesting this instrument.
-        fig (matplotlib.figure): Figure of the Cockpit.
-        gridspec (matplotlib.gridspec): GridSpec where the instrument should be
+        self (CockpitPlotter): The cockpit plotter requesting this instrument.
+        fig (matplotlib.figure.Figure): Figure of the Cockpit.
+        gridspec (matplotlib.gridspec.GridSpec): GridSpec where the instrument should be
             placed
     """
     # Plot Trace vs iteration

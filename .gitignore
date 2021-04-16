@@ -297,6 +297,7 @@ TSWLatexianTemp*
 
 # DeepOBS
 *.json
+!docs/source/_static/instrument_preview_run.json
 **/results
 **/data_deepobs
 

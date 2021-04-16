@@ -14,10 +14,13 @@ from cockpit.instruments.utils_instruments import (
 def performance_gauge(self, fig, gridspec):
     """Plotting train/valid accuracy vs. epoch and mini-batch loss vs. iteration.
 
+    .. image:: ../../_static/instrument_previews/Performance.png
+        :alt: Preview Performance Gauge
+
     Args:
-        self (cockpit.plotter): The cockpit plotter requesting this instrument.
-        fig (matplotlib.figure): Figure of the Cockpit.
-        gridspec (matplotlib.gridspec): GridSpec where the instrument should be
+        self (CockpitPlotter): The cockpit plotter requesting this instrument.
+        fig (matplotlib.figure.Figure): Figure of the Cockpit.
+        gridspec (matplotlib.gridspec.GridSpec): GridSpec where the instrument should be
             placed
     """
     # Plot Trace vs iteration

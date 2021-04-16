@@ -10,10 +10,12 @@ from cockpit.quantities.utils_transforms import BatchGradTransforms_SumGradSquar
 class TIC(SingleStepQuantity):
     """Base class for different Takeuchi Information Criterion approximations.
 
-    Takeuchi Information criterion (TIC) rediscovered by thomas2019interplay.
+    Note: Takeuchi Information criterion (TIC) rediscovered by
 
-    Link:
-        - https://arxiv.org/pdf/1906.07774.pdf
+        - Thomas, V., et al.
+          On the interplay between noise and curvature and its effect on
+          optimization and generalization (2019).
+          https://arxiv.org/abs/1906.07774
     """
 
     extensions_from_str = {
@@ -32,18 +34,18 @@ class TIC(SingleStepQuantity):
         """Initialize TIC quantity.
 
         Note:
-            The curvature options "diag_h" and "diag_ggn_exact" are more expensive than
-            "diag_ggn_mc", but more precise. For a classification task with ``C``
-            classes, the former require that ``C`` times more information be backpropa-
-            gated through the computation graph.
+            The curvature options ``"diag_h"`` and ``"diag_ggn_exact"`` are more
+            expensive than ``"diag_ggn_mc"``, but more precise. For a classification
+            task with ``C`` classes, the former require that ``C`` times more
+            information be backpropagated through the computation graph.
 
         Args:
             track_schedule (callable): Function that maps the ``global_step``
                 to a boolean, which determines if the quantity should be computed.
             verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
-            curvature (string): Which diagonal curvature approximation should be used.
-                Options are "diag_h", "diag_ggn_exact", "diag_ggn_mc".
-            epsilon (float): Stabilization constant. Defaults to 1e-7.
+            curvature (str): Which diagonal curvature approximation should be used.
+                Options are ``"diag_h"``, ``"diag_ggn_exact"``, ``"diag_ggn_mc"``.
+            epsilon (float): Stabilization constant. Defaults to ``1e-7``.
         """
         super().__init__(track_schedule, verbose=verbose)
 
@@ -77,7 +79,15 @@ class TIC(SingleStepQuantity):
 
 
 class TICDiag(TIC):
-    """TIC with diagonal curvature approximation for cheap inversion."""
+    """TIC with diagonal curvature approximation for cheap inversion.
+
+    Note: Takeuchi Information criterion (TIC) rediscovered by
+
+        - Thomas, V., et al.
+          On the interplay between noise and curvature and its effect on
+          optimization and generalization (2019).
+          https://arxiv.org/abs/1906.07774
+    """
 
     def _compute(self, global_step, params, batch_loss):
         """Compute the TICDiag using a diagonal curvature approximation.
@@ -103,7 +113,15 @@ class TICDiag(TIC):
 
 
 class TICTrace(TIC):
-    """TIC approximation using the trace of curvature and gradient covariance."""
+    """TIC approximation using the trace of curvature and gradient covariance.
+
+    Note: Takeuchi Information criterion (TIC) rediscovered by
+
+        - Thomas, V., et al.
+          On the interplay between noise and curvature and its effect on
+          optimization and generalization (2019).
+          https://arxiv.org/abs/1906.07774
+    """
 
     def _compute(self, global_step, params, batch_loss):
         """Compute the TICTrace using a trace approximation.

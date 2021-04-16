@@ -8,16 +8,17 @@ from cockpit.instruments.utils_instruments import check_data, create_basic_plot
 def cabs_gauge(self, fig, gridspec):
     """CABS gauge, showing the CABS rule versus iteration.
 
-    If the stopping criterion becomes positive, this suggests stopping the training
-    according to
-
     - Balles, L., Romero, J., & Hennig, P.,
       Coupling adaptive batch sizes with learning rates (2017).
 
+    Example:
+        .. image:: ../../_static/instrument_previews/CABS.png
+            :alt: Preview CABS Gauge
+
     Args:
-        self (cockpit.plotter): The cockpit plotter requesting this instrument.
-        fig (matplotlib.figure): Figure of the Cockpit.
-        gridspec (matplotlib.gridspec): GridSpec where the instrument should be
+        self (CockpitPlotter): The cockpit plotter requesting this instrument.
+        fig (matplotlib.figure.Figure): Figure of the Cockpit.
+        gridspec (matplotlib.gridspec.GridSpec): GridSpec where the instrument should be
             placed
     """
     # Plot Trace vs iteration

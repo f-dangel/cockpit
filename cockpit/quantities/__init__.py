@@ -14,13 +14,21 @@ from cockpit.quantities.mean_gsnr import MeanGSNR
 from cockpit.quantities.norm_test import NormTest
 from cockpit.quantities.ortho_test import OrthoTest
 from cockpit.quantities.parameters import Parameters
-from cockpit.quantities.quantity import Quantity
+from cockpit.quantities.quantity import (
+    ByproductQuantity,
+    Quantity,
+    SingleStepQuantity,
+    TwoStepQuantity,
+)
 from cockpit.quantities.tic import TICDiag, TICTrace
 from cockpit.quantities.time import Time
 from cockpit.quantities.update_size import UpdateSize
 
 __all__ = [
     "Quantity",
+    "SingleStepQuantity",
+    "ByproductQuantity",
+    "TwoStepQuantity",
     "Loss",
     "Parameters",
     "Distance",

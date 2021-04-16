@@ -46,9 +46,9 @@ class CockpitPlotter:
         # Individual parts are managed separetely but (for now) they share a layout
         self.inner_num_rows = 5
         self.inner_num_cols = 3
-        self.inner_width_ratios = [0.05, 1, 0.05]
+        self.inner_width_ratios = [0.1, 1, 0.1]
         self.inner_height_ratios = [0.0, 1, 1, 1, 0.00]
-        self.inner_hspace = 0.6
+        self.inner_hspace = 0.8
 
     def _set_backend(self, show_plot):
         """Use a backend that does (not) show plots."""
@@ -74,9 +74,9 @@ class CockpitPlotter:
         """Plot the cockpit for the current state of the log file.
 
         Args:
-            source (Cockpit or str): ``Cockpit`` instance, or string containing the path
-                to a .json log produced with ``Cockpit.write``, where information will
-                be fetched from.
+            source (Cockpit or str): ``Cockpit`` instance, or string
+                containing the path to a .json log produced with ``Cockpit.write``,
+                where information will be fetched from.
             savedir (str): Directory where to save the plot.
             show_plot (bool, optional): Whether the plot should be shown on
                 screen. Defaults to True.
@@ -134,7 +134,7 @@ class CockpitPlotter:
             nrows=2,
             width_ratios=outer_widths,
             height_ratios=outer_heights,
-            wspace=0.05,
+            wspace=0.1,
             hspace=0.1,
         )
 

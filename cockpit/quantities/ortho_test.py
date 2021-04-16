@@ -7,10 +7,11 @@ from cockpit.quantities.utils_transforms import BatchGradTransforms_BatchDotGrad
 class OrthoTest(SingleStepQuantity):
     """Orthogonality Test Quantity Class.
 
-    Orthogonality test proposed in bollapragada2017adaptive.
+    Note: Orthogonality test as proposed in
 
-    Link:
-        - https://arxiv.org/pdf/1710.11258.pdf
+        - Bollapragada, R., Byrd, R., &  Nocedal, J.,
+          Adaptive Sampling Strategies for Stochastic Optimization (2017).
+          https://arxiv.org/abs/1710.112585
     """
 
     def extensions(self, global_step):

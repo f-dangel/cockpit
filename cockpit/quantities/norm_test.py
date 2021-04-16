@@ -7,10 +7,11 @@ from cockpit.quantities.utils_transforms import BatchGradTransforms_BatchL2Grad
 class NormTest(SingleStepQuantity):
     """Norm Test Quantitiy Class.
 
-    Norm test proposed in byrd2012adaptive.
+    Note: Norm test as proposed in
 
-    Link:
-        - https://link.springer.com/content/pdf/10.1007/s10107-012-0572-5.pdf
+        - Byrd, R., Chin, G., Nocedal, J., & Wu, Y.,
+          Sample size selection in optimization methods for machine learning (2012).
+          https://link.springer.com/article/10.1007%2Fs10107-012-0572-5
     """
 
     def extensions(self, global_step):

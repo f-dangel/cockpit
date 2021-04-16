@@ -6,10 +6,13 @@ from cockpit.instruments.utils_instruments import check_data, create_basic_plot
 def tic_gauge(self, fig, gridspec):
     """TIC gauge, showing the TIC versus iteration.
 
+    .. image:: ../../_static/instrument_previews/TIC.png
+        :alt: Preview TIC Gauge
+
     Args:
-        self (cockpit.plotter): The cockpit plotter requesting this instrument.
-        fig (matplotlib.figure): Figure of the Cockpit.
-        gridspec (matplotlib.gridspec): GridSpec where the instrument should be
+        self (CockpitPlotter): The cockpit plotter requesting this instrument.
+        fig (matplotlib.figure.Figure): Figure of the Cockpit.
+        gridspec (matplotlib.gridspec.GridSpec): GridSpec where the instrument should be
             placed
     """
     # Plot Trace vs iteration
