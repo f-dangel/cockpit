@@ -138,12 +138,11 @@ def _get_2d_histogram_data(tracking_data, transformation=None, idx=None):
     clean_data = tracking_data.GradHist2d.dropna()
     last_step_data = clean_data[clean_data.index[-1]]
 
-    key_prefix = "" if idx is None else f"param_{idx}_"
-    x_key = key_prefix + "x_edges"
-    y_key = key_prefix + "y_edges"
-    hist_key = key_prefix + "hist_2d"
+    if idx is not None:
+        param_key = f"param_{idx}"
+        last_step_data = last_step_data[param_key]
 
-    vals = np.array(last_step_data[hist_key])
+    vals = np.array(last_step_data["hist"].cpu())
 
     # apply transformation
     if transformation is None:
@@ -151,8 +150,8 @@ def _get_2d_histogram_data(tracking_data, transformation=None, idx=None):
 
     vals = transformation(vals)
 
-    x_bins = np.array(last_step_data[x_key])
-    y_bins = np.array(last_step_data[y_key])
+    x_bins = np.array(last_step_data["edges"][0].cpu())
+    y_bins = np.array(last_step_data["edges"][1].cpu())
 
     x_mid_points = (x_bins[1:] + x_bins[:-1]) / 2
     y_mid_points = (y_bins[1:] + y_bins[:-1]) / 2
@@ -179,15 +178,15 @@ def _get_xmargin_histogram_data(tracking_data, idx=None):
             points of the histogram bins.
         bin_size (float): Width of a bin.
     """
-    key_prefix = "" if idx is None else f"param_{idx}_"
-    x_key = key_prefix + "x_edges"
-    hist_key = key_prefix + "hist_2d"
-
     clean_data = tracking_data.GradHist2d.dropna()
     last_step_data = clean_data[clean_data.index[-1]]
 
-    vals = np.array(last_step_data[hist_key]).sum(1)
-    bins = np.array(last_step_data[x_key])
+    if idx is not None:
+        param_key = f"param_{idx}"
+        last_step_data = last_step_data[param_key]
+
+    vals = np.array(last_step_data["hist"].cpu()).sum(1)
+    bins = np.array(last_step_data["edges"][0].cpu())
     # invert to be consistent with 2d plot
     vals = vals[::-1]
 
@@ -213,15 +212,15 @@ def _get_ymargin_histogram_data(tracking_data, idx=None):
             points of the histogram bins.
         bin_size (float): Width of a bin.
     """
-    key_prefix = "" if idx is None else f"param_{idx}_"
-    y_key = key_prefix + "y_edges"
-    hist_key = key_prefix + "hist_2d"
-
     clean_data = tracking_data.GradHist2d.dropna()
     last_step_data = clean_data[clean_data.index[-1]]
 
-    vals = np.array(last_step_data[hist_key]).sum(0)
-    bins = np.array(last_step_data[y_key])
+    if idx is not None:
+        param_key = f"param_{idx}"
+        last_step_data = last_step_data[param_key]
+
+    vals = np.array(last_step_data["hist"].cpu()).sum(0)
+    bins = np.array(last_step_data["edges"][1].cpu())
 
     bin_size = bins[1] - bins[0]
 

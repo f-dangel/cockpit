@@ -71,8 +71,8 @@ def _get_histogram_data(tracking_data):
     clean_data = tracking_data.GradHist1d.dropna()
     last_step_data = clean_data[clean_data.index[-1]]
 
-    vals = np.array(last_step_data["hist_1d"])
-    bins = np.array(last_step_data["edges"])
+    vals = np.array(last_step_data["hist"].cpu())
+    bins = np.array(last_step_data["edges"].cpu())
 
     width = bins[1] - bins[0]
 
