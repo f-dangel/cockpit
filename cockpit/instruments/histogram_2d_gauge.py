@@ -142,7 +142,7 @@ def _get_2d_histogram_data(tracking_data, transformation=None, idx=None):
         param_key = f"param_{idx}"
         last_step_data = last_step_data[param_key]
 
-    vals = np.array(last_step_data["hist"].cpu())
+    vals = last_step_data["hist"]
 
     # apply transformation
     if transformation is None:
@@ -150,8 +150,7 @@ def _get_2d_histogram_data(tracking_data, transformation=None, idx=None):
 
     vals = transformation(vals)
 
-    x_bins = np.array(last_step_data["edges"][0].cpu())
-    y_bins = np.array(last_step_data["edges"][1].cpu())
+    x_bins, y_bins = last_step_data["edges"]
 
     x_mid_points = (x_bins[1:] + x_bins[:-1]) / 2
     y_mid_points = (y_bins[1:] + y_bins[:-1]) / 2
@@ -185,8 +184,8 @@ def _get_xmargin_histogram_data(tracking_data, idx=None):
         param_key = f"param_{idx}"
         last_step_data = last_step_data[param_key]
 
-    vals = np.array(last_step_data["hist"].cpu()).sum(1)
-    bins = np.array(last_step_data["edges"][0].cpu())
+    vals = last_step_data["hist"].sum(1)
+    bins = last_step_data["edges"][0]
     # invert to be consistent with 2d plot
     vals = vals[::-1]
 
@@ -219,8 +218,8 @@ def _get_ymargin_histogram_data(tracking_data, idx=None):
         param_key = f"param_{idx}"
         last_step_data = last_step_data[param_key]
 
-    vals = np.array(last_step_data["hist"].cpu()).sum(0)
-    bins = np.array(last_step_data["edges"][1].cpu())
+    vals = last_step_data["hist"].sum(0)
+    bins = last_step_data["edges"][1]
 
     bin_size = bins[1] - bins[0]
 

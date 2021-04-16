@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 
+import numpy
 import torch
 
 
@@ -106,7 +107,45 @@ class Quantity:
             global_step (int): The current iteration number.
             result (arbitrary): The result to be stored.
         """
-        self.output[global_step] = result
+        self.output[global_step] = self._apply_save_format(result)
+
+    def _apply_save_format(self, value):
+        """Apply formatting rules for saved data.
+
+        ``torch.Tensor``s are detached, loaded to CPU and converted to ``numpy`` arrays.
+        Items of ``dict``, ``list``, and ``tuple`` are converted recursively.
+        ``float``, ``int``, and ``numpy.ndarray`` values are unaffected.
+
+        Args:
+            value (Any): Value to be saved.
+
+        Returns:
+            Any: Converted value.
+
+        Raises:
+            NotImplementedError: If there is no formatting rule for the data type.
+        """
+        if isinstance(value, torch.Tensor):
+            value = value.detach().cpu().numpy()
+
+        elif isinstance(value, dict):
+            for key, val in value.items():
+                value[key] = self._apply_save_format(val)
+
+        elif isinstance(value, list):
+            for idx, val in enumerate(value):
+                value[idx] = self._apply_save_format(val)
+
+        elif isinstance(value, tuple):
+            value = tuple(self._apply_save_format(val) for val in value)
+
+        elif isinstance(value, (float, int, numpy.ndarray)):
+            pass
+
+        else:
+            raise NotImplementedError(f"No formatting rule for type {type(value)}")
+
+        return value
 
     def compute(self, global_step, params, batch_loss):
         """Evaluate quantity at a step in training.
@@ -126,6 +165,8 @@ class Quantity:
         """Return a dictionary that stores the results.
 
         Keys correspond to the iteration and values represent the computational result.
+        Values are kept as ``numpy.ndarray``s on CPU rather than ``torch.Tensor``s to
+        avoid unnecessary data traffic during plotting.
 
         Example:
             >>> quantity = quantities.MaxEV()

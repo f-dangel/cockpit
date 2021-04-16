@@ -4,6 +4,7 @@ import json
 import os
 from collections import defaultdict
 
+import numpy
 import torch
 from backpack import backpack_deactivate_io
 from backpack.extensions import BatchGradTransforms
@@ -320,6 +321,8 @@ class Cockpit:
         for key, value in dictionary.items():
             if isinstance(value, torch.Tensor):
                 compatible = value.cpu().numpy().tolist()
+            elif isinstance(value, numpy.ndarray):
+                compatible = value.tolist()
             elif isinstance(value, dict):
                 compatible = self._make_json_serializable(value)
             elif isinstance(value, (int, float)):
@@ -330,6 +333,8 @@ class Cockpit:
                 for item in value:
                     if isinstance(item, torch.Tensor):
                         compatible.append(item.cpu().numpy().tolist())
+                    elif isinstance(item, numpy.ndarray):
+                        compatible.append(item.tolist())
                     else:
                         compatible.append(item)
             else:

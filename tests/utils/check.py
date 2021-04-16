@@ -1,7 +1,6 @@
 """Utility functions to compare results of two implementations."""
 
 import numpy
-import torch
 
 
 def compare_outputs(output1, output2, rtol=1e-5, atol=1e-7):
@@ -27,10 +26,10 @@ def get_compare_function(value1, value2):
         compare_fn = compare_floats
     elif isinstance(value1, int) and isinstance(value2, int):
         compare_fn = compare_ints
+    elif isinstance(value1, numpy.ndarray) and isinstance(value2, numpy.ndarray):
+        compare_fn = compare_arrays
     elif isinstance(value1, list) and isinstance(value2, list):
         compare_fn = compare_lists
-    elif isinstance(value1, torch.Tensor) and isinstance(value2, torch.Tensor):
-        compare_fn = compare_tensors
     elif isinstance(value1, tuple) and isinstance(value2, tuple):
         compare_fn = compare_tuples
     else:
@@ -51,9 +50,9 @@ def compare_tuples(tuple1, tuple2, rtol=1e-5, atol=1e-7):
         compare_fn(value1, value2, rtol=rtol, atol=atol)
 
 
-def compare_tensors(tensor1, tensor2, rtol=1e-5, atol=1e-7):
-    """Compare two tensors."""
-    assert torch.allclose(tensor1, tensor2, rtol=rtol, atol=atol)
+def compare_arrays(array1, array2, rtol=1e-5, atol=1e-7):
+    """Compare two ``numpy`` arrays."""
+    assert numpy.allclose(array1, array2, rtol=rtol, atol=atol)
 
 
 def compare_floats(float1, float2, rtol=1e-5, atol=1e-7):
