@@ -1,11 +1,9 @@
 """Cockpit."""
 
-import json
 import os
 from collections import defaultdict
 
-import numpy
-import torch
+import json_tricks
 from backpack import backpack_deactivate_io
 from backpack.extensions import BatchGradTransforms
 from backpack.extensions.backprop_extension import BackpropExtension
@@ -242,10 +240,8 @@ class Cockpit:
 
         os.makedirs(os.path.dirname(logpath_with_suffix), exist_ok=True)
 
-        processed = self._make_json_serializable(self.get_output())
-
         with open(logpath_with_suffix, "w") as json_file:
-            json.dump(processed, json_file, indent=4, sort_keys=True)
+            json_tricks.dump(self.get_output(), json_file, indent=4, sort_keys=True)
 
     def update_output(self):
         """Fetch outputs from tracked quantities into ``self.output``."""
@@ -301,48 +297,6 @@ class Cockpit:
                 ext_dict[type(e)] = True
 
         return no_duplicate_ext
-
-    # TODO Fix data format (see https://github.com/f-dangel/cockpit-paper/issues/214)
-    def _make_json_serializable(self, dictionary):
-        """Convert all values to a json-compatible format.
-
-        Args:
-            dictionary (dict): A dictionary
-
-        Returns:
-            dict: Dictionary with json-compatible values.
-
-        Raises:
-            NotImplementedError: If the dictionary contains values whose type
-                conversions is unsupported.
-        """
-        converted = {}
-
-        for key, value in dictionary.items():
-            if isinstance(value, torch.Tensor):
-                compatible = value.cpu().numpy().tolist()
-            elif isinstance(value, numpy.ndarray):
-                compatible = value.tolist()
-            elif isinstance(value, dict):
-                compatible = self._make_json_serializable(value)
-            elif isinstance(value, (int, float)):
-                compatible = value
-            elif isinstance(value, (list, tuple)):
-                compatible = []
-
-                for item in value:
-                    if isinstance(item, torch.Tensor):
-                        compatible.append(item.cpu().numpy().tolist())
-                    elif isinstance(item, numpy.ndarray):
-                        compatible.append(item.tolist())
-                    else:
-                        compatible.append(item)
-            else:
-                raise NotImplementedError(f"Unknown type {type(value)}: {value}")
-
-            converted[key] = compatible
-
-        return converted
 
     @classmethod
     def _process_multiple_batch_grad_transforms(cls, ext):
