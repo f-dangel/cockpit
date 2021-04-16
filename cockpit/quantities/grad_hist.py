@@ -1,8 +1,8 @@
 """Histograms of individual gradient transformations."""
 
+import torch
 from backpack import extensions
 
-import torch
 from cockpit.quantities.bin_adaptation import NoAdaptation
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_hists import histogram2d
