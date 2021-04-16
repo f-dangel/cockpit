@@ -13,7 +13,15 @@ from cockpit.quantities.utils_transforms import BatchGradTransformsHook
 
 
 class Cockpit:
-    """Cockpit class."""
+    """Cockpit class.
+
+    Attributes:
+        BACKPACK_CONV_SAVE_MEMORY (bool): Tell BackPACK to use a more memory-efficient
+            Jacobian-vector product algorithm for weights in convolution layers.
+            Default: ``True``.
+    """
+
+    BACKPACK_CONV_SAVE_MEMORY = True
 
     def __init__(self, params, quantities=None):
         """Initialize a cockpit.
