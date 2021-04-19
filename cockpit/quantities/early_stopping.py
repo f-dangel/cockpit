@@ -9,7 +9,10 @@ from cockpit.utils.optim import ComputeStep
 
 
 class EarlyStopping(SingleStepQuantity):
-    """Evidence-based (EB) early-stopping criterion.
+    """Quantity class for the evidence-based early-stopping criterion.
+
+    This criterion uses local statistics of the gradients to indicate when training
+    should be stopped. If the criterion exceeds zero, training should be stopped.
 
     Note: Proposed in
 
@@ -18,14 +21,13 @@ class EarlyStopping(SingleStepQuantity):
     """
 
     def __init__(self, track_schedule, verbose=False, epsilon=1e-5):
-        """Initialize.
+        """Initialization sets the tracking schedule & creates the output dict.
 
         Args:
             track_schedule (callable): Function that maps the ``global_step``
                 to a boolean, which determines if the quantity should be computed.
             verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             epsilon (float): Stabilization constant. Defaults to 0.0.
-            verbose (bool): Turns on verbose mode. Defaults to ``False``.
         """
         super().__init__(track_schedule, verbose=verbose)
 

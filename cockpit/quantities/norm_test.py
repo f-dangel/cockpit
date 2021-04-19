@@ -7,7 +7,7 @@ from cockpit.quantities.utils_transforms import BatchGradTransformsHook_BatchL2G
 
 
 class NormTest(SingleStepQuantity):
-    """Norm Test Quantitiy Class.
+    """Quantitiy Class for the norm test.
 
     Note: Norm test as proposed in
 

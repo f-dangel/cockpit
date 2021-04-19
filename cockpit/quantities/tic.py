@@ -31,7 +31,7 @@ class TIC(SingleStepQuantity):
         curvature="diag_h",
         epsilon=1e-7,
     ):
-        """Initialize TIC quantity.
+        """Initialization sets the tracking schedule & creates the output dict.
 
         Note:
             The curvature options ``"diag_h"`` and ``"diag_ggn_exact"`` are more
@@ -95,7 +95,9 @@ class TIC(SingleStepQuantity):
 
 
 class TICDiag(TIC):
-    """TIC with diagonal curvature approximation for cheap inversion.
+    """Quantity class for tracking the TIC using diagonal curvature approximation.
+
+    The diagonal curvature approximation provide cheap inversion.
 
     Note: Takeuchi Information criterion (TIC) rediscovered by
 
@@ -129,7 +131,7 @@ class TICDiag(TIC):
 
 
 class TICTrace(TIC):
-    """TIC approximation using the trace of curvature and gradient covariance.
+    """Quantity class for the TIC using the trace of curvature and gradient covariance.
 
     Note: Takeuchi Information criterion (TIC) rediscovered by
 

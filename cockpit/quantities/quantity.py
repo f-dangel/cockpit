@@ -25,10 +25,7 @@ class Quantity:
     """
 
     def __init__(self, track_schedule, verbose=False):
-        """Initialize the Quantity by storing the track interval.
-
-        Crucially, it creates the output dictionary, that is meant to store all
-        values that should be stored.
+        """Initialization sets the tracking schedule & creates the output dict.
 
         Args:
             track_schedule (callable): Function that maps the ``global_step``
@@ -179,7 +176,7 @@ class Quantity:
         """Return a dictionary that stores the results.
 
         Keys correspond to the iteration and values represent the computational result.
-        Values are kept as ``numpy.ndarray``s on CPU rather than ``torch.Tensor``s to
+        Values are kept as ``numpy.ndarray`` on CPU rather than ``torch.Tensor`` to
         avoid unnecessary data traffic during plotting.
 
         Example:
@@ -486,11 +483,7 @@ class TwoStepQuantity(Quantity):
     """
 
     def __init__(self, track_schedule, verbose=False):
-        """Initialize the Quantity by storing the track interval.
-
-        Crucially, it creates the output dictionary, that is meant to store all
-        values that should be stored, and the cache dictionary to save information
-        between start and end point
+        """Initialization sets the tracking schedule & creates the output dict.
 
         Args:
             track_schedule (callable): Function that maps the ``global_step``
@@ -499,6 +492,7 @@ class TwoStepQuantity(Quantity):
         """
         super().__init__(track_schedule, verbose=verbose)
 
+        # Cache dictionary to save information between start and end point
         self._cache = defaultdict(dict)
 
     def compute(self, global_step, params, batch_loss):

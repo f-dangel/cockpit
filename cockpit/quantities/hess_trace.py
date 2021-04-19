@@ -6,7 +6,7 @@ from cockpit.quantities.quantity import SingleStepQuantity
 
 
 class HessTrace(SingleStepQuantity):
-    """Trace Quantitiy Class."""
+    """Quantitiy Class tracking the trace of the Hessian during training."""
 
     extensions_from_str = {
         "diag_h": extensions.DiagHessian,
@@ -15,10 +15,7 @@ class HessTrace(SingleStepQuantity):
     }
 
     def __init__(self, track_schedule, verbose=False, curvature="diag_h"):
-        """Initialize the Hessian trace quantity.
-
-        Crucially, it creates the output dictionary, that is meant to store all
-        values that should be stored.
+        """Initialization sets the tracking schedule & creates the output dict.
 
         Note:
             The curvature options ``"diag_h"`` and ``"diag_ggn_exact"`` are more

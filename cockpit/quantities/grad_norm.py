@@ -4,7 +4,7 @@ from cockpit.quantities.quantity import ByproductQuantity
 
 
 class GradNorm(ByproductQuantity):
-    """Gradient Norm Quantitiy Class."""
+    """Quantitiy Class for tracking the norm of the mean gradient."""
 
     def _compute(self, global_step, params, batch_loss):
         """Evaluate the gradient norm at the current point.

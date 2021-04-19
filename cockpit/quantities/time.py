@@ -6,7 +6,7 @@ from cockpit.quantities.quantity import ByproductQuantity
 
 
 class Time(ByproductQuantity):
-    """Time Quantity Class."""
+    """Time Quantity Class tracking the time during training."""
 
     def _compute(self, global_step, params, batch_loss):
         """Return the time at the current point.

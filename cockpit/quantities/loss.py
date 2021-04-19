@@ -4,7 +4,7 @@ from cockpit.quantities.quantity import ByproductQuantity
 
 
 class Loss(ByproductQuantity):
-    """Loss Quantity Class."""
+    """Loss Quantity class tracking the mini-batch training loss during training."""
 
     def _compute(self, global_step, params, batch_loss):
         """Track the loss at the current point.

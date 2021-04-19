@@ -4,7 +4,7 @@ from cockpit.quantities.quantity import ByproductQuantity
 
 
 class Parameters(ByproductQuantity):
-    """Parameter Quantitiy Class."""
+    """Parameter Quantitiy class tracking the current parameters in each iteration."""
 
     def _compute(self, global_step, params, batch_loss):
         """Store the current parameter.

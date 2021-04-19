@@ -8,13 +8,13 @@ from cockpit.quantities.utils_transforms import BatchGradTransformsHook_BatchDot
 
 
 class InnerTest(SingleStepQuantity):
-    """Inner Product Quantitiy Class.
+    """Quantitiy Class for tracking the result of the inner product test.
 
     Note: Inner Product test as proposed in
 
         - Bollapragada, R., Byrd, R., &  Nocedal, J.,
           Adaptive Sampling Strategies for Stochastic Optimization (2017).
-          https://arxiv.org/abs/1710.112585
+          https://arxiv.org/abs/1710.11258
     """
 
     def extensions(self, global_step):

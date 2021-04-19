@@ -9,7 +9,7 @@ from cockpit.quantities.utils_transforms import BatchGradTransformsHook_SumGradS
 
 
 class MeanGSNR(SingleStepQuantity):
-    """Mean GSNR Quantitiy Class.
+    """Quantitiy Class for the mean gradient signal-to-noise ratio (GSNR).
 
     Note: Mean gradient signal-to-noise ratio as defined by
 

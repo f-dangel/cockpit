@@ -4,7 +4,7 @@ from cockpit.quantities.quantity import TwoStepQuantity
 
 
 class Distance(TwoStepQuantity):
-    """Distance from initialization Quantity Class."""
+    """Distance Quantity class tracking distance of the parameters from their init."""
 
     CACHE_KEY = "params"
     """str: String under which the parameters are cached for computation.

@@ -21,11 +21,15 @@ from cockpit.utils.optim import ComputeStep
 
 
 class Alpha(TwoStepQuantity):
-    """Normalized step length α on a noise-aware quadratic loss landscape fit.
+    """Alpha Quantity class for the normalized step length α.
+
+    The normalized step length α  uses a noise-aware quadratic loss landscape fit
+    to estimate whether current local steps over- or undershoot the local minimum.
 
     The fit uses zero- and first-order information, including uncertainties, between
-    two consecutive iterations which are referred to as ``'start'`` and ``'end'`` point,
-    respectively. This information needs to be projected onto the update step.
+    two consecutive iterations which are referred to as ``'start'`` and ``'end'``
+    point, respectively. This information needs to be projected onto the update
+    step.
 
     Note:
         This quantity requires the optimizer be specified in the ``'optimizer'``

@@ -9,7 +9,10 @@ from cockpit.utils.optim import ComputeStep
 
 
 class CABS(SingleStepQuantity):
-    """CABS criterion, coupling adaptive batch sizes and learning rates.
+    """CABS Quantity class for the suggested batch size using the CABS criterion.
+
+    CABS uses the current learning rate and variance of the stochastic gradients
+    to suggest an optima batch size.
 
     Only applies to SGD without momentum.
 

@@ -4,7 +4,7 @@ from cockpit.quantities.quantity import TwoStepQuantity
 
 
 class UpdateSize(TwoStepQuantity):
-    """Quantity for tracking parameter update sizes."""
+    """Quantity class for tracking parameter update sizes."""
 
     CACHE_KEY = "params"
     """str: String under which the parameters are cached for computation.

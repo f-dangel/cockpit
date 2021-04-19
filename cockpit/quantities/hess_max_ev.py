@@ -13,10 +13,10 @@ from cockpit.quantities.quantity import SingleStepQuantity
 
 
 class HessMaxEV(SingleStepQuantity):
-    """Maximum Hessian Eigenvalue Quantity Class."""
+    """Quantity Class tracking the Hessian's largest eigenvalue."""
 
     def __init__(self, track_schedule, verbose=False, use_power=True):
-        """Initialize maximum eigenvalue computation.
+        """Initialization sets the tracking schedule & creates the output dict.
 
         Args:
             track_schedule (callable): Function that maps the ``global_step``
