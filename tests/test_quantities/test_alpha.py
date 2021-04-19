@@ -3,7 +3,7 @@
 import pytest
 
 from cockpit.context import get_individual_losses
-from cockpit.quantities import Alpha, Quantity
+from cockpit.quantities import Alpha
 from cockpit.quantities.alpha import (
     _exact_variance,
     _fit_quadratic,
@@ -11,6 +11,7 @@ from cockpit.quantities.alpha import (
     _projected_gradient,
     _root_sum_of_squares,
 )
+from cockpit.quantities.quantity import Quantity
 from tests.test_quantities.adam_settings import ADAM_IDS, ADAM_PROBLEMS
 from tests.test_quantities.settings import (
     INDEPENDENT_RUNS,
