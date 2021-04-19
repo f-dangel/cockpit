@@ -1,11 +1,12 @@
 """Histograms of individual gradient transformations."""
 
 import torch
-from backpack import extensions
+from backpack.extensions import BatchGrad
 
 from cockpit.quantities.bin_adaptation import NoAdaptation
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_hists import histogram2d
+from cockpit.quantities.utils_transforms import BatchGradTransformsHook
 
 
 class GradHist1d(SingleStepQuantity):
@@ -52,15 +53,32 @@ class GradHist1d(SingleStepQuantity):
         ext = []
 
         if self.should_compute(global_step):
-            ext.append(
-                extensions.BatchGradTransforms(
-                    transforms={"hist_1d": self._compute_histogram}
-                )
-            )
+            ext.append(BatchGrad())
 
         ext += self._adapt.extensions(global_step)
 
         return ext
+
+    def extension_hooks(self, global_step):
+        """Return list of BackPACK extension hooks required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            [callable]: List of required BackPACK extension hooks for the current
+                iteration.
+        """
+        hooks = []
+
+        if self.should_compute(global_step):
+            hooks.append(
+                BatchGradTransformsHook(transforms={"hist_1d": self._compute_histogram})
+            )
+
+        hooks += self._adapt.extension_hooks(global_step)
+
+        return hooks
 
     def track(self, global_step, params, batch_loss):
         """Perform scheduled computations and store result.
@@ -177,16 +195,32 @@ class GradHist2d(SingleStepQuantity):
         ext = []
 
         if self.should_compute(global_step):
-            ext.append(
-                extensions.BatchGradTransforms(
-                    transforms={"hist_2d": self._compute_histogram}
-                )
-            )
+            ext.append(BatchGrad())
 
         for adapt in self._adapt:
             ext += adapt.extensions(global_step)
 
         return ext
+
+    def extension_hooks(self, global_step):
+        """Return list of BackPACK extension hooks required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            [callable]: List of required BackPACK extension hooks for the current
+                iteration.
+        """
+        hooks = []
+
+        if self.should_compute(global_step):
+            hooks.append(BatchGradTransformsHook({"hist_2d": self._compute_histogram}))
+
+        for adapt in self._adapt:
+            hooks += adapt.extension_hooks(global_step)
+
+        return hooks
 
     def track(self, global_step, params, batch_loss):
         """Perform scheduled computations and store result.

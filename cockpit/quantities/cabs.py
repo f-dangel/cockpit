@@ -1,8 +1,10 @@
 """Class for tracking the CABS criterion for adaptive batch size."""
 
+from backpack.extensions import BatchGrad
+
 from cockpit.context import get_batch_size, get_optimizer
 from cockpit.quantities.quantity import SingleStepQuantity
-from cockpit.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
+from cockpit.quantities.utils_transforms import BatchGradTransformsHook_SumGradSquared
 from cockpit.utils.optim import ComputeStep
 
 
@@ -48,9 +50,26 @@ class CABS(SingleStepQuantity):
         ext = []
 
         if self.should_compute(global_step):
-            ext.append(BatchGradTransforms_SumGradSquared())
+            ext.append(BatchGrad())
 
         return ext
+
+    def extension_hooks(self, global_step):
+        """Return list of BackPACK extension hooks required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            [callable]: List of required BackPACK extension hooks for the current
+                iteration.
+        """
+        hooks = []
+
+        if self.should_compute(global_step):
+            hooks.append(BatchGradTransformsHook_SumGradSquared())
+
+        return hooks
 
     def _compute(self, global_step, params, batch_loss):
         """Compute the CABS rule. Return suggested batch size.

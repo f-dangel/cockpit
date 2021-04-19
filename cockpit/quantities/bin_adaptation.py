@@ -1,9 +1,10 @@
 """Adaptation policies to dynamically update histogram bins."""
 
-from backpack import extensions
+from backpack.extensions import BatchGrad
 
 from cockpit.quantities.quantity import SingleStepQuantity
 from cockpit.quantities.utils_hists import transform_grad_batch_abs_max
+from cockpit.quantities.utils_transforms import BatchGradTransformsHook
 
 
 class BinAdaptation(SingleStepQuantity):
@@ -160,13 +161,30 @@ class GradAbsMax(_AbsMax):
         ext = []
 
         if self.should_compute(global_step):
-            ext.append(
-                extensions.BatchGradTransforms(
+            ext.append(BatchGrad())
+
+        return ext
+
+    def extension_hooks(self, global_step):
+        """Return list of BackPACK extension hooks required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            [callable]: List of required BackPACK extension hooks for the current
+                iteration.
+        """
+        hooks = []
+
+        if self.should_compute(global_step):
+            hooks.append(
+                BatchGradTransformsHook(
                     transforms={"grad_batch_abs_max": transform_grad_batch_abs_max}
                 )
             )
 
-        return ext
+        return hooks
 
     def _get_abs_max(self, global_step, params, batch_loss, range):
         """Compute the maximum absolute value of individual gradient elements.

@@ -2,7 +2,8 @@
 
 import warnings
 
-from backpack import backpack, backpack_deactivate_io
+from backpack import backpack, disable
+from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 
 
 class CockpitCTX:
@@ -103,24 +104,35 @@ class BackwardCTX:
 
         # choose context
         ext = cp._get_extensions(global_step, custom_exts=custom_exts)
+        ext_hook = cp._get_extension_hook(global_step)
+
+        save_memory = cp.BACKPACK_CONV_SAVE_MEMORY
+
         if ext:
-            self.ctx = backpack(*ext, debug=debug)
+            self.contexts = (
+                backpack(*ext, extension_hook=ext_hook, debug=debug),
+                weight_jac_t_save_memory(save_memory=save_memory),
+            )
         else:
-            self.ctx = backpack_deactivate_io()
+            self.contexts = (disable(),)
 
         if debug:
             print(f"[DEBUG, step {global_step}]")
             print(f" ↪Quantities  : {cp.quantities}")
             print(f" ↪Extensions  : {ext}")
+            print(f" ↪Hooks       : {ext_hook}")
             print(f" ↪Create graph: {cp.create_graph}")
+            print(f" ↪Save memory : {save_memory}")
 
     def __enter__(self):
-        """Enter cockpit context."""
-        self.ctx.__enter__()
+        """Enter cockpit context(s)."""
+        for ctx in self.contexts:
+            ctx.__enter__()
 
     def __exit__(self, type, value, traceback):
-        """Exist cockpit context and call tracking function of cockpit."""
-        self.ctx.__exit__(type, value, traceback)
+        """Exist cockpit context(s) and call tracking function of cockpit."""
+        for ctx in self.contexts:
+            ctx.__exit__(type, value, traceback)
 
         self.cp.track(self.global_step, protected_savefields=self.protected_savefields)
 

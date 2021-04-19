@@ -4,7 +4,7 @@ from backpack import extensions
 
 from cockpit.context import get_batch_size
 from cockpit.quantities.quantity import SingleStepQuantity
-from cockpit.quantities.utils_transforms import BatchGradTransforms_SumGradSquared
+from cockpit.quantities.utils_transforms import BatchGradTransformsHook_SumGradSquared
 
 
 class TIC(SingleStepQuantity):
@@ -67,15 +67,31 @@ class TIC(SingleStepQuantity):
         ext = []
 
         if self.should_compute(global_step):
+            ext.append(extensions.BatchGrad())
             try:
                 ext.append(self.extensions_from_str[self._curvature]())
             except KeyError as e:
                 available = list(self.extensions_from_str.keys())
                 raise KeyError(f"{str(e)}. Available: {available}")
 
-            ext.append(BatchGradTransforms_SumGradSquared())
-
         return ext
+
+    def extension_hooks(self, global_step):
+        """Return list of BackPACK extension hooks required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            [callable]: List of required BackPACK extension hooks for the current
+                iteration.
+        """
+        hooks = []
+
+        if self.should_compute(global_step):
+            hooks.append(BatchGradTransformsHook_SumGradSquared())
+
+        return hooks
 
 
 class TICDiag(TIC):

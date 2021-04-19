@@ -13,7 +13,10 @@ from cockpit.quantities.utils_quantities import (
     _layerwise_dot_product,
     _root_sum_of_squares,
 )
-from cockpit.quantities.utils_transforms import get_first_n_alphabet
+from cockpit.quantities.utils_transforms import (
+    BatchGradTransformsHook,
+    get_first_n_alphabet,
+)
 from cockpit.utils.optim import ComputeStep
 
 
@@ -54,19 +57,33 @@ class Alpha(TwoStepQuantity):
         """
         ext = []
 
+        if self.is_start(global_step) or self.is_end(global_step):
+            ext.append(extensions.BatchGrad())
+
+        return ext
+
+    def extension_hooks(self, global_step):
+        """Return list of BackPACK extension hooks required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            [callable]: List of required BackPACK extension hooks for the current
+                iteration.
+        """
+        hooks = []
+
         start = self.is_start(global_step)
         end = self.is_end(global_step)
 
-        if start or end:
-            ext.append(extensions.BatchGrad())
+        if (start or end) and self.__projection_with_backpack(global_step):
+            if start:
+                hooks.append(self._project_with_backpack_start(global_step))
+            if end:
+                hooks.append(self._project_with_backpack_end(global_step))
 
-            if self.__projection_with_backpack(global_step):
-                if start:
-                    ext.append(self._project_with_backpack_start(global_step))
-                if end:
-                    ext.append(self._project_with_backpack_end(global_step))
-
-        return ext
+        return hooks
 
     def is_start(self, global_step):
         """Return whether current iteration is start point.
@@ -181,7 +198,7 @@ class Alpha(TwoStepQuantity):
 
             return {}
 
-        return extensions.BatchGradTransforms({"_first_order_projections_start": hook})
+        return BatchGradTransformsHook({"_first_order_projections_start": hook})
 
     def _project_with_backpack_end(self, end_step):
         """Return hook that computes gradient info at end with known search direction.
@@ -236,7 +253,7 @@ class Alpha(TwoStepQuantity):
 
             return {}
 
-        return extensions.BatchGradTransforms({"_first_order_projections_end": hook})
+        return BatchGradTransformsHook({"_first_order_projections_end": hook})
 
     def _compute_start(self, global_step, params, batch_loss):
         """Perform computations at start point (store info for α fit).

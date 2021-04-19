@@ -33,6 +33,18 @@ class AutogradTICDiag(TICDiag):
         """
         return []
 
+    def extension_hooks(self, global_step):
+        """Return list of BackPACK extension hooks required for the computation.
+
+        Args:
+            global_step (int): The current iteration number.
+
+        Returns:
+            [callable]: List of required BackPACK extension hooks for the current
+                iteration.
+        """
+        return []
+
     def create_graph(self, global_step):
         """Return whether access to the forward pass computation graph is needed.
 
