@@ -9,19 +9,18 @@ from backpack.extensions.backprop_extension import BackpropExtension
 
 from cockpit import quantities
 from cockpit.context import BackwardCTX, get_loss
+from cockpit.quantities.quantity import Quantity
 from cockpit.quantities.utils_transforms import BatchGradTransformsHook
 
 
 class Cockpit:
-    """Cockpit class.
+    """Cockpit class."""
 
-    Attributes:
-        BACKPACK_CONV_SAVE_MEMORY (bool): Tell BackPACK to use a more memory-efficient
+    BACKPACK_CONV_SAVE_MEMORY = True
+    """bool: Tell BackPACK to use a more memory-efficient
             Jacobian-vector product algorithm for weights in convolution layers.
             Default: ``True``.
     """
-
-    BACKPACK_CONV_SAVE_MEMORY = True
 
     def __init__(self, params, quantities=None):
         """Initialize a cockpit.
@@ -57,12 +56,12 @@ class Cockpit:
         """Add quantity to tracked quantities.
 
         Args:
-            quantity (Quantity): The quantity to be added.
+            quantity (cockpit.quantites.Quantity): The quantity to be added.
 
         Raises:
             ValueError: If passed quantity is not a ``cockpit.quantity``.
         """
-        if not isinstance(quantity, quantities.Quantity):
+        if not isinstance(quantity, Quantity):
             raise ValueError(
                 f"Added quantities must be instances of Quantity. Got {quantity}"
             )
@@ -166,6 +165,8 @@ class Cockpit:
             global_step (int): Current number of iteration.
             protected_savefields ([str]): List of strings containing attribute names
                 of backpack extensions that will not be deleted after the backward pass
+
+        :meta private:
         """
         batch_loss = get_loss(global_step)
 
@@ -286,7 +287,7 @@ class Cockpit:
         with open(logpath_with_suffix, "w") as json_file:
             json_tricks.dump(self.get_output(), json_file, indent=4, sort_keys=True)
 
-    def update_output(self):
+    def _update_output(self):
         """Fetch outputs from tracked quantities into ``self.output``."""
         # Update the cockpit with the outputs from the individual quantities
         for q in self.quantities:
@@ -313,7 +314,7 @@ class Cockpit:
         Returns:
             dict: Nested dictionary with the results of all tracked quantities.
         """
-        self.update_output()
+        self._update_output()
         return self.output
 
     def _process_duplicate_extensions(self, ext):
