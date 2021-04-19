@@ -281,6 +281,8 @@ class CockpitPlotter:
                 Defaults to 200.
             loop (int, optional): Number of times the GIF should loop.
                 Defaults to 0 which means it will loop forever.
+
+        :meta private:
         """
         screens = ["primary"]
         if self._secondary_screen:
@@ -353,7 +355,6 @@ class CockpitPlotter:
             ValueError: If `source` is neither a ``Cockpit```instance or string.
         """
         if isinstance(source, Cockpit):
-            source.update_output()
             data = source.get_output()
         elif isinstance(source, str):
             with open(source + ".json") as f:
