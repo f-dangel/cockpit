@@ -31,7 +31,7 @@ class GradHist1d(SingleStepQuantity):
                 to a boolean, which determines if the quantity should be computed.
             verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
             bins (int): Number of bins
-            range ((float, float), optional): Lower and upper limit of the bin range.
+            range ([float, float], optional): Lower and upper limit of the bin range.
                 Default: ``(-2, 2)``.
             adapt (BinAdaptation): Policy for adapting the bin limits. Per default,
                 no adaptation is performed.
@@ -168,11 +168,11 @@ class GradHist2d(SingleStepQuantity):
             track_schedule (callable): Function that maps the ``global_step``
                 to a boolean, which determines if the quantity should be computed.
             verbose (bool, optional): Turns on verbose mode. Defaults to ``False``.
-            bins ((int, int)): Number of bins in x and y direction. Default:
+            bins ([int, int]): Number of bins in x and y direction. Default:
                 ``(40, 50)``
-            range ((float, float), (float, float)), optional): Bin limits in x and
+            range ([[float, float], [float, float]], optional): Bin limits in x and
                 y direction. Default ``((-1, 1), (-2, 2))``.
-            adapt ((BinAdaptation or None, BinAdaptation or None), optional): Policy
+            adapt ([BinAdaptation or None, BinAdaptation or None], optional): Policy
                 for adapting the bin limits in x and y direction. ``None`` indicates
                 no adaptation. Default value: ``(None, None)``.
             keep_individual (bool, optional):  Whether to keep individual
