@@ -1,6 +1,6 @@
 distance_gauge
 ==============
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: distance_gauge
+.. autoclass:: distance_gauge

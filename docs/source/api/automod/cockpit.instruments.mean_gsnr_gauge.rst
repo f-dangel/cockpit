@@ -1,6 +1,6 @@
 mean_gsnr_gauge
 ===============
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: mean_gsnr_gauge
+.. autoclass:: mean_gsnr_gauge

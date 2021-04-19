@@ -1,6 +1,6 @@
 tic_gauge
 =========
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: tic_gauge
+.. autoclass:: tic_gauge

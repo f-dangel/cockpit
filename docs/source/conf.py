@@ -16,6 +16,8 @@ from datetime import datetime
 
 from pkg_resources import DistributionNotFound, get_distribution
 
+from docs.source._utils_automod_fix import _create_instruments, _create_quantities
+
 sys.path.insert(0, os.path.abspath("../"))
 
 
@@ -46,13 +48,14 @@ finally:
 # ones.
 extensions = [
     "m2r2",
+    "notfound.extension",
+    "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_automodapi.automodapi",
-    "sphinx_rtd_theme",
     "sphinx_copybutton",
-    "notfound.extension",
+    "sphinx_rtd_theme",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -72,7 +75,7 @@ napoleon_google_docstring = True
 # Settings for automodapi
 automodapi_toctreedirnm = "api/automod"
 automodapi_writereprocessed = False
-automodsumm_inherited_members = True
+automodsumm_inherited_members = False
 numpydoc_show_class_members = False
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -120,6 +123,8 @@ html_static_path = ["_static"]
 def setup(app):
     """Add stylefile to rtd theme."""
     app.add_css_file("stylefile.css")
+    _create_quantities()
+    _create_instruments()
 
 
 # Theme options are theme-specific and customize the look and feel of a theme

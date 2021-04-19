@@ -1,6 +1,6 @@
 hyperparameter_gauge
 ====================
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: hyperparameter_gauge
+.. autoclass:: hyperparameter_gauge

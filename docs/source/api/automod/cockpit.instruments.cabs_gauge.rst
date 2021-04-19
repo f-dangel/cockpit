@@ -1,6 +1,6 @@
 cabs_gauge
 ==========
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: cabs_gauge
+.. autoclass:: cabs_gauge

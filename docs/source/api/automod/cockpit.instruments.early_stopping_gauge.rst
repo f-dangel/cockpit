@@ -1,6 +1,6 @@
 early_stopping_gauge
 ====================
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: early_stopping_gauge
+.. autoclass:: early_stopping_gauge

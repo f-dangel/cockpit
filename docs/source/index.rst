@@ -34,7 +34,6 @@ To install **Cockpit** simply run
    examples/02_advanced_fmnist
    examples/03_deepobs
 
-
 .. toctree::
    :maxdepth: 1
    :caption: API Documentation

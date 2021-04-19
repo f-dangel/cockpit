@@ -1,6 +1,6 @@
 gradient_tests_gauge
 ====================
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: gradient_tests_gauge
+.. autoclass:: gradient_tests_gauge

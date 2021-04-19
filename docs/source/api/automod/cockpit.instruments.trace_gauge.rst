@@ -1,6 +1,6 @@
 trace_gauge
 ===========
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: trace_gauge
+.. autoclass:: trace_gauge

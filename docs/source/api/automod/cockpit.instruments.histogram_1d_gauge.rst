@@ -1,6 +1,6 @@
 histogram_1d_gauge
 ==================
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: histogram_1d_gauge
+.. autoclass:: histogram_1d_gauge

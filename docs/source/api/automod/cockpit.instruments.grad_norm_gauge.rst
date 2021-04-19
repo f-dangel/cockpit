@@ -1,6 +1,6 @@
 grad_norm_gauge
 ===============
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: grad_norm_gauge
+.. autoclass:: grad_norm_gauge

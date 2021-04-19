@@ -1,6 +1,6 @@
 alpha_gauge
 ===========
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: alpha_gauge
+.. autoclass:: alpha_gauge

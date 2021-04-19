@@ -1,6 +1,6 @@
 performance_gauge
 =================
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: performance_gauge
+.. autoclass:: performance_gauge

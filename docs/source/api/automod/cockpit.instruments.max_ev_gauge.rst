@@ -1,6 +1,6 @@
 max_ev_gauge
 ============
 
-.. currentmodule:: cockpit.instruments
+.. currentmodule:: cockpit.instruments 
 
-.. autofunction:: max_ev_gauge
+.. autoclass:: max_ev_gauge
