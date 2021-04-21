@@ -28,11 +28,13 @@ To install **Cockpit** simply run
 
 .. toctree::
    :maxdepth: 1
-   :caption: Tutorials and Examples
+   :caption: Getting Started & Examples
 
+   introduction/getting_started
    examples/01_basic_fmnist
    examples/02_advanced_fmnist
    examples/03_deepobs
+   introduction/good_to_know
 
 .. toctree::
    :maxdepth: 1
