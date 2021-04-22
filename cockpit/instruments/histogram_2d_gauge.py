@@ -14,8 +14,23 @@ def histogram_2d_gauge(
 ):
     """Two-dimensional histogram of the individual gradient and parameter elements.
 
+    This instrument provides a combined histogram of parameter-gradient pairs of
+    the network. The values are collected across an entire mini-batch and thus
+    captures indvidual gradients as well. The marignal distributions across the
+    parameters and gradient values are shown at the top and right respectively.
+
+    The histogram shows the distribution of gradient and parameter elements for
+    the last tracked iteration only.
+
+    **Preview**
+
     .. image:: ../../_static/instrument_previews/Hist2d.png
         :alt: Preview Hist2d Gauge
+
+    **Requires**
+
+    This two dimensional histogram instrument requires data from the
+    :class:`~cockpit.quantities.GradHist2d` quantity class.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.

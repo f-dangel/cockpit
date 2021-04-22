@@ -12,7 +12,7 @@ class CABS(SingleStepQuantity):
     """CABS Quantity class for the suggested batch size using the CABS criterion.
 
     CABS uses the current learning rate and variance of the stochastic gradients
-    to suggest an optima batch size.
+    to suggest an optimal batch size.
 
     Only applies to SGD without momentum.
 

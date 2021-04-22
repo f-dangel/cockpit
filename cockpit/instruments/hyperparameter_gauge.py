@@ -14,8 +14,20 @@ from cockpit.instruments.utils_instruments import (
 def hyperparameter_gauge(self, fig, gridspec):
     """Hyperparameter gauge, currently showing the learning rate over time.
 
+    This instrument visualizes the hyperparameters values over the course of the
+    training. Currently, it shows the learning rate, the most likely parameter to
+    be adapted during training. The current learning rate is additionally shown
+    in the figure's legend.
+
+    **Preview**
+
     .. image:: ../../_static/instrument_previews/Hyperparameters.png
         :alt: Preview Hyperparameter Gauge
+
+    **Requires**
+
+    This instrument requires the learning rate data passed via the
+    :func:`cockpit.Cockpit.log()` method.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.

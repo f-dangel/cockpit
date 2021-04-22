@@ -8,8 +8,22 @@ from cockpit.instruments.utils_instruments import check_data, create_basic_plot
 def max_ev_gauge(self, fig, gridspec):
     """Showing the largest eigenvalue of the Hessian versus iteration.
 
+    The largest eigenvalue of the Hessian indicates the loss surface's sharpest
+    valley. Together with the :func:`~cockpit.instruments.trace_gauge()`, which
+    provides a notion of "average curvature", it can help understand the "average
+    condition number" of the loss landscape at the current point. The instrument
+    shows the largest eigenvalue of the Hessian versus iteration, overlayed with
+    an exponentially weighted average.
+
+    **Preview**
+
     .. image:: ../../_static/instrument_previews/HessMaxEV.png
         :alt: Preview HessMaxEV Gauge
+
+    **Requires**
+
+    The trace instrument requires data from the :class:`~cockpit.quantities.HessMaxEv`
+    quantity class.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.

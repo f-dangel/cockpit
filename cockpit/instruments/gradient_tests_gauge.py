@@ -11,8 +11,27 @@ from cockpit.instruments.utils_instruments import check_data
 def gradient_tests_gauge(self, fig, gridspec):
     """Gauge, showing the the status of several gradient tests.
 
+    All three gradient tests (the norm test, the inner product test, and the
+    orthogonality test) indicate how strongly individual gradients in a mini-batch
+    scatter around the mean gradient. This information can be used to adapt the
+    batch size whenever the information becomes to noisy, as indicated by large
+    values.
+
+    The central plot visualizes all three tests in different colors. Each area shows
+    how far the individual gradients scatter. The smaller plots show their evolution
+    over time.
+
+    **Preview**
+
     .. image:: ../../_static/instrument_previews/GradientTests.png
         :alt: Preview GradientTests Gauge
+
+    **Requires**
+
+    The gradient test instrument requires data from all three gradient test quantities,
+    namely the :class:`~cockpit.quantities.InnerTest`,
+    :class:`~cockpit.quantities.NormTest`, and :class:`~cockpit.quantities.OrthoTest`
+    quantity classes.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.

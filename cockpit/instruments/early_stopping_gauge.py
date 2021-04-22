@@ -8,14 +8,26 @@ from cockpit.instruments.utils_instruments import check_data, create_basic_plot
 def early_stopping_gauge(self, fig, gridspec):
     """Early Stopping gauge, showing the LHS of the stopping criterion versus iteration.
 
-    If the stopping criterion becomes positive, this suggests stopping the training
-    according to
+    Early stopping the training has been widely used to prevent poor generalization
+    due to over-fitting. `Mahsereci et al. (2017) <https://arxiv.org/abs/1703.09580>`_
+    proposed an evidence-based stopping criterion based on mini-batch statistics.
+    This instruments visualizes this criterion versus iteration, overlayed
+    with an exponentially weighted average. If the stopping criterion becomes
+    positive, this suggests stopping the training according to
 
-    - Mahsereci, M., Balles, L., Lassner, C., & Hennig, P.,
+    - `Mahsereci, M., Balles, L., Lassner, C., & Hennig, P.,
       Early stopping without a validation set (2017).
+      <https://arxiv.org/abs/1703.09580>`_
+
+    **Preview**
 
     .. image:: ../../_static/instrument_previews/EarlyStopping.png
         :alt: Preview EarlyStopping Gauge
+
+    **Requires**
+
+    This instrument requires data from the :class:`~cockpit.quantities.EarlyStopping`
+    quantity class.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.

@@ -8,8 +8,19 @@ from cockpit.instruments.utils_instruments import _beautify_plot, check_data
 def histogram_1d_gauge(self, fig, gridspec, y_scale="log"):
     """One-dimensional histogram of the individual gradient elements.
 
+    This instrument provides a histogram of the gradient element values across all
+    individual gradients in a mini-batch. The histogram shows the distribution for
+    the last tracked iteration only.
+
+    **Preview**
+
     .. image:: ../../_static/instrument_previews/Hist1d.png
         :alt: Preview Hist1d Gauge
+
+    **Requires**
+
+    This two dimensional histogram instrument requires data from the
+    :class:`~cockpit.quantities.GradHist1d` quantity class.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.

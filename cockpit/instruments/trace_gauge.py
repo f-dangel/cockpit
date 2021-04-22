@@ -8,8 +8,21 @@ from cockpit.instruments.utils_instruments import check_data, create_basic_plot
 def trace_gauge(self, fig, gridspec):
     """Trace gauge, showing the trace of the Hessian versus iteration.
 
+    The trace of the hessian is the sum of its eigenvalues and thus can indicate
+    the overall or average curvature of the loss landscape at the current point.
+    Increasing values for the trace indicate a steeper curvature, for example, a
+    narrower valley. This instrument shows the trace versus iteration, overlayed
+    with an exponentially weighted average.
+
+    **Preview**
+
     .. image:: ../../_static/instrument_previews/HessTrace.png
         :alt: Preview HessTrace Gauge
+
+    **Requires**
+
+    The trace instrument requires data from the :class:`~cockpit.quantities.HessTrace`
+    quantity class.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.

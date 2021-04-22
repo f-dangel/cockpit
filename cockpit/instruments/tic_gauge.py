@@ -6,8 +6,21 @@ from cockpit.instruments.utils_instruments import check_data, create_basic_plot
 def tic_gauge(self, fig, gridspec):
     """TIC gauge, showing the TIC versus iteration.
 
+    The TIC (either approximated via traces or using a diagonal approximation)
+    describes the relation between the curvature and the gradient noise. `Recent
+    work <https://arxiv.org/abs/1906.07774>`_ suggested that *at a local minimum*,
+    this quantitiy can estimate the generalization gap. This instrument shows the
+    TIC versus iteration, overlayed with an exponentially weighted average.
+
+    **Preview**
+
     .. image:: ../../_static/instrument_previews/TIC.png
         :alt: Preview TIC Gauge
+
+    **Requires**
+
+    The trace instrument requires data from the :class:`~cockpit.quantities.TICDiag`
+    or :class:`~cockpit.quantities.TICTrace` quantity class.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.

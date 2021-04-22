@@ -8,8 +8,22 @@ from cockpit.instruments.utils_instruments import check_data, create_basic_plot
 def mean_gsnr_gauge(self, fig, gridspec):
     """Mean GSNR gauge, showing the mean GSNR versus iteration.
 
+    The mean GSNR describes the average gradient signal-to-noise-ratio. `Recent
+    work <https://arxiv.org/abs/2001.07384>`_ used this quantity to study the
+    generalization performances of neural networks, noting "that larger GSNR during
+    training process leads to better generalization performance. The instrument
+    shows the mean GSNR versus iteration, overlayed with an exponentially weighted
+    average.
+
+    **Preview**
+
     .. image:: ../../_static/instrument_previews/MeanGSNR.png
         :alt: Preview MeanGSNR Gauge
+
+    **Requires**
+
+    This instrument requires data from the :class:`~cockpit.quantities.MeanGSNR`
+    quantity class.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.

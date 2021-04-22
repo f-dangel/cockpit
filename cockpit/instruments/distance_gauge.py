@@ -7,10 +7,27 @@ from cockpit.quantities.utils_quantities import _root_sum_of_squares
 
 
 def distance_gauge(self, fig, gridspec):
-    """Showing the parameter L2-distance to the initialization versus iteration.
+    """Distance gauge showing two different quantities related to distance.
+
+    This instruments shows two quantities at once. Firstly, the :math:`L_2`-distance
+    of the current parameters to their initialization. This describes the total distance
+    that the optimization trajectory "has traveled so far" and can be seen via the
+    blue-to-green dots (and the left y-axis).
+
+    Secondly, the update sizes of individual steps are shown via the yellow-to-blue
+    dots (and the right y-axis). It measure the distance that a single parameter
+    update covers.
+
+    Both quantities are overlayed with an exponentially weighted average.
 
     .. image:: ../../_static/instrument_previews/Distances.png
         :alt: Preview Distances Gauge
+
+    **Requires**
+
+    The distance instrument requires data from both, the
+    :class:`~cockpit.quantities.UpdateSize` and the
+    :class:`~cockpit.quantities.Distance` quantity class.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.

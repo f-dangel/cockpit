@@ -14,8 +14,20 @@ from cockpit.instruments.utils_instruments import (
 def performance_gauge(self, fig, gridspec):
     """Plotting train/valid accuracy vs. epoch and mini-batch loss vs. iteration.
 
+    This instruments visualizes the currently most popular diagnostic metrics. It
+    shows the mini-batch loss in each iteration (overlayed with an exponentially
+    weighted average) as well as accuracies for both the training as well as the
+    validation set. The current accuracy numbers are also shown in the legend.
+
+    **Preview**
+
     .. image:: ../../_static/instrument_previews/Performance.png
         :alt: Preview Performance Gauge
+
+    **Requires**
+
+    This instrument visualizes quantities passed via the
+    :func:`cockpit.Cockpit.log()` method.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.

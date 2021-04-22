@@ -9,8 +9,21 @@ from cockpit.quantities.utils_quantities import _root_sum_of_squares
 def grad_norm_gauge(self, fig, gridspec):
     """Showing the gradient norm versus iteration.
 
+    If the training gets stuck, due to a small
+    :class:`~cockpit.quantities.UpdateSize` it can be the result of both a badly
+    chosen learning rate, or from a flat plateau in the loss landscape.
+    This instrument shows the gradient norm at each iteration, overlayed with an
+    exponentially weighted average, and can thus distinguish these two cases.
+
+    **Preview**
+
     .. image:: ../../_static/instrument_previews/GradientNorm.png
         :alt: Preview GradientNorm Gauge
+
+    **Requires**
+
+    The gradient norm instrument requires data from the
+    :class:`~cockpit.quantities.GradNorm` quantity class.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.

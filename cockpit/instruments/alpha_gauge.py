@@ -11,10 +11,39 @@ from cockpit.instruments.utils_instruments import _beautify_plot, check_data
 
 
 def alpha_gauge(self, fig, gridspec):
-    """Showing a distribution of the alpha values since the last plot.
+    r"""Showing a distribution of the alpha values.
+
+    This alpha instruments provides a summary of the alpha values of all tracked
+    iterations (shown in gray) as well as the last 10% of them (shown in blue).
+
+    The alpha value uses loss and gradient information to build a noise-informed
+    univariate quadratic approximation of the loss function to assess to which
+    point on this parabola the optimizer moves. The parabola (shown in orange) is
+    always normalized such that the starting point of each iteration is at
+    :math:`x=-1`. If the optimzer takes a single step to the local minimum (e.g.
+    the valley floor) it would be indicated by an :math:`\alpha` value of :math:`0`.
+    Analogously, taking a step to the exact opposite side of the valley, will be
+    descrbied by :math:`\alpha=1`.
+
+    The instruments shows a histogram and a distribution fit of all alpha values,
+    as well as the last 10% of tracked iterations. The mean values of both distributions
+    are also shown in the figure's legend.
+
+    For a more detailed explanation of the alpha value and why - perhaps against
+    intuition - values larger than zero might be desirable, have a look at the
+    Cockpit paper:
+
+    - `Schneider, F., Dangel, F., & Hennig, P.,
+      Cockpit: A Practical Debugging Tool for Training Deep Neural Networks (2021).
+      <https://arxiv.org/abs/2102.06604>`_
 
     .. image:: ../../_static/instrument_previews/Alpha.png
         :alt: Preview Alpha Gauge
+
+    **Requires**
+
+    This instrument requires data from the :class:`~cockpit.quantities.Alpha`
+    quantity class.
 
     Args:
         self (CockpitPlotter): The cockpit plotter requesting this instrument.
