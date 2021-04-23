@@ -121,7 +121,7 @@ class BackwardCTX:
             print(f" ↪Quantities  : {cp.quantities}")
             print(f" ↪Extensions  : {ext}")
             print(f" ↪Hooks       : {ext_hook}")
-            print(f" ↪Create graph: {cp.create_graph}")
+            print(f" ↪Create graph: {cp.create_graph(global_step)}")
             print(f" ↪Save memory : {save_memory}")
 
     def __enter__(self):
