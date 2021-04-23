@@ -1,3 +1,5 @@
+.. _basic_example:
+
 =============
 Basic Example
 =============
