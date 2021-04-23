@@ -8,7 +8,7 @@ are limitations. Here are some common pitfalls and recommendations.
 BackPACK
 ########
 
-Most of Cockpit's quantities use BackPACK_ as back-end for efficient
+Most of Cockpit's quantities use BackPACK_ as the back-end for efficient
 computation. Please pay attention to the following points for smooth
 integration:
 
@@ -16,10 +16,11 @@ integration:
   <https://docs.backpack.pt/en/master/main-api.html#extending-the-model-and-loss-function>`_
   yourself [1]_ to activate BackPACK_.
 
-- Verify your model architecture is `supported by BackPACK
+- Verify that your model architecture is `supported by BackPACK
   <https://docs.backpack.pt/en/master/supported-layers.html>`_.
 
-- Your loss function must use ``"mean"`` reduction, that is the loss is of structure
+- Your loss function must use ``"mean"`` reduction, that is the loss is of the
+  following structure
 
   .. math::
 
@@ -43,7 +44,7 @@ time and memory consumption:
 
 - Use schedules to reduce the tracking frequency. You can specify custom
   schedules to literally select any iteration to be tracked, or rely on
-  pre-defined :ref:`schedules <Schedules>`.
+  pre-defined :mod:`~cockpit.utils.schedules`.
 
 - Exclude :py:class:`GradHist2d <cockpit.quantities.GradHist2d>` from your quantities. The
   two-dimensional histogram implementation uses :py:func:`torch.scatter_add`,
@@ -53,7 +54,7 @@ time and memory consumption:
   requires multiple Hessian-vector products, that are executed sequentially.
   Also, this requires the full computation be kept in memory.
 
-- Spot :ref:`quantities <Quantities>` whose constructor contains a ``curvature``
+- Spot :ref:`quantities <quantities>` whose constructor contains a ``curvature``
   argument. It defaults to the most accurate, but also most expensive type. You
   may want to sacrifice accuracy for memory and run time performance by
   selecting a cheaper option.
