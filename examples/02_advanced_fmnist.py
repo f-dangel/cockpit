@@ -1,5 +1,4 @@
 """A slightly advanced example of using Cockpit with PyTorch for Fashion-MNIST."""
-import time
 
 import torch
 from backpack import extend, extensions
@@ -19,7 +18,12 @@ opt = torch.optim.SGD(model.parameters(), lr=5e-1)
 
 # Create Cockpit and a plotter
 # Customize the tracked quantities and their tracking schedule
-quantities = [quantities.Distance(schedules.linear(interval=2))]
+quantities = [
+    quantities.GradNorm(schedules.linear(interval=2)),
+    quantities.Distance(schedules.linear(interval=1)),
+    quantities.UpdateSize(schedules.linear(interval=1)),
+    quantities.GradHist1d(schedules.linear(interval=4), bins=10),
+]
 cockpit = Cockpit(model.parameters(), quantities=quantities)
 plotter = CockpitPlotter()
 
@@ -67,5 +71,10 @@ for inputs, labels in iter(fmnist_data):
 cockpit.write(get_logpath())
 
 # Plot results from file
-plotter.plot(get_logpath())
-time.sleep(3)
+plotter.plot(
+    get_logpath(),
+    savedir=get_logpath(),
+    show_plot=False,
+    save_plot=True,
+    savename_append="_final",
+)
