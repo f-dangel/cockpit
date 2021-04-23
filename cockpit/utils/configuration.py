@@ -5,7 +5,21 @@ from cockpit.utils import schedules
 
 
 def configuration(label, track_schedule=None, verbose=False):
-    """Collect all quantities that should be used for tracking.
+    """Use pre-defined collections of quantities that should be used for tracking.
+
+    Currently supports three different configurations:
+
+    - ``"economy"``: Combines the :class:`~cockpit.quantities.Alpha`,
+      :class:`~cockpit.quantities.Distance`, :class:`~cockpit.quantities.GradHist1d`,
+      :class:`~cockpit.quantities.GradNorm`, :class:`~cockpit.quantities.InnerTest`,
+      :class:`~cockpit.quantities.Loss`, :class:`~cockpit.quantities.NormTest`,
+      :class:`~cockpit.quantities.OrthoTest` and :class:`~cockpit.quantities.UpdateSize`
+      quantities.
+    - ``"business"``: Same as ``"economy"`` but additionally with
+      :class:`~cockpit.quantities.TICDiag` and :class:`~cockpit.quantities.HessTrace`.
+    - ``"full"``: Same as ``"business"`` but additionally with
+      :class:`~cockpit.quantities.HessMaxEV` and
+      :class:`~cockpit.quantities.GradHist2d`.
 
     Args:
         label (str): String specifying the configuration type. Possible configurations
@@ -31,6 +45,20 @@ def configuration(label, track_schedule=None, verbose=False):
 def quantities_cls_for_configuration(label):
     """Return the quantity classes for a cockpit configuration.
 
+    Currently supports three different configurations:
+
+    - ``"economy"``: Combines the :class:`~cockpit.quantities.Alpha`,
+      :class:`~cockpit.quantities.Distance`, :class:`~cockpit.quantities.GradHist1d`,
+      :class:`~cockpit.quantities.GradNorm`, :class:`~cockpit.quantities.InnerTest`,
+      :class:`~cockpit.quantities.Loss`, :class:`~cockpit.quantities.NormTest`,
+      :class:`~cockpit.quantities.OrthoTest` and :class:`~cockpit.quantities.UpdateSize`
+      quantities.
+    - ``"business"``: Same as ``"economy"`` but additionally with
+      :class:`~cockpit.quantities.TICDiag` and :class:`~cockpit.quantities.HessTrace`.
+    - ``"full"``: Same as ``"business"`` but additionally with
+      :class:`~cockpit.quantities.HessMaxEV` and
+      :class:`~cockpit.quantities.GradHist2d`.
+
     Args:
         label (str): String specifying the configuration type. Possible configurations
             are (least to most expensive) ``'economy'``, ``'business'``, ``'full'``.
@@ -41,14 +69,14 @@ def quantities_cls_for_configuration(label):
     """
     economy = [
         quantities.Alpha,
-        quantities.GradHist1d,
         quantities.Distance,
-        quantities.UpdateSize,
+        quantities.GradHist1d,
         quantities.GradNorm,
         quantities.InnerTest,
+        quantities.Loss,
         quantities.NormTest,
         quantities.OrthoTest,
-        quantities.Loss,
+        quantities.UpdateSize,
     ]
     business = economy + [
         quantities.TICDiag,
