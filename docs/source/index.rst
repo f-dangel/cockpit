@@ -23,7 +23,7 @@ To install **Cockpit** simply run
 
 .. code:: bash
 
-  pip install 'git+https://github.com/f-dangel/cockpit-paper.git@v1_release'
+  pip install 'git+https://github.com/f-dangel/cockpit.git@v1_release'
 
 
 .. toctree::
@@ -49,26 +49,26 @@ To install **Cockpit** simply run
    :maxdepth: 1
    :caption: Other
 
-   GitHub Repository <https://github.com/f-dangel/cockpit-paper>
+   GitHub Repository <https://github.com/f-dangel/cockpit>
    other/contributors
    other/license
    other/changelog
 
 
-.. |CI Status| image:: https://github.com/f-dangel/cockpit-paper/actions/workflows/CI.yml/badge.svg
-    :target: https://github.com/f-dangel/cockpit-paper/actions/workflows/CI.yml
+.. |CI Status| image:: https://github.com/f-dangel/cockpit/actions/workflows/CI.yml/badge.svg
+    :target: https://github.com/f-dangel/cockpit/actions/workflows/CI.yml
     :alt: CI Status
 
-.. |Lint Status| image:: https://github.com/f-dangel/cockpit-paper/actions/workflows/Lint.yml/badge.svg
-    :target: https://github.com/f-dangel/cockpit-paper/actions/workflows/Lint.yml
+.. |Lint Status| image:: https://github.com/f-dangel/cockpit/actions/workflows/Lint.yml/badge.svg
+    :target: https://github.com/f-dangel/cockpit/actions/workflows/Lint.yml
     :alt: Lint Status
 
-.. |Coverage| image:: https://coveralls.io/repos/github/f-dangel/cockpit-paper/badge.svg?branch=v1_release&t=piyZHm
-    :target: https://coveralls.io/github/f-dangel/cockpit-paper?branch=v1_release
+.. |Coverage| image:: https://coveralls.io/repos/github/f-dangel/cockpit/badge.svg?branch=v1_release&t=piyZHm
+    :target: https://coveralls.io/github/f-dangel/cockpit?branch=v1_release
     :alt: CI Status
 
 .. |License| image:: https://img.shields.io/badge/License-MIT-green.svg
-    :target: https://github.com/f-dangel/cockpit-paper/blob/master/LICENSE
+    :target: https://github.com/f-dangel/cockpit/blob/master/LICENSE
     :alt: License
 
 .. |Code Style| image:: https://img.shields.io/badge/code%20style-black-000000.svg

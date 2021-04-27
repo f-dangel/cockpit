@@ -11,16 +11,16 @@
 
 <p align="center">
   <a href="#installation">Installation</a> •
-  <a href="https://f-dangel.github.io/cockpit-paper/">Docs</a> •
+  <a href="https://cockpit.readthedocs.io/">Docs</a> •
   <a href="experiments/">Experiments</a> •
   <a href="#license">License</a> •
   <a href="#citation">Citation</a>
 </p>
 
-[![CI](https://github.com/f-dangel/cockpit-paper/actions/workflows/CI.yml/badge.svg)](https://github.com/f-dangel/cockpit-paper/actions/workflows/CI.yml)
-[![Lint](https://github.com/f-dangel/cockpit-paper/actions/workflows/Lint.yml/badge.svg)](https://github.com/f-dangel/cockpit-paper/actions/workflows/Lint.yml)
-[![Coverage](https://coveralls.io/repos/github/f-dangel/cockpit-paper/badge.svg?branch=v1_release&t=piyZHm)](https://coveralls.io/github/f-dangel/cockpit-paper?branch=v1_release)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/f-dangel/cockpit-paper/blob/master/LICENSE)
+[![CI](https://github.com/f-dangel/cockpit/actions/workflows/CI.yml/badge.svg)](https://github.com/f-dangel/cockpit/actions/workflows/CI.yml)
+[![Lint](https://github.com/f-dangel/cockpit/actions/workflows/Lint.yml/badge.svg)](https://github.com/f-dangel/cockpit/actions/workflows/Lint.yml)
+[![Coverage](https://coveralls.io/repos/github/f-dangel/cockpit/badge.svg?branch=v1_release&t=piyZHm)](https://coveralls.io/github/f-dangel/cockpit?branch=v1_release)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/f-dangel/cockpit/blob/master/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![arXiv](https://img.shields.io/static/v1?logo=arxiv&logoColor=white&label=Preprint&message=2102.06604&color=B31B1B)](https://arxiv.org/abs/2102.06604)
 
@@ -38,13 +38,13 @@
 To install **Cockpit** simply run
 
 ```bash
-pip install 'git+https://github.com/f-dangel/cockpit-paper.git@v1_release'
+pip install 'git+https://github.com/f-dangel/cockpit.git@v1_release'
 ```
 
 <!-- Documentation -->
 ## Documentation
 
-The [documentation](https://f-dangel.github.io/cockpit-paper/) provides a full tutorial on how to get started using **Cockpit** as well as a detailed documentation of its API.
+The [documentation](https://cockpit.readthedocs.io/) provides a full tutorial on how to get started using **Cockpit** as well as a detailed documentation of its API.
 
 <!-- Experiments -->
 ## Experiments

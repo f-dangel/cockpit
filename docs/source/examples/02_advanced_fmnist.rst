@@ -12,7 +12,7 @@ To run this example, run
   python 02_advanced_fmnist.py
 
 Assuming you have a similar structure to our `example files 
-<https://github.com/f-dangel/cockpit-paper/tree/v1_release/examples>`_
+<https://github.com/f-dangel/cockpit/tree/v1_release/examples>`_
 from the repository, this will execute the following file:
 
 .. literalinclude:: ../../../examples/02_advanced_fmnist.py
