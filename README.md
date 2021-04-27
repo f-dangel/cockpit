@@ -12,7 +12,6 @@
 <p align="center">
   <a href="#installation">Installation</a> •
   <a href="https://cockpit.readthedocs.io/">Docs</a> •
-  <a href="experiments/">Experiments</a> •
   <a href="#license">License</a> •
   <a href="#citation">Citation</a>
 </p>
@@ -49,12 +48,12 @@ The [documentation](https://cockpit.readthedocs.io/) provides a full tutorial on
 <!-- Experiments -->
 ## Experiments
 
-To showcase the capabilities of **Cockpit** we performed several experiments illustrating the usefulness of our debugging tool. The code for all experiments, as well as the generated data is presented in [experiments](experiments/). For a discussion of those experiments please refer to our [paper](https://arxiv.org/abs/2102.06604).
+To showcase the capabilities of **Cockpit** we performed several experiments illustrating the usefulness of our debugging tool. For a discussion of those experiments please refer to our [paper](https://arxiv.org/abs/2102.06604).
 
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
+Distributed under the MIT License. See [`LICENSE`](LICENSE.txt) for more information.
 
 <!-- Citation -->
 ## Citation
