@@ -2,7 +2,7 @@
 Cockpit
 =======
 
-|CI Status| |Lint Status| |Coverage| |License| |Code Style| |arXiv|
+|CI Status| |Lint Status| |Doc Status| |Coverage| |License| |Code Style| |arXiv|
 
 ----
 
@@ -62,6 +62,10 @@ To install **Cockpit** simply run
 .. |Lint Status| image:: https://github.com/f-dangel/cockpit/actions/workflows/Lint.yml/badge.svg
     :target: https://github.com/f-dangel/cockpit/actions/workflows/Lint.yml
     :alt: Lint Status
+
+.. |Doc Status| image:: https://img.shields.io/readthedocs/cockpit.svg?logo=read%20the%20docs&logoColor=white&label=Doc
+    :target: https://cockpit.readthedocs.io
+    :alt: Doc Status
 
 .. |Coverage| image:: https://coveralls.io/repos/github/f-dangel/cockpit/badge.svg?branch=v1_release&t=piyZHm
     :target: https://coveralls.io/github/f-dangel/cockpit?branch=v1_release

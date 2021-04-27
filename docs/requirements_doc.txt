@@ -1,6 +1,11 @@
+# Sphinx builds the documentation
 sphinx
+
+# Sphinx extensions
 sphinx-rtd-theme
 sphinx-automodapi
 sphinx-copybutton
 sphinx-notfound-page
-graphviz
+
+# Markdown conversion
+m2r2
