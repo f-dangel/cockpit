@@ -16,7 +16,8 @@ from datetime import datetime
 
 from pkg_resources import DistributionNotFound, get_distribution
 
-from docs.source._utils_automod_fix import _create_instruments, _create_quantities
+from cockpit.instruments import __all__ as all_instruments
+from cockpit.quantities import __all__ as all_quantities
 
 sys.path.insert(0, os.path.abspath("../"))
 
@@ -119,14 +120,6 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
 
-# Use custom stylefile
-def setup(app):
-    """Add stylefile to rtd theme."""
-    app.add_css_file("stylefile.css")
-    _create_quantities()
-    _create_instruments()
-
-
 # Theme options are theme-specific and customize the look and feel of a theme
 # further. For a list of options available for each theme, see the
 # documentation.
@@ -135,3 +128,46 @@ html_theme_options = {"style_nav_header_background": "#fcfcfc"}
 html_logo = "_static/LogoSquare.png"
 
 html_favicon = "_static/favicon.ico"
+
+
+# Fix for the automod extension.
+def _create_quantities():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "api/automod")
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    for q in all_quantities:
+        file_name = "cockpit.quantities." + q + ".rst"
+
+        with open(os.path.join(path, file_name), "w+") as file:
+            file.write(q + "\n")
+            file.write(len(q) * "=" + "\n\n")
+
+            file.write(".. currentmodule:: cockpit.quantities \n\n")
+            file.write(".. autoclass:: " + q + "\n")
+
+
+def _create_instruments():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "api/automod")
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    for q in all_instruments:
+        file_name = "cockpit.instruments." + q + ".rst"
+
+        with open(os.path.join(path, file_name), "w+") as file:
+            file.write(q + "\n")
+            file.write(len(q) * "=" + "\n\n")
+
+            file.write(".. currentmodule:: cockpit.instruments \n\n")
+            file.write(".. autoclass:: " + q + "\n")
+
+
+# Use custom stylefile
+def setup(app):
+    """Add stylefile to rtd theme."""
+    app.add_css_file("stylefile.css")
+    _create_quantities()
+    _create_instruments()
