@@ -1,0 +1,6 @@
+sphinx
+sphinx-rtd-theme
+sphinx-automodapi
+sphinx-copybutton
+sphinx-notfound-page
+graphviz
