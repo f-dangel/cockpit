@@ -15,7 +15,7 @@ don't worry, most of these changes are simple plug-and-play solutions.
    :linenos:
 
 You can try out this basic example yourself. Simply install **Cockpit** and then 
-copy the `example files <https://github.com/f-dangel/cockpit/tree/v1_release/examples>`_
+copy the `example files <https://github.com/f-dangel/cockpit/tree/development/examples>`_
 from the repository.
 
 In this first example, we will run this 

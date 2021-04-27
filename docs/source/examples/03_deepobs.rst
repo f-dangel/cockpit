@@ -17,7 +17,7 @@ In the following example, we use an :download:`example DeepOBS runner
 with **DeepOBS**.
 
 Assuming the structure from our `example files 
-<https://github.com/f-dangel/cockpit/tree/v1_release/examples>`_
+<https://github.com/f-dangel/cockpit/tree/development/examples>`_
 from the repository, we just have to run
 
 .. code:: bash
