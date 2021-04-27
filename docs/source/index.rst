@@ -63,7 +63,7 @@ To install **Cockpit** simply run
     :target: https://github.com/f-dangel/cockpit/actions/workflows/Lint.yml
     :alt: Lint Status
 
-.. |Doc Status| image:: https://img.shields.io/readthedocs/cockpit.svg?logo=read%20the%20docs&logoColor=white&label=Doc
+.. |Doc Status| image:: https://img.shields.io/readthedocs/cockpit/v1_release.svg?logo=read%20the%20docs&logoColor=white&label=Doc
     :target: https://cockpit.readthedocs.io
     :alt: Doc Status
 
