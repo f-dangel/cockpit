@@ -4,21 +4,33 @@ DeepOBS Example
 
 **Cockpit** easily integrates with and can be used together with 
 `DeepOBS <https://deepobs.github.io/>`_.
-This will directly give you access to run on dozens of deep learning problems 
+This will directly give you access to dozens of deep learning problems 
 that you can explore with **Cockpit**.
 
 .. Note::
-   This example requires a **DeepOBS** installation. Currently, only the 1.2.0 beta
-   version of it supports PyTorch. Installation instructions can be found
-   `here <https://github.com/fsschneider/DeepOBS/tree/develop>`_.
+   This example requires a `DeepOBS <https://github.com/fsschneider/DeepOBS/>`__ 
+   and a `BackOBS <https://github.com/f-dangel/backobs>`_ installation. 
+   You can install them by running
 
-In the following example, we use an :download:`example DeepOBS runner 
-<../../../examples/_utils_deepobs.py>` that integrates the **Cockpit** 
-with **DeepOBS**.
+   .. code:: bash
 
-Assuming the structure from our `example files 
-<https://github.com/f-dangel/cockpit/tree/development/examples>`_
-from the repository, we just have to run
+      pip install 'git+https://github.com/fsschneider/DeepOBS.git@v1.2.0-beta0#egg=DeepOBS'
+
+   and
+   
+   .. code:: bash
+
+      pip install 'git://github.com/f-dangel/backobs.git@master#egg=backobs'
+
+   Note, that currently, only the 1.2.0 beta version of DeepOBS supports PyTorch
+   which will be installed by the above command.
+
+In the following example, we will use an additional :download:`utility file 
+<../../../examples/_utils_deepobs.py>` which automatically incorporates **Cockpit**
+with the DeepOBS training loop.
+
+Having the two `utility files from our repository 
+<https://github.com/f-dangel/cockpit/tree/development/examples>`_ we can run
 
 .. code:: bash
 
