@@ -9,26 +9,38 @@ training loop.
 Lines that are highlighted in yellow highlight **Cockpit**-specific code, but 
 don't worry, most of these changes are simple plug-and-play solutions.
 
+You can try out this basic example yourself.
+Simply install **Cockpit** via
+
+.. code:: bash
+
+  pip install 'git+https://github.com/f-dangel/cockpit.git@development'
+
+and then copy the `example files <https://github.com/f-dangel/cockpit/tree/development/examples>`_
+from the repository or from the code block below. Don't forget the 
+:download:`utility file <../../../examples/utils/utils_examples.py>` which provides
+the data for this example.
+
 .. literalinclude:: ../../../examples/01_basic_fmnist.py
    :language: python
    :emphasize-lines: 4-5,7-8,12-14,20-21,31, 34-43, 51
    :linenos:
 
-You can try out this basic example yourself. Simply install **Cockpit** and then 
-copy the `example files <https://github.com/f-dangel/cockpit/tree/development/examples>`_
-from the repository.
-
-In this first example, we will run this 
-:download:`example script <../../../examples/01_basic_fmnist.py>`  
-(and the :download:`utility file <../../../examples/utils/utils_examples.py>` 
-for defining the data of the example) via
+Try running this :download:`example script <../../../examples/01_basic_fmnist.py>`  
+via
 
 .. code:: bash
 
   python 01_basic_fmnist.py
 
-In the following, we will break-down and explain each step required to include 
-**Cockpit** to a training loop.
+During every iteration of the training process, **Cockpit** will show you a 
+status screen of the training, which will look something like this:
+
+.. image:: ../_static/01_basic_fmnist.png
+        :alt: Preview Cockpit Basic Example
+
+In the following, we will break-down and explain each step of this exampe, which
+also explains what is required to include **Cockpit** to a training loop.
 
 Imports
 =======
@@ -131,4 +143,3 @@ This will result in a status screen similar to this:
 
 .. image:: ../_static/01_basic_fmnist.png
         :alt: Preview Cockpit Basic Example
-
