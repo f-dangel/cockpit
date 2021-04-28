@@ -13,7 +13,7 @@ that you can explore with **Cockpit**.
    `here <https://github.com/fsschneider/DeepOBS/tree/develop>`_.
 
 In the following example, we use an :download:`example DeepOBS runner 
-<../../../examples/utils/deepobs_runner.py>` that integrates the **Cockpit** 
+<../../../examples/_utils_deepobs.py>` that integrates the **Cockpit** 
 with **DeepOBS**.
 
 Assuming the structure from our `example files 

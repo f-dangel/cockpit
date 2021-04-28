@@ -1,8 +1,8 @@
 """An example of using Cockpit with DeepOBS."""
 
+from _utils_deepobs import DeepOBSRunner
+from _utils_examples import get_logpath
 from torch.optim import SGD
-from utils.deepobs_runner import DeepOBSRunner
-from utils.utils_examples import get_logpath
 
 from cockpit.utils import configuration, schedules
 

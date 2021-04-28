@@ -11,9 +11,11 @@ To run this example, run
 
   python 02_advanced_fmnist.py
 
-Assuming you have a similar structure to our `example files 
-<https://github.com/f-dangel/cockpit/tree/development/examples>`_
-from the repository, this will execute the following file:
+Again, you need the :download:`utility file <../../../examples/_utils_examples.py>` 
+which provides us with the training data, a convolutional network and a logpath.
+You can copy all `example files 
+<https://github.com/f-dangel/cockpit/tree/development/examples>`_ from our 
+repository.
 
 .. literalinclude:: ../../../examples/02_advanced_fmnist.py
    :language: python

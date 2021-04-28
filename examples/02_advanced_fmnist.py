@@ -1,8 +1,8 @@
 """A slightly advanced example of using Cockpit with PyTorch for Fashion-MNIST."""
 
 import torch
+from _utils_examples import cnn, fmnist_data, get_logpath
 from backpack import extend, extensions
-from utils.utils_examples import cnn, fmnist_data, get_logpath
 
 from cockpit import Cockpit, CockpitPlotter, quantities
 from cockpit.utils import schedules

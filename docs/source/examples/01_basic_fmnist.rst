@@ -18,7 +18,7 @@ Simply install **Cockpit** via
 
 and then copy the `example files <https://github.com/f-dangel/cockpit/tree/development/examples>`_
 from the repository or from the code block below. Don't forget the 
-:download:`utility file <../../../examples/utils/utils_examples.py>` which provides
+:download:`utility file <../../../examples/_utils_examples.py>` which provides
 the data for this example.
 
 .. literalinclude:: ../../../examples/01_basic_fmnist.py
@@ -56,7 +56,7 @@ be installed when installing **Cockpit**. We also import the :class:`~cockpit.Co
 and :class:`~cockpit.CockpitPlotter` class which will let us track and then 
 visualize insightful quantities.
 
-To simplify the code snippet, in line 5, we import from a utils file which will 
+To simplify the code snippet, in line 4, we import from a utils file which will 
 provide us with the Fashion-MNIST data.
 
 Defining the Problem

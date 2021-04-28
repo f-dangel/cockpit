@@ -11,15 +11,16 @@ import pytest
 
 mpl.use("Agg")
 
-scripts = sorted(pathlib.Path(__file__, "../../..", "examples").resolve().glob("*.py"))
-scripts_str, scripts_id = [], []
-for s in scripts:
-    scripts_str.append(str(s))
-    scripts_id.append(str(s).split("/")[-1].split(".")[0])
+SCRIPTS = sorted(pathlib.Path(__file__, "../../..", "examples").resolve().glob("*.py"))
+SCRIPTS_STR, SCRIPTS_ID = [], []
+for s in SCRIPTS:
+    if not str(s).split("/")[-1].startswith("_"):
+        SCRIPTS_STR.append(str(s))
+        SCRIPTS_ID.append(str(s).split("/")[-1].split(".")[0])
 
 
 @patch("time.sleep")
-@pytest.mark.parametrize("script", scripts_str, ids=scripts_id)
+@pytest.mark.parametrize("script", SCRIPTS_STR, ids=SCRIPTS_ID)
 def test_example_scripts(mock, script):
     """Run a single example script.
 
