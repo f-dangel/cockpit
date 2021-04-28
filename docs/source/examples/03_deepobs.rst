@@ -49,7 +49,37 @@ Just like before, we can define a list of quantities (here we use the
 With the arguments of the ``runner.run()`` function, we can define whether we want
 the :class:`~cockpit.CockpitPlotter` plots to show and/or be stored.
 
-The fifteen steps on the `deep quadratic 
+The **Cockpit** will show a status screen every few epochs, as well as writing to
+a logfile and saving its final plot, after training completed.
+
+.. code-block:: console
+
+  $ python 03_deepobs.py
+
+  ********************************
+  Evaluating after 0 of 15 epochs...
+  TRAIN: loss 7.0372
+  VALID: loss 7.07626
+  TEST: loss 7.06894
+  ********************************
+  [cockpit|plot] Showing current Cockpit.
+  ********************************
+  Evaluating after 1 of 15 epochs...
+  TRAIN: loss 7.00634
+  VALID: loss 7.01242
+  TEST: loss 7.00535
+  ********************************
+  ********************************
+  Evaluating after 2 of 15 epochs...
+  TRAIN: loss 6.98335
+  VALID: loss 6.94937
+  TEST: loss 6.94255
+  ********************************
+  [cockpit|plot] Showing current Cockpit.
+  
+  [...]
+
+The fifteen epochs on the `deep quadratic 
 <https://deepobs.readthedocs.io/en/v1.2.0-beta0_a/api/pytorch/testproblems/quadratic/quadratic_deep.html>`_ 
 problem will result in a **Cockpit** plot similar to this:
 

@@ -34,7 +34,24 @@ via
   python 01_basic_fmnist.py
 
 During every iteration of the training process, **Cockpit** will show you a 
-status screen of the training, which will look something like this:
+status screen of the training.
+
+.. code-block:: console
+
+  $ python 01_basic_fmnist.py
+  
+  Step:     1 | Loss: 2.5365
+  [cockpit|plot] Showing current Cockpit.
+  Step:     2 | Loss: 2.1643
+  [cockpit|plot] Showing current Cockpit.
+  Step:     3 | Loss: 1.9929
+  [cockpit|plot] Showing current Cockpit.
+  Step:     4 | Loss: 1.9733
+  [cockpit|plot] Showing current Cockpit.
+  Step:     5 | Loss: 1.6479
+  [cockpit|plot] Showing current Cockpit.
+
+which will look something like this
 
 .. image:: ../_static/01_basic_fmnist.png
         :alt: Preview Cockpit Basic Example

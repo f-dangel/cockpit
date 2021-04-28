@@ -5,13 +5,8 @@ Advanced Example
 In this second example, we will take a look into a couple more advanced features
 and ways to customize **Cockpit**.
 
-To run this example, run 
-
-.. code:: bash
-
-  python 02_advanced_fmnist.py
-
-Again, you need the :download:`utility file <../../../examples/_utils_examples.py>` 
+Just like before, you also need the :download:`utility file 
+<../../../examples/_utils_examples.py>` 
 which provides us with the training data, a convolutional network and a logpath.
 You can copy all `example files 
 <https://github.com/f-dangel/cockpit/tree/development/examples>`_ from our 
@@ -21,6 +16,33 @@ repository.
    :language: python
    :linenos:
    :emphasize-lines: 12,19-27,43,59-65,70-71,73-80
+
+To run this example, run 
+
+.. code:: bash
+
+  python 02_advanced_fmnist.py
+
+This time no **Cockpit**-plot will show. Instead, the plots will be directly saved
+to files. Everything that the **Cockpit** tracked during training will also be stored
+and both this *logfile* as well as the plots can be inspected and analyzed after 
+training is finished.
+
+.. code-block:: console
+
+  $ python 02_advanced_fmnist.py
+  
+  [cockpit|plot] Saving figure in [...]/logfiles/cockpit_output__primary1.png
+  Step:     2 | Loss: 2.3185
+  [cockpit|plot] Saving figure in [...]/logfiles/cockpit_output__primary2.png
+  Step:     3 | Loss: 2.2932
+  [cockpit|plot] Saving figure in [...]/logfiles/cockpit_output__primary3.png
+  Step:     4 | Loss: 2.2893
+  [cockpit|plot] Saving figure in [...]/logfiles/cockpit_output__primary4.png
+  Step:     5 | Loss: 2.2865
+  [cockpit|plot] Saving figure in [...]/logfiles/cockpit_output__primary5.png
+  [cockpit] writing output to [...]/logfiles/cockpit_output.json
+  [cockpit|plot] Saving figure in [...]/logfiles/cockpit_output__primary_final.png
 
 We will now go over the main changes compared to the :ref:`basic example <basic_example>`.
 The relevant lines including the most important changes are highilghted above.
