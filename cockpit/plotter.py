@@ -152,6 +152,7 @@ class CockpitPlotter:
 
         # Show or Save plots
         if show_plot:
+            print(f"[cockpit|plot] Showing current Cockpit.")
             plt.show(block=block)
             plt.pause(0.001)
         if save_plot:
