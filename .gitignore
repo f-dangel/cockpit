@@ -309,6 +309,7 @@ TSWLatexianTemp*
 
 # Test
 .coverage
+**/logfiles
 
 # Doc
 docs/build/
