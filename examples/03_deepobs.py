@@ -9,12 +9,11 @@ from cockpit.utils import configuration, schedules
 optimizer = SGD
 hyperparams = {"lr": {"type": float, "default": 0.001}}
 
-schedule = schedules.linear(20)
-quantities = configuration.configuration("full", track_schedule=schedule)
+track_schedule = schedules.linear(10)
+plot_schedule = schedules.linear(20)
+quantities = configuration.configuration("full", track_schedule=track_schedule)
 
-runner = DeepOBSRunner(
-    optimizer, hyperparams, quantities=quantities, plot_schedule=schedule
-)
+runner = DeepOBSRunner(optimizer, hyperparams, quantities, plot_schedule=plot_schedule)
 
 
 def const_schedule(num_epochs):
@@ -26,7 +25,7 @@ runner.run(
     testproblem="quadratic_deep",
     output_dir=get_logpath(),
     l2_reg=0.0,
-    num_epochs=15,
+    num_epochs=50,
     show_plots=True,
     save_plots=False,
     save_final_plot=True,

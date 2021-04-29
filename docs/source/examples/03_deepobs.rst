@@ -79,7 +79,7 @@ a logfile and saving its final plot, after training completed.
   
   [...]
 
-The fifteen epochs on the `deep quadratic 
+The fifty epochs on the `deep quadratic 
 <https://deepobs.readthedocs.io/en/v1.2.0-beta0_a/api/pytorch/testproblems/quadratic/quadratic_deep.html>`_ 
 problem will result in a **Cockpit** plot similar to this:
 
