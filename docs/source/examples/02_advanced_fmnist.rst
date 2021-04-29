@@ -15,7 +15,7 @@ repository.
 .. literalinclude:: ../../../examples/02_advanced_fmnist.py
    :language: python
    :linenos:
-   :emphasize-lines: 12,19-27,43,59-65,70-71,73-80
+   :emphasize-lines: 12,19-28,44,60-67,72-73,75-82
 
 To run this example, run 
 
@@ -32,17 +32,20 @@ training is finished.
 
   $ python 02_advanced_fmnist.py
   
-  [cockpit|plot] Saving figure in [...]/logfiles/cockpit_output__primary1.png
+  Step:     1 | Loss: 2.2965
   Step:     2 | Loss: 2.3185
-  [cockpit|plot] Saving figure in [...]/logfiles/cockpit_output__primary2.png
   Step:     3 | Loss: 2.2932
-  [cockpit|plot] Saving figure in [...]/logfiles/cockpit_output__primary3.png
   Step:     4 | Loss: 2.2893
-  [cockpit|plot] Saving figure in [...]/logfiles/cockpit_output__primary4.png
   Step:     5 | Loss: 2.2865
-  [cockpit|plot] Saving figure in [...]/logfiles/cockpit_output__primary5.png
-  [cockpit] writing output to [...]/logfiles/cockpit_output.json
-  [cockpit|plot] Saving figure in [...]/logfiles/cockpit_output__primary_final.png
+  Step:     6 | Loss: 2.2780
+  Step:     7 | Loss: 2.2485
+  Step:     8 | Loss: 2.2600
+  Step:     9 | Loss: 2.1823
+  Step:    10 | Loss: 2.0557
+  [cockpit|plot] Saving figure in /home/frank/PhD/Nextcloud/PhD/Projects/2019-10-Cockpit/cockpit/logfiles/cockpit_output__primary10.png
+  Step:    11 | Loss: 2.0539
+  Step:    12 | Loss: 2.4792
+  [...]
 
 We will now go over the main changes compared to the :ref:`basic example <basic_example>`.
 The relevant lines including the most important changes are highilghted above.
@@ -66,17 +69,19 @@ Customizing the Quantities
 .. literalinclude:: ../../../examples/02_advanced_fmnist.py
    :language: python
    :linenos:
-   :lines: 19-27
+   :lines: 19-28
    :lineno-start: 19
 
 **Cockpit** allows you to fully customize what and how often you want to track it.
 
 Instead of using a pre-defined configuration, here, we customize our set of quantities.
-We use four quantities, the :class:`~cockpit.quantities.GradNorm`, the 
-:class:`~cockpit.quantities.Distance`, the :class:`~cockpit.quantities.UpdateSize`,
-and the :class:`~cockpit.quantities.GradHist1d`. For each quantity we use a different
+We use five quantities, the :class:`~cockpit.quantities.GradNorm`, the 
+:class:`~cockpit.quantities.Distance` and :class:`~cockpit.quantities.UpdateSize`, 
+the :class:`~cockpit.quantities.HessMaxEV` and the 
+:class:`~cockpit.quantities.GradHist1d`. For each quantity we use a different
 rate of tracking, e.g., we track the distance and update size in every step, but
-the gradient norms only every second step. We further customize the gradient histogram
+the largest eigenvalue of the Hessian only every third step. 
+We further customize the gradient histogram
 by specifying that we only want to use 10 different ``bins``.
 
 Additional BackPACK Extensions
@@ -85,8 +90,8 @@ Additional BackPACK Extensions
 .. literalinclude:: ../../../examples/02_advanced_fmnist.py
    :language: python
    :linenos:
-   :lines: 43
-   :lineno-start: 43
+   :lines: 44
+   :lineno-start: 44
 
 **Cockpit** uses BackPACK for most of the background computations to extract more
 information from a single backward pass. If you want to use additional BackPACK
@@ -98,11 +103,11 @@ Plotting Options
 .. literalinclude:: ../../../examples/02_advanced_fmnist.py
    :language: python
    :linenos:
-   :lines: 59-80
-   :lineno-start: 59
+   :lines: 60-82
+   :lineno-start: 60
 
-In this example, we now create a **Cockpit** view in every single step. However,
-instead of showing it in real-time, we directly save it (without showing it).
+In this example, we now create a **Cockpit** view every tenth iteration. 
+Instead of showing it in real-time, however, we directly save to disk.
 At the end of the training process, we write all **Cockpit** information to a log
 file. We can then also plot from this file, which we do in the last step.
 
