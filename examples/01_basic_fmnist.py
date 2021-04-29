@@ -52,3 +52,5 @@ for inputs, labels in iter(fmnist_data):
 
     if global_step >= max_steps:
         break
+
+plotter.plot(cockpit, block=True)

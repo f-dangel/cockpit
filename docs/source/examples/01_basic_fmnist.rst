@@ -23,7 +23,7 @@ the data for this example.
 
 .. literalinclude:: ../../../examples/01_basic_fmnist.py
    :language: python
-   :emphasize-lines: 4-5,7-8,12-14,20-21,31, 34-43, 51
+   :emphasize-lines: 4-5, 7-8, 12-14, 20-21, 31, 34-43, 51, 56
    :linenos:
 
 Try running this :download:`example script <../../../examples/01_basic_fmnist.py>`  
@@ -50,6 +50,7 @@ status screen of the training.
   [cockpit|plot] Showing current Cockpit.
   Step:     5 | Loss: 1.6479
   [cockpit|plot] Showing current Cockpit.
+  [cockpit|plot] Showing current Cockpit. Blocking. Close plot to continue.
 
 which will look something like this
 
@@ -147,16 +148,28 @@ Plotting the Cockpit
 
 .. literalinclude:: ../../../examples/01_basic_fmnist.py
    :language: python
-   :emphasize-lines: 1
+   :emphasize-lines: 3
    :linenos:
-   :lines: 51
-   :lineno-start: 51
+   :lines: 49-51
+   :lineno-start: 49
 
 At any point during the training, here we do it in every single iteration, the 
 computed metrics can be visualized by calling the plotting functionality of the 
 :class:`~cockpit.CockpitPlotter` via :func:`~cockpit.CockpitPlotter.plot()`.
 
-This will result in a status screen similar to this:
+.. literalinclude:: ../../../examples/01_basic_fmnist.py
+   :language: python
+   :emphasize-lines: 4
+   :linenos:
+   :lines: 53-56
+   :lineno-start: 53
+
+After the final iteration, we will again show the full **Cockpit** view. The option
+``block=True`` allows us to pause our program and inspect the plot for as long as
+we want.
+The final **Cockpit** status screen will look similar to this:
 
 .. image:: ../_static/01_basic_fmnist.png
         :alt: Preview Cockpit Basic Example
+
+Simply closing the plotting window ends the program and this example.
