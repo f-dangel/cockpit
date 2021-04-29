@@ -2,6 +2,8 @@
 
 import warnings
 
+from matplotlib import ticker
+
 from cockpit.instruments.utils_instruments import check_data, create_basic_plot
 
 
@@ -64,3 +66,5 @@ def max_ev_gauge(self, fig, gridspec):
     # part that should be plotted
     ax = fig.add_subplot(gridspec)
     create_basic_plot(**plot_args, ax=ax)
+
+    ax.yaxis.set_minor_formatter(ticker.FormatStrFormatter("%.2g"))

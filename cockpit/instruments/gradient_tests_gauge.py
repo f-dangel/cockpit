@@ -4,6 +4,7 @@ import warnings
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib import ticker
 
 from cockpit.instruments.utils_instruments import check_data
 
@@ -88,26 +89,29 @@ def _format(self, ax_all, ax_norm, ax_inner, ax_ortho):
 
     ax_norm.set_ylabel("Norm")
     ax_norm.set_yscale("log")
-
     ax_norm.xaxis.tick_top()
     ax_norm.set_facecolor(self.bg_color_instruments)
     ax_norm.set_xscale(iter_scale)
+    ax_norm.yaxis.set_minor_locator(ticker.MaxNLocator(3))
+    ax_norm.yaxis.set_minor_formatter(ticker.FormatStrFormatter("%.2g"))
 
     ax_inner.set_ylabel("Inner")
     ax_inner.set_yscale("log")
-
     ax_inner.invert_yaxis()
     ax_inner.set_facecolor(self.bg_color_instruments)
     ax_inner.set_xscale(iter_scale)
+    ax_inner.yaxis.set_minor_locator(ticker.MaxNLocator(3))
+    ax_inner.yaxis.set_minor_formatter(ticker.FormatStrFormatter("%.2g"))
 
     ax_ortho.set_title("Ortho")
     ax_ortho.xaxis.tick_top()
     ax_ortho.yaxis.tick_right()
     ax_ortho.set_xscale("log")
-
     ax_ortho.invert_yaxis()
     ax_ortho.set_yscale(iter_scale)
     ax_ortho.set_facecolor(self.bg_color_instruments)
+    ax_ortho.xaxis.set_minor_locator(ticker.MaxNLocator(2))
+    ax_ortho.xaxis.set_minor_formatter(ticker.FormatStrFormatter("%.2g"))
 
 
 def _plot(self, ax_all, ax_norm, ax_inner, ax_ortho):
