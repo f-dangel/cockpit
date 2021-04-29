@@ -34,8 +34,9 @@ help:
 	@echo "        Removes all unnecessary files."
 
 ### TESTING ###
+# Run pytest with the Matplotlib backend agg to not show plots
 test:
-	@pytest -vx --cov=cockpit .
+	@MPLBACKEND=agg pytest -vx --cov=cockpit .
 
 ### LINTING & FORMATTING ###
 

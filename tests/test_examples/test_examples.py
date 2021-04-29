@@ -4,12 +4,8 @@ import os
 import pathlib
 import runpy
 import sys
-from unittest.mock import patch
 
-import matplotlib as mpl
 import pytest
-
-mpl.use("Agg")
 
 SCRIPTS = sorted(pathlib.Path(__file__, "../../..", "examples").resolve().glob("*.py"))
 SCRIPTS_STR, SCRIPTS_ID = [], []
@@ -19,9 +15,8 @@ for s in SCRIPTS:
         SCRIPTS_ID.append(str(s).split("/")[-1].split(".")[0])
 
 
-@patch("time.sleep")
 @pytest.mark.parametrize("script", SCRIPTS_STR, ids=SCRIPTS_ID)
-def test_example_scripts(mock, script):
+def test_example_scripts(script):
     """Run a single example script.
 
     Args:
