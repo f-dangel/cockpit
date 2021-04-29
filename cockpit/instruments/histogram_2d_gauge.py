@@ -5,8 +5,13 @@ import warnings
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib import ticker
 
-from cockpit.instruments.utils_instruments import _beautify_plot, check_data
+from cockpit.instruments.utils_instruments import (
+    _beautify_plot,
+    _ticks_formatter,
+    check_data,
+)
 
 
 def histogram_2d_gauge(
@@ -76,7 +81,7 @@ def histogram_2d_gauge(
     joint_plot_args = {
         "facecolor": self.bg_color_instruments,
         "xlabel": "Parameter Element Value",
-        "ylabel": "Gradient Element Value",
+        "ylabel": "Gradient Element\nValue",
     }
 
     df = _get_2d_histogram_data(
@@ -88,6 +93,9 @@ def histogram_2d_gauge(
     sns.heatmap(data=df, cbar=False, cmap=cmap, ax=ax_joint)
 
     _beautify_plot(ax=ax_joint, **joint_plot_args)
+
+    ax_joint.set_xticklabels(_ticks_formatter(ax_joint.get_xticklabels()))
+    ax_joint.set_yticklabels(_ticks_formatter(ax_joint.get_yticklabels()))
 
     # "Zero lines
     # TODO This assumes that the bins are symmetrical!
@@ -109,6 +117,7 @@ def histogram_2d_gauge(
         ax_xmargin.barh(
             mid_points, vals, height=bin_size, color=self.primary_color, linewidth=0.1
         )
+        ax_xmargin.xaxis.set_minor_locator(ticker.MaxNLocator(3))
 
         ax_ymargin = fig.add_subplot(gs[0, :2])
         ax_ymargin.set_yscale("log")
@@ -127,6 +136,8 @@ def histogram_2d_gauge(
             color=self.primary_color,
             linewidth=0.2,
         )
+        ax_ymargin.yaxis.set_minor_locator(ticker.MaxNLocator(3))
+        ax_ymargin.yaxis.set_minor_formatter(ticker.FormatStrFormatter("%.3g"))
 
 
 def _default_trafo(array):
