@@ -14,7 +14,7 @@ that you can explore with **Cockpit**.
 
    .. code:: bash
 
-      pip install 'git+https://github.com/fsschneider/DeepOBS.git@v1.2.0-beta0#egg=DeepOBS'
+      pip install 'git+https://github.com/fsschneider/DeepOBS.git@develop#egg=deepobs'
 
    and
    
