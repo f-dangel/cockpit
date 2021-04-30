@@ -20,7 +20,7 @@ that you can explore with **Cockpit**.
    
    .. code:: bash
 
-      pip install 'git://github.com/f-dangel/backobs.git@master#egg=backobs'
+      pip install 'git+https://github.com/f-dangel/backobs.git@master#egg=backobs'
 
    Note, that currently, only the 1.2.0 beta version of DeepOBS supports PyTorch
    which will be installed by the above command.
