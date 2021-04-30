@@ -42,7 +42,7 @@ training is finished.
   Step:     8 | Loss: 2.2600
   Step:     9 | Loss: 2.1823
   Step:    10 | Loss: 2.0557
-  [cockpit|plot] Saving figure in /home/frank/PhD/Nextcloud/PhD/Projects/2019-10-Cockpit/cockpit/logfiles/cockpit_output__primary10.png
+  [cockpit|plot] Saving figure in ~/logfiles/cockpit_output__primary10.png
   Step:    11 | Loss: 2.0539
   Step:    12 | Loss: 2.4792
   [...]
