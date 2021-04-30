@@ -25,9 +25,11 @@ that you can explore with **Cockpit**.
    Note, that currently, only the 1.2.0 beta version of DeepOBS supports PyTorch
    which will be installed by the above command.
 
-In the following example, we will use an additional :download:`utility file 
-<../../../examples/_utils_deepobs.py>` which automatically incorporates **Cockpit**
-with the DeepOBS training loop.
+.. note::
+
+  In the following example, we will use an additional :download:`utility file 
+  <../../../examples/_utils_deepobs.py>` which automatically incorporates **Cockpit**
+  with the DeepOBS training loop.
 
 Having the two `utility files from our repository 
 <https://github.com/f-dangel/cockpit/tree/development/examples>`_ we can run

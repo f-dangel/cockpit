@@ -17,9 +17,12 @@ Simply install **Cockpit** via
   pip install 'git+https://github.com/f-dangel/cockpit.git@development'
 
 and then copy the `example files <https://github.com/f-dangel/cockpit/tree/development/examples>`_
-from the repository or from the code block below. Don't forget the 
-:download:`utility file <../../../examples/_utils_examples.py>` which provides
-the data for this example.
+from the repository or from the code block below. 
+
+.. note::
+
+  Don't forget the :download:`utility file <../../../examples/_utils_examples.py>` 
+  which provides the data for this example.
 
 .. literalinclude:: ../../../examples/01_basic_fmnist.py
    :language: python
