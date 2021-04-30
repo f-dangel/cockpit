@@ -13,4 +13,4 @@ except VersionConflict:
 
 
 if __name__ == "__main__":
-    setup()
+    setup(use_scm_version=True)

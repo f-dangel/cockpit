@@ -20,7 +20,6 @@ def test_example_scripts(script):
     """Run a single example script.
 
     Args:
-        mock (str): Call that should be replaced by a mock object.
         script (str): Script that should be run.
     """
     sys.path.append(os.path.dirname(script))
