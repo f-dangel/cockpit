@@ -19,7 +19,8 @@ and ways to customize **Cockpit**.
    :linenos:
    :emphasize-lines: 12,19-28,44,60-67,72-73,75-82
 
-To run this example, run 
+To run :download:`this example script <../../../examples/02_advanced_fmnist.py>`, 
+run 
 
 .. code:: bash
 
