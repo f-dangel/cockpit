@@ -38,7 +38,7 @@ Having the two `utility files from our repository
 
   python 03_deepobs.py
 
-which exectues the following file:
+which exectues the following :download:`example script <../../../examples/03_deepobs.py>`:
 
 .. literalinclude:: ../../../examples/03_deepobs.py
    :language: python
