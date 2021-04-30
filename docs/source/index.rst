@@ -36,7 +36,6 @@ To install **Cockpit** simply run
    :maxdepth: 1
    :caption: Getting Started
 
-   introduction/quickstart
    examples/01_basic_fmnist
    examples/02_advanced_fmnist
    examples/03_deepobs
