@@ -1,8 +1,8 @@
 """A basic example of using Cockpit with PyTorch for Fashion-MNIST."""
 
 import torch
+from _utils_examples import fmnist_data
 from backpack import extend
-from utils.utils_examples import fmnist_data
 
 from cockpit import Cockpit, CockpitPlotter
 from cockpit.utils.configuration import configuration
@@ -52,3 +52,5 @@ for inputs, labels in iter(fmnist_data):
 
     if global_step >= max_steps:
         break
+
+plotter.plot(cockpit, block=True)

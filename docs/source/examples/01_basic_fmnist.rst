@@ -9,26 +9,59 @@ training loop.
 Lines that are highlighted in yellow highlight **Cockpit**-specific code, but 
 don't worry, most of these changes are simple plug-and-play solutions.
 
+You can try out this basic example yourself.
+Simply install **Cockpit** via
+
+.. code:: bash
+
+  pip install 'git+https://github.com/f-dangel/cockpit.git@development'
+
+and then copy the `example files <https://github.com/f-dangel/cockpit/tree/development/examples>`_
+from the repository or from the code block below. 
+
+.. note::
+
+  Don't forget the :download:`utility file <../../../examples/_utils_examples.py>` 
+  which provides the data for this example.
+
 .. literalinclude:: ../../../examples/01_basic_fmnist.py
    :language: python
-   :emphasize-lines: 4-5,7-8,12-14,20-21,31, 34-43, 51
+   :emphasize-lines: 4-5, 7-8, 12-14, 20-21, 31, 34-43, 51, 56
    :linenos:
 
-You can try out this basic example yourself. Simply install **Cockpit** and then 
-copy the `example files <https://github.com/f-dangel/cockpit/tree/development/examples>`_
-from the repository.
-
-In this first example, we will run this 
-:download:`example script <../../../examples/01_basic_fmnist.py>`  
-(and the :download:`utility file <../../../examples/utils/utils_examples.py>` 
-for defining the data of the example) via
+Try running this :download:`example script <../../../examples/01_basic_fmnist.py>`  
+via
 
 .. code:: bash
 
   python 01_basic_fmnist.py
 
-In the following, we will break-down and explain each step required to include 
-**Cockpit** to a training loop.
+During every iteration of the training process, **Cockpit** will show you a 
+status screen of the training.
+
+.. code-block:: console
+
+  $ python 01_basic_fmnist.py
+  
+  Step:     1 | Loss: 2.5365
+  [cockpit|plot] Showing current Cockpit.
+  Step:     2 | Loss: 2.1643
+  [cockpit|plot] Showing current Cockpit.
+  Step:     3 | Loss: 1.9929
+  [cockpit|plot] Showing current Cockpit.
+  Step:     4 | Loss: 1.9733
+  [cockpit|plot] Showing current Cockpit.
+  Step:     5 | Loss: 1.6479
+  [cockpit|plot] Showing current Cockpit.
+  [cockpit|plot] Showing current Cockpit. Blocking. Close plot to continue.
+
+which will look something like this
+
+.. image:: ../_static/01_basic_fmnist.png
+        :alt: Preview Cockpit Basic Example
+
+In the following, we will break-down and explain each step of this exampe, which
+also explains what is required to include **Cockpit** to a training loop.
 
 Imports
 =======
@@ -44,7 +77,7 @@ be installed when installing **Cockpit**. We also import the :class:`~cockpit.Co
 and :class:`~cockpit.CockpitPlotter` class which will let us track and then 
 visualize insightful quantities.
 
-To simplify the code snippet, in line 5, we import from a utils file which will 
+To simplify the code snippet, in line 4, we import from a utils file which will 
 provide us with the Fashion-MNIST data.
 
 Defining the Problem
@@ -118,17 +151,28 @@ Plotting the Cockpit
 
 .. literalinclude:: ../../../examples/01_basic_fmnist.py
    :language: python
-   :emphasize-lines: 1
+   :emphasize-lines: 3
    :linenos:
-   :lines: 51
-   :lineno-start: 51
+   :lines: 49-51
+   :lineno-start: 49
 
 At any point during the training, here we do it in every single iteration, the 
 computed metrics can be visualized by calling the plotting functionality of the 
 :class:`~cockpit.CockpitPlotter` via :func:`~cockpit.CockpitPlotter.plot()`.
 
-This will result in a status screen similar to this:
+.. literalinclude:: ../../../examples/01_basic_fmnist.py
+   :language: python
+   :emphasize-lines: 4
+   :linenos:
+   :lines: 53-56
+   :lineno-start: 53
+
+After the final iteration, we will again show the full **Cockpit** view. The option
+``block=True`` allows us to pause our program and inspect the plot for as long as
+we want.
+The final **Cockpit** status screen will look similar to this:
 
 .. image:: ../_static/01_basic_fmnist.png
         :alt: Preview Cockpit Basic Example
 
+Simply closing the plotting window ends the program and this example.

@@ -1,8 +1,8 @@
 """A slightly advanced example of using Cockpit with PyTorch for Fashion-MNIST."""
 
 import torch
+from _utils_examples import cnn, fmnist_data, get_logpath
 from backpack import extend, extensions
-from utils.utils_examples import cnn, fmnist_data, get_logpath
 
 from cockpit import Cockpit, CockpitPlotter, quantities
 from cockpit.utils import schedules
@@ -19,16 +19,17 @@ opt = torch.optim.SGD(model.parameters(), lr=5e-1)
 # Create Cockpit and a plotter
 # Customize the tracked quantities and their tracking schedule
 quantities = [
-    quantities.GradNorm(schedules.linear(interval=2)),
+    quantities.GradNorm(schedules.linear(interval=1)),
     quantities.Distance(schedules.linear(interval=1)),
     quantities.UpdateSize(schedules.linear(interval=1)),
-    quantities.GradHist1d(schedules.linear(interval=4), bins=10),
+    quantities.HessMaxEV(schedules.linear(interval=3)),
+    quantities.GradHist1d(schedules.linear(interval=10), bins=10),
 ]
 cockpit = Cockpit(model.parameters(), quantities=quantities)
 plotter = CockpitPlotter()
 
 # Main training loop
-max_steps, global_step = 5, 0
+max_steps, global_step = 50, 0
 for inputs, labels in iter(fmnist_data):
     opt.zero_grad()
 
@@ -56,13 +57,14 @@ for inputs, labels in iter(fmnist_data):
 
     print(f"Step: {global_step:5d} | Loss: {loss.item():.4f}")
 
-    plotter.plot(
-        cockpit,
-        savedir=get_logpath(),
-        show_plot=False,
-        save_plot=True,
-        savename_append=str(global_step),
-    )
+    if global_step % 10 == 0:
+        plotter.plot(
+            cockpit,
+            savedir=get_logpath(),
+            show_plot=False,
+            save_plot=True,
+            savename_append=str(global_step),
+        )
 
     if global_step >= max_steps:
         break

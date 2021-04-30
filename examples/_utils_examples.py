@@ -1,6 +1,7 @@
 """Utility functions for the basic PyTorch example."""
 
 import os
+import warnings
 
 import torch
 import torchvision
@@ -8,6 +9,9 @@ import torchvision
 HERE = os.path.abspath(__file__)
 HEREDIR = os.path.dirname(HERE)
 EXAMPLESDIR = os.path.dirname(HEREDIR)
+
+# Ignore the PyTorch warning that is irrelevant for us
+warnings.filterwarnings("ignore", message="Using a non-full backward hook ")
 
 
 def fmnist_data(batch_size=64, shuffle=True):

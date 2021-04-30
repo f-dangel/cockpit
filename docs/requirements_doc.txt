@@ -4,7 +4,7 @@ sphinx
 # Sphinx extensions
 sphinx-rtd-theme
 sphinx-automodapi
-sphinx-copybutton
+#sphinx-copybutton
 sphinx-notfound-page
 
 # Markdown conversion

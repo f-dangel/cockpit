@@ -55,7 +55,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_automodapi.automodapi",
-    "sphinx_copybutton",
+    # "sphinx_copybutton",
     "sphinx_rtd_theme",
 ]
 

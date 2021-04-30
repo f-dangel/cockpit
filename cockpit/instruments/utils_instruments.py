@@ -2,6 +2,7 @@
 
 import warnings
 
+import matplotlib as mpl
 import seaborn as sns
 
 
@@ -294,3 +295,22 @@ def check_data(data, requires, min_elements=1):
                 return False
 
     return True
+
+
+def _ticks_formatter(ticklabels, format_str="{:.2f}"):
+    """Format the ticklabels.
+
+    Args:
+        ticklabels ([mpl.text.Text]): List of ticklabels.
+        format_str (str, optional): Formatting string for the labels.
+            Defaults to "{:.2f}".
+
+    Returns:
+        [mpl.text.Text]: Reformatted list of ticklabels.
+    """
+    new_ticks = []
+    for tick in ticklabels:
+        rounded_label = format_str.format(float(tick.get_text()))
+        new_tick = mpl.text.Text(*tick.get_position(), rounded_label)
+        new_ticks.append(new_tick)
+    return new_ticks

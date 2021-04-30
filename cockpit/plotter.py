@@ -152,6 +152,9 @@ class CockpitPlotter:
 
         # Show or Save plots
         if show_plot:
+            msg = "[cockpit|plot] Showing current Cockpit."
+            msg += " Blocking. Close plot to continue." if block else ""
+            print(msg)
             plt.show(block=block)
             plt.pause(0.001)
         if save_plot:
@@ -236,10 +239,13 @@ class CockpitPlotter:
 
         # Build inner structure of this plotting group
         # We use additional "dummy" gridspecs to position the instruments
+        inner_width_ratios_curvature = self.inner_width_ratios[:]
+        inner_width_ratios_curvature[2] = 0.0
+        inner_width_ratios_curvature[0] = 1.5 * inner_width_ratios_curvature[0]
         self.gs_curvature = grid_spec.subgridspec(
             self.inner_num_rows,
             self.inner_num_cols,
-            width_ratios=self.inner_width_ratios,
+            width_ratios=inner_width_ratios_curvature,
             height_ratios=self.inner_height_ratios,
             hspace=self.inner_hspace,
         )

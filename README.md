@@ -26,6 +26,12 @@
 
 ---
 
+```bash
+pip install 'git+https://github.com/f-dangel/cockpit.git@development'
+```
+
+---
+
 **Cockpit is a visual and statistical debugger specifically designed for deep learning.** Training a deep neural network is often a pain! Successfully training such a network usually requires either years of intuition or expensive parameter searches involving lots of trial and error. Traditional debuggers provide only limited help: They can find *syntactical errors* but not *training bugs* such as ill-chosen learning rates. **Cockpit** offers a closer, more meaningful look into the training process with multiple well-chosen *instruments*.
 
 ---

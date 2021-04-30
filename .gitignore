@@ -307,17 +307,12 @@ TSWLatexianTemp*
 # Tensorboard
 **/*events.out.tfevents.*
 
-# Paper
-tex/CVPR2021/cockpit_paper.pdf
-tex/CVPR2021/main.pdf
-tex/CVPR2021/suppl.pdf
-
-tex/CVPR2021/rebuttal/cvpr_rebuttal.pdf
-
-tex/CVPR2021/arXiv/
-
 # Test
 .coverage
+**/logfiles
+
+# Doc
+docs/build/
 
 # local emacs variables
 !**/.dir-locals.el
