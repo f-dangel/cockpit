@@ -1,6 +1,5 @@
 """Base classes for BackPACK's extension hooks."""
 
-import torch
 from torch.nn import Module
 
 
