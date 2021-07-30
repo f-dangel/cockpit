@@ -85,7 +85,7 @@ class ModuleExtensionHook:
     def _has_children(net: Module) -> bool:
         """Check if module contains other modules.
 
-        Params:
+        Args:
             net: A module.
 
         Returns:
