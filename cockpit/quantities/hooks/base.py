@@ -86,10 +86,10 @@ class ModuleExtensionHook:
         """Check if module contains other modules.
 
         Params:
-           net: A module.
+            net: A module.
 
         Returns:
-           If the module contains other modules
+            If the module contains other modules
         """
         return len(list(net.children())) > 0
 
