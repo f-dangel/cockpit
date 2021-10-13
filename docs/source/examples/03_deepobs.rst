@@ -32,7 +32,7 @@ that you can explore with **Cockpit**.
   with the DeepOBS training loop.
 
 Having the two `utility files from our repository 
-<https://github.com/f-dangel/cockpit/tree/development/examples>`_ we can run
+<https://github.com/f-dangel/cockpit/tree/main/examples>`_ we can run
 
 .. code:: bash
 
