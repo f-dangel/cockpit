@@ -53,7 +53,7 @@ class HessTrace(SingleStepQuantity):
                 ext.append(self.extensions_from_str[self._curvature]())
             except KeyError as e:
                 available = list(self.extensions_from_str.keys())
-                raise KeyError(f"{str(e)}. Available: {available}")
+                raise KeyError(f"Available: {available}") from e
 
         return ext
 
