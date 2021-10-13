@@ -27,7 +27,7 @@
 ---
 
 ```bash
-pip install 'git+https://github.com/f-dangel/cockpit.git'
+pip install cockpit
 ```
 
 ---
@@ -44,8 +44,13 @@ pip install 'git+https://github.com/f-dangel/cockpit.git'
 To install **Cockpit** simply run
 
 ```bash
-pip install 'git+https://github.com/f-dangel/cockpit.git'
+pip install cockpit
 ```
+
+<details>
+<summary>Conda environment</summary>
+For convenience, we also provide a conda environment, which can be installed via the conda yml file. It includes all the necessary requirements to build the docs, execute the tests and run the examples.
+</details>
 
 <!-- Documentation -->
 ## Documentation
