@@ -89,7 +89,7 @@ class CockpitPlotter:
             savename (str, optional): Filename of the saved plot.
             savename_append (str, optional): Optional appendix to the savefile
                 name. Defaults to None.
-            savefig_kwards (dict, optional): Additional keyword arguemnts that
+            savefig_kwargs (dict, optional): Additional keyword arguments that
                 are passed to `fig.savefig` such as fileformat or dpi.
             show_log_iter (bool, optional): Whether the instruments should use
                 a log scale for the iterations. Defaults to False.
