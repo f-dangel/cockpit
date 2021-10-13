@@ -13,6 +13,8 @@ From this version on, `cockpit` will be available on PyPI.
 ### Added
 - Require BackPACK main release
   [[PR](https://github.com/f-dangel/cockpit/pull/12)]
+- Added a `savename` argument to the `CockpitPlotter.plot()` function, which lets you define the name, and now the `savedir` should really only describe the **directory**. [[PR](https://github.com/f-dangel/cockpit/pull/16), Fixes #8]
+- Added optional `savefig_kwargs` argument to the `CockpitPlotter.plot()` function that gets passed to the `matplotlib` function `fig.savefig()` to, e.g., specify DPI value or use a different file format (e.g. PDF). [[PR](https://github.com/f-dangel/cockpit/pull/16), Fixes #10]
 
 ### Internal
 - Fix [#6](https://github.com/f-dangel/cockpit/issues/6): Don't execute
