@@ -409,9 +409,12 @@ class CockpitPlotter:
         """Save the (internal) figure to file.
 
         Args:
-            logpath (str): Full logpath to the JSON file.
+            savedir (str): Directory where to save the plot.
+            savename (str): Filename of the saved plot.
             savename_append (str, optional): Optional appendix to the savefile
                 name. Defaults to None.
+            savefig_kwargs (dict, optional): Additional keyword arguments that
+                are passed to `fig.savefig` such as fileformat or dpi.
             screen (str): String that specifies screen figure should be saved.
                 Possible options are ``'primary'`` and ``'secondary'``.
 
