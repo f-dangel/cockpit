@@ -8,7 +8,7 @@ Cockpit
 
 .. code:: bash
 
-  pip install cockpit
+  pip install cockpit-for-pytorch
 
 ----
 
@@ -29,7 +29,7 @@ To install **Cockpit** simply run
 
 .. code:: bash
 
-  pip install cockpit
+  pip install cockpit-for-pytorch
 
 
 .. toctree::
