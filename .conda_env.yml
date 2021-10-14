@@ -19,12 +19,12 @@ dependencies:
   - conda-forge::sphinx
   - conda-forge::sphinx-automodapi
   - conda-forge::sphinx_rtd_theme
+  - conda-forge::matplotlib=3.4.3
   - conda-forge::tikzplotlib
   - pip:
     - memory-profiler
     - pre-commit
     - graphviz
-    # - sphinx-copybutton
     - sphinx-notfound-page
     - git+https://git@github.com/fsschneider/DeepOBS.git@develop#egg=deepobs
     - git+https://git@github.com/f-dangel/backobs.git@development#egg=backobs

@@ -1,6 +1,6 @@
 """Base classes for BackPACK's extension hooks."""
 
-import torch
+from torch.nn import Module
 
 
 class ModuleExtensionHook:
@@ -65,7 +65,7 @@ class ModuleExtensionHook:
         Returns:
             bool: Whether the hook should be executed on the parameter.
         """
-        if isinstance(module, torch.nn.Sequential):
+        if self._has_children(module):
             return False
         else:
             return id(param) not in self.processed and param.requires_grad
@@ -80,6 +80,18 @@ class ModuleExtensionHook:
         value = self.module_hook(param, module)
         self._save(value, param)
         self.processed.add(id(param))
+
+    @staticmethod
+    def _has_children(net: Module) -> bool:
+        """Check if module contains other modules.
+
+        Args:
+            net: A module.
+
+        Returns:
+            If the module contains other modules
+        """
+        return len(list(net.children())) > 0
 
     def _save(self, value, param):
         """Store value in parameter's ``savefield`` argument.

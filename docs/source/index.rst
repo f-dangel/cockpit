@@ -8,7 +8,7 @@ Cockpit
 
 .. code:: bash
 
-  pip install 'git+https://github.com/f-dangel/cockpit.git'
+  pip install cockpit
 
 ----
 
@@ -29,7 +29,7 @@ To install **Cockpit** simply run
 
 .. code:: bash
 
-  pip install 'git+https://github.com/f-dangel/cockpit.git'
+  pip install cockpit
 
 
 .. toctree::

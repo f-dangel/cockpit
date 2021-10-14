@@ -14,7 +14,7 @@ Simply install **Cockpit** via
 
 .. code:: bash
 
-  pip install 'git+https://github.com/f-dangel/cockpit.git'
+  pip install cockpit
 
 and then copy the `example files <https://github.com/f-dangel/cockpit/tree/main/examples>`_
 from the repository or from the code block below. 
