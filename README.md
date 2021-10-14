@@ -27,7 +27,7 @@
 ---
 
 ```bash
-pip install cockpit
+pip install cockpit-for-pytorch
 ```
 
 ---
@@ -44,7 +44,7 @@ pip install cockpit
 To install **Cockpit** simply run
 
 ```bash
-pip install cockpit
+pip install cockpit-for-pytorch
 ```
 
 <details>

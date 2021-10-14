@@ -8,9 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [1.0.1] - 2021-10-13
 
-From this version on, `cockpit` will be available on PyPI.
+From this version on, `cockpit` will be available as `cockpit-for-pytorch` on
+PyPI.
 
 ### Added
+- Make library `pip`-installable as `cockpit-for-pytorch`
+  [[PR](https://github.com/f-dangel/cockpit/pull/17)]
 - Require BackPACK main release
   [[PR](https://github.com/f-dangel/cockpit/pull/12)]
 - Added a `savename` argument to the `CockpitPlotter.plot()` function, which lets you define the name, and now the `savedir` should really only describe the **directory**. [[PR](https://github.com/f-dangel/cockpit/pull/16), Fixes #8]
