@@ -90,7 +90,7 @@ class Alpha(TwoStepQuantity):
 
         return hooks
 
-    def protected_savefields(self, global_step: int) -> Set[str]:
+    def protected_savefields(self, global_step: int) -> Set[str]:  # noqa: D102
         protected = set()
         if self.is_start(global_step) or self.is_end(global_step):
             if not self.__projection_with_backpack(global_step):
