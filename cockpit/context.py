@@ -99,7 +99,9 @@ class BackwardCTX:
         self.cp = cp
         self.global_step = global_step
 
-        self.protected_savefields = [e.savefield for e in custom_exts]
+        self.protected_savefields = set(
+            e.savefield for e in custom_exts
+        ) + cp._get_protected_savefields(global_step)
 
         # choose context
         ext = cp._get_extensions(global_step, custom_exts=custom_exts)

@@ -1,6 +1,7 @@
 """Base class for a tracked quantity."""
 
 from collections import defaultdict
+from typing import Set
 
 import numpy
 import torch
@@ -73,6 +74,19 @@ class Quantity:
                 iteration.
         """
         return []
+
+    def protected_savefields(self, global_step: int) -> Set[str]:
+        """Return list of protected BackPACK buffers at the current step.
+
+        Protected buffers will not be freed during a backward pass.
+
+        Args:
+            global_step: The current iteration number.
+
+        Returns:
+            Set of protected savefields.
+        """
+        return set()
 
     def track(self, global_step, params, batch_loss):
         """Perform scheduled computations and store result.

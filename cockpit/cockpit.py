@@ -2,6 +2,7 @@
 
 import os
 from collections import defaultdict
+from typing import Set
 
 import json_tricks
 from backpack import disable
@@ -129,6 +130,22 @@ class Cockpit:
             hook = self._merge_batch_grad_transform_hooks(hooks)
 
         return hook
+
+    def _get_protected_savefields(self, global_step: int) -> Set[str]:
+        """Return names of protected BackPACK buffers.
+
+        Args:
+            global_step: Current iteration number.
+
+        Returns:
+            List of protected buffers.
+        """
+        protected = set()
+
+        for q in self.quantities:
+            protected.update(q.protected_savefields(global_step))
+
+        return protected
 
     def __call__(self, global_step, *exts, info=None, debug=False):
         """Returns the backpack extensions that should be used in this iteration.
