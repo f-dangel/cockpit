@@ -1,6 +1,7 @@
 """Reproduces the bug described in https://github.com/f-dangel/cockpit/issues/5."""
 
 from backpack import extend
+from pytest import raises
 from torch import manual_seed, rand
 from torch.nn import Flatten, Linear, MSELoss, Sequential
 from torch.optim import Adam
@@ -43,13 +44,14 @@ def test_BatchGradTransformsHook_deletes_attribute_required_by_Alpha():
     losses = individual_loss_fn(outputs, labels)
 
     # backward pass
-    with cockpit(
-        global_step,
-        info={
-            "batch_size": N,
-            "individual_losses": losses,
-            "loss": loss,
-            "optimizer": opt_not_sgd,
-        },
-    ):
-        loss.backward(create_graph=cockpit.create_graph(global_step))
+    with raises(AttributeError):
+        with cockpit(
+            global_step,
+            info={
+                "batch_size": N,
+                "individual_losses": losses,
+                "loss": loss,
+                "optimizer": opt_not_sgd,
+            },
+        ):
+            loss.backward(create_graph=cockpit.create_graph(global_step))
