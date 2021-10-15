@@ -1,9 +1,14 @@
 """Cockpit Context."""
 
 import warnings
+from typing import Any, Callable, Union
 
 from backpack import backpack, disable
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
+from torch.nn import Module
+
+from cockpit.quantities.hooks.cleanup import CleanupHook
+from cockpit.quantities.utils_transforms import BatchGradTransformsHook
 
 
 class CockpitCTX:
@@ -99,13 +104,24 @@ class BackwardCTX:
         self.cp = cp
         self.global_step = global_step
 
-        self.protected_savefields = set(
-            e.savefield for e in custom_exts
-        ) + cp._get_protected_savefields(global_step)
+        self.protected_savefields = set(e.savefield for e in custom_exts)
+        self.protected_savefields.update(cp._get_protected_savefields(global_step))
 
         # choose context
         ext = cp._get_extensions(global_step, custom_exts=custom_exts)
-        ext_hook = cp._get_extension_hook(global_step)
+        compute_hook = cp._get_extension_hook(global_step)
+
+        # Delete 'grad_batch' during backprop if it's not protected
+        if (
+            isinstance(compute_hook, BatchGradTransformsHook)
+            and "grad_batch" not in self.protected_savefields
+        ):
+            # TODO Implement all quantities with hooks and specify protected savefields
+            # Remove unprotected buffers in this cleanup hook during backpropagation
+            cleanup_hook = CleanupHook(set(["grad_batch"]))
+            ext_hook = self._combine_hooks(compute_hook, cleanup_hook)
+        else:
+            ext_hook = compute_hook
 
         save_memory = cp.BACKPACK_CONV_SAVE_MEMORY
 
@@ -124,6 +140,7 @@ class BackwardCTX:
             print(f" ↪Hooks       : {ext_hook}")
             print(f" ↪Create graph: {cp.create_graph(global_step)}")
             print(f" ↪Save memory : {save_memory}")
+            print(f" ↪Protect     : {self.protected_savefields}")
 
     def __enter__(self):
         """Enter cockpit context(s)."""
@@ -138,3 +155,33 @@ class BackwardCTX:
         self.cp.track(self.global_step, protected_savefields=self.protected_savefields)
 
         CockpitCTX.erase()
+
+    @staticmethod
+    def _combine_hooks(
+        *hooks: Union[Callable[[Module], Any], None]
+    ) -> Union[Callable[[Module], None], None]:
+        """Combine multiple extension hooks into a single one.
+
+        Args:
+            hooks: List of extension hooks to be combined.
+
+        Returns:
+            Merged hook. ``None`` if all passed hooks were ``None``.
+        """
+        non_empty_hooks = [h for h in hooks if h is not None]
+
+        if non_empty_hooks:
+
+            def hook(module: Module):
+                """Sequentially execute all hooks on the module.
+
+                Args:
+                    module: Module to run the extension hook on.
+                """
+                for h in non_empty_hooks:
+                    h(module)
+
+            return hook
+
+        else:
+            return None
