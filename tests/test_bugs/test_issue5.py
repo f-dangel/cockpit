@@ -1,7 +1,6 @@
 """Reproduces the bug described in https://github.com/f-dangel/cockpit/issues/5."""
 
 from backpack import extend
-from pytest import raises
 from torch import manual_seed, rand
 from torch.nn import Flatten, Linear, MSELoss, Sequential
 from torch.optim import Adam
