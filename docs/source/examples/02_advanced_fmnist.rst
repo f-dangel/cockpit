@@ -11,7 +11,7 @@ and ways to customize **Cockpit**.
   <../../../examples/_utils_examples.py>` 
   which provides us with the training data, a convolutional network and a logpath.
   You can copy all `example files 
-  <https://github.com/f-dangel/cockpit/tree/development/examples>`_ from our 
+  <https://github.com/f-dangel/cockpit/tree/main/examples>`_ from our 
   repository.
 
 .. literalinclude:: ../../../examples/02_advanced_fmnist.py

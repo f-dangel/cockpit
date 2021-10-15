@@ -14,9 +14,9 @@ Simply install **Cockpit** via
 
 .. code:: bash
 
-  pip install 'git+https://github.com/f-dangel/cockpit.git@development'
+  pip install cockpit-for-pytorch
 
-and then copy the `example files <https://github.com/f-dangel/cockpit/tree/development/examples>`_
+and then copy the `example files <https://github.com/f-dangel/cockpit/tree/main/examples>`_
 from the repository or from the code block below. 
 
 .. note::

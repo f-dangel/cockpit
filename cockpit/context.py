@@ -40,8 +40,7 @@ class CockpitCTX:
         try:
             return CockpitCTX.INFO[global_step][name]
         except KeyError as e:
-            e_msg = getattr(e, "message", repr(e))
-            raise KeyError(f"{e_msg}. Please hand in '{name}' via cockpit(info=...).")
+            raise KeyError(f"Please hand in '{name}' via cockpit(info=...).") from e
 
     @staticmethod
     def erase():

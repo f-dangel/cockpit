@@ -8,7 +8,7 @@ Cockpit
 
 .. code:: bash
 
-  pip install 'git+https://github.com/f-dangel/cockpit.git@development'
+  pip install cockpit-for-pytorch
 
 ----
 
@@ -29,7 +29,7 @@ To install **Cockpit** simply run
 
 .. code:: bash
 
-  pip install 'git+https://github.com/f-dangel/cockpit.git@development'
+  pip install cockpit-for-pytorch
 
 
 .. toctree::
@@ -69,12 +69,12 @@ To install **Cockpit** simply run
     :target: https://github.com/f-dangel/cockpit/actions/workflows/Lint.yml
     :alt: Lint Status
 
-.. |Doc Status| image:: https://img.shields.io/readthedocs/cockpit/development.svg?logo=read%20the%20docs&logoColor=white&label=Doc
+.. |Doc Status| image:: https://img.shields.io/readthedocs/cockpit/latest.svg?logo=read%20the%20docs&logoColor=white&label=Doc
     :target: https://cockpit.readthedocs.io
     :alt: Doc Status
 
-.. |Coverage| image:: https://coveralls.io/repos/github/f-dangel/cockpit/badge.svg?branch=development&t=piyZHm
-    :target: https://coveralls.io/github/f-dangel/cockpit?branch=development
+.. |Coverage| image:: https://coveralls.io/repos/github/f-dangel/cockpit/badge.svg?branch=main&t=piyZHm
+    :target: https://coveralls.io/github/f-dangel/cockpit?branch=main
     :alt: CI Status
 
 .. |License| image:: https://img.shields.io/badge/License-MIT-green.svg

@@ -220,10 +220,6 @@ class Cockpit:
                     pass
 
     @staticmethod
-    def _has_children(net):
-        return len(list(net.children())) > 0
-
-    @staticmethod
     def _remove_module_io(module):
         io_fields = ["input0", "output"]
 

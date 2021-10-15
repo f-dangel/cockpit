@@ -61,11 +61,13 @@ class CockpitPlotter:
     def plot(
         self,
         source,
-        savedir=None,
         show_plot=True,
-        save_plot=False,
-        savename_append=None,
         block=False,
+        save_plot=False,
+        savedir=None,
+        savename="cockpit",
+        savename_append=None,
+        savefig_kwargs=None,
         show_log_iter=False,
         discard=None,
         plot_title=None,
@@ -77,15 +79,18 @@ class CockpitPlotter:
             source (Cockpit or str): ``Cockpit`` instance, or string
                 containing the path to a .json log produced with ``Cockpit.write``,
                 where information will be fetched from.
-            savedir (str): Directory where to save the plot.
             show_plot (bool, optional): Whether the plot should be shown on
                 screen. Defaults to True.
-            save_plot (bool, optional): Whether the plot should be saved to disk.
-                Defaults to False.
-            savename_append (str, optional): Optional appendix to the savefile
-                name. Defaults to None.
             block (bool, optional): Whether the halt the computation after
                 blocking or not. Defaults to False.
+            save_plot (bool, optional): Whether the plot should be saved to disk.
+                Defaults to False.
+            savedir (str, optional): Directory where to save the plot.
+            savename (str, optional): Filename of the saved plot.
+            savename_append (str, optional): Optional appendix to the savefile
+                name. Defaults to None.
+            savefig_kwargs (dict, optional): Additional keyword arguments that
+                are passed to `fig.savefig` such as fileformat or dpi.
             show_log_iter (bool, optional): Whether the instruments should use
                 a log scale for the iterations. Defaults to False.
             discard (int, optional): Global step after which information
@@ -165,10 +170,22 @@ class CockpitPlotter:
                 else:
                     raise ValueError("Please specify savedir when plotting a Cockpit.")
 
-            self._save(savedir, savename_append, screen="primary")
+            self._save(
+                savedir,
+                savename,
+                savename_append,
+                savefig_kwargs,
+                screen="primary",
+            )
 
             if self._secondary_screen:
-                self._save(savedir, savename_append, screen="secondary")
+                self._save(
+                    savedir,
+                    savename,
+                    savename_append,
+                    savefig_kwargs,
+                    screen="secondary",
+                )
 
     def _plot_step(self, grid_spec):
         """Plot all instruments having to do with step size in the given gridspec.
@@ -326,7 +343,7 @@ class CockpitPlotter:
         plot_scale = 1.0  # 0.7 works well for the MacBook
         sns.set_style("dark")
         sns.set_context("paper", font_scale=1.0)
-        self.save_format = ".png"  # how the plots should be saved
+        self.save_format = "png"  # how the plots should be saved
         # Colors #
         self.primary_color = (0.29, 0.45, 0.68, 1.0)  # blue #4a73ad
         self.secondary_color = (0.95, 0.50, 0.20, 1.0)  # orange #f28033
@@ -381,13 +398,23 @@ class CockpitPlotter:
         if discard is not None:
             self.tracking_data = self.tracking_data[self.tracking_data.index <= discard]
 
-    def _save(self, logpath, savename_append=None, screen="primary"):
+    def _save(
+        self,
+        savedir,
+        savename,
+        savename_append,
+        savefig_kwargs,
+        screen="primary",
+    ):
         """Save the (internal) figure to file.
 
         Args:
-            logpath (str): Full logpath to the JSON file.
+            savedir (str): Directory where to save the plot.
+            savename (str): Filename of the saved plot.
             savename_append (str, optional): Optional appendix to the savefile
                 name. Defaults to None.
+            savefig_kwargs (dict, optional): Additional keyword arguments that
+                are passed to `fig.savefig` such as fileformat or dpi.
             screen (str): String that specifies screen figure should be saved.
                 Possible options are ``'primary'`` and ``'secondary'``.
 
@@ -396,13 +423,15 @@ class CockpitPlotter:
         """
         if savename_append is None:
             savename_append = ""
+        else:
+            savename_append = "__" + savename_append
 
-        file_path = (
-            os.path.splitext(logpath)[0]
-            + f"__{screen}"
-            + savename_append
-            + self.save_format
-        )
+        file_path = os.path.join(savedir, savename + f"__{screen}" + savename_append)
+
+        if savefig_kwargs is not None and "format" in savefig_kwargs:
+            file_path += "." + savefig_kwargs["format"]
+        else:
+            file_path += "." + self.save_format
 
         if screen == "primary":
             fig = self.fig
@@ -413,9 +442,12 @@ class CockpitPlotter:
 
         print(f"[cockpit|plot] Saving figure in {file_path}")
 
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        os.makedirs(savedir, exist_ok=True)
 
-        fig.savefig(file_path)
+        if savefig_kwargs is None:
+            fig.savefig(file_path)
+        else:
+            fig.savefig(file_path, **savefig_kwargs)
 
     def _post_process_plot(self, plot_title):
         """Process the plotting figure, by adding a title, legend, etc."""
