@@ -104,7 +104,7 @@ class BackwardCTX:
         self.cp = cp
         self.global_step = global_step
 
-        self.protected_savefields = set(e.savefield for e in custom_exts)
+        self.protected_savefields = {e.savefield for e in custom_exts}
         self.protected_savefields.update(cp._get_protected_savefields(global_step))
 
         # choose context
@@ -118,7 +118,7 @@ class BackwardCTX:
         ):
             # TODO Implement all quantities with hooks and specify protected savefields
             # Remove unprotected buffers in this cleanup hook during backpropagation
-            cleanup_hook = CleanupHook(set(["grad_batch"]))
+            cleanup_hook = CleanupHook({"grad_batch"})
             ext_hook = self._combine_hooks(compute_hook, cleanup_hook)
         else:
             ext_hook = compute_hook
