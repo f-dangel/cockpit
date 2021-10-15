@@ -219,16 +219,6 @@ class Cockpit:
                 except AttributeError:
                     pass
 
-    @staticmethod
-    def _remove_module_io(module):
-        io_fields = ["input0", "output"]
-
-        for field in io_fields:
-            try:
-                delattr(module, field)
-            except AttributeError:
-                pass
-
     def log(
         self,
         global_step,
