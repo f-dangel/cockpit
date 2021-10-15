@@ -44,14 +44,13 @@ def test_BatchGradTransformsHook_deletes_attribute_required_by_Alpha():
     losses = individual_loss_fn(outputs, labels)
 
     # backward pass
-    with raises(AttributeError):
-        with cockpit(
-            global_step,
-            info={
-                "batch_size": N,
-                "individual_losses": losses,
-                "loss": loss,
-                "optimizer": opt_not_sgd,
-            },
-        ):
-            loss.backward(create_graph=cockpit.create_graph(global_step))
+    with cockpit(
+        global_step,
+        info={
+            "batch_size": N,
+            "individual_losses": losses,
+            "loss": loss,
+            "optimizer": opt_not_sgd,
+        },
+    ):
+        loss.backward(create_graph=cockpit.create_graph(global_step))

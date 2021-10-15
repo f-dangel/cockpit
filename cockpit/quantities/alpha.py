@@ -2,6 +2,7 @@
 
 import itertools
 import warnings
+from typing import Set
 
 import numpy as np
 import torch
@@ -88,6 +89,14 @@ class Alpha(TwoStepQuantity):
                 hooks.append(self._project_with_backpack_end(global_step))
 
         return hooks
+
+    def protected_savefields(self, global_step: int) -> Set[str]:
+        protected = set()
+        if self.is_start(global_step) or self.is_end(global_step):
+            if not self.__projection_with_backpack(global_step):
+                protected.update(["grad_batch"])
+
+        return protected
 
     def is_start(self, global_step):
         """Return whether current iteration is start point.
