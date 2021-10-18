@@ -3,7 +3,7 @@
 import string
 import weakref
 
-from torch import einsum
+from torch import Tensor, einsum
 
 from cockpit.quantities.hooks.base import ParameterExtensionHook
 
@@ -67,20 +67,14 @@ class BatchGradTransformsHook(ParameterExtensionHook):
         super().__init__(savefield=savefield)
         self._transforms = transforms
 
-    def param_hook(self, param):
+    def param_hook(self, param: Tensor):
         """Execute all transformations and store results as dictionary in the parameter.
 
-        Delete individual gradients in the parameter.
-
         Args:
-            param (torch.Tensor): Trainable parameter which hosts BackPACK quantities.
+            param: Trainable parameter which hosts BackPACK quantities.
         """
         param.grad_batch._param_weakref = weakref.ref(param)
         # TODO Delete after backward pass with Cockpit
         param.grad_batch_transforms = {
             key: func(param.grad_batch) for key, func in self._transforms.items()
         }
-        # TODO Delete with a separate hook that also knows which savefield should be
-        # kept because it's protected by the user. See
-        # https://github.com/f-dangel/cockpit-paper/issues/197
-        del param.grad_batch
