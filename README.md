@@ -12,6 +12,7 @@
 <p align="center">
   <a href="#installation">Installation</a> •
   <a href="https://cockpit.readthedocs.io/">Docs</a> •
+  <a href="https://github.com/fsschneider/cockpit-experiments">Experiments</a> •
   <a href="#license">License</a> •
   <a href="#citation">Citation</a>
 </p>
@@ -60,7 +61,7 @@ The [documentation](https://cockpit.readthedocs.io/) provides a full tutorial on
 <!-- Experiments -->
 ## Experiments
 
-To showcase the capabilities of **Cockpit** we performed several experiments illustrating the usefulness of our debugging tool. For a discussion of those experiments please refer to our [paper](https://arxiv.org/abs/2102.06604).
+To showcase the capabilities of **Cockpit** we performed several experiments illustrating the usefulness of our debugging tool. The code for the experiments can be found in a [separate repository](https://github.com/fsschneider/cockpit-experiments). For a discussion of those experiments please refer to our [paper](https://arxiv.org/abs/2102.06604).
 
 <!-- LICENSE -->
 ## License

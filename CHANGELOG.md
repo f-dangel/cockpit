@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.0.2] - 2021-10-26
+
+### Added
+
+- Added references to a separate [experiment repository](https://github.com/fsschneider/cockpit-experiments) that publishes the code for all experiments shown in the paper.
+
+### Fixed
+
+- Protects the `batch_grad` field in the case where non-SGD is used together with other quantities that free `batch_grad` for memory performance. [[#5](https://github.com/f-dangel/cockpit/issues/5), [PR](https://github.com/f-dangel/cockpit/pull/18)]
+
 ## [1.0.1] - 2021-10-13
 
 From this version on, `cockpit` will be available as `cockpit-for-pytorch` on
@@ -30,6 +40,7 @@ PyPI.
 
 - First public release version of **Cockpit**.
 
-[Unreleased]: https://github.com/f-dangel/cockpit/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/f-dangel/cockpit/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/f-dangel/cockpit/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/f-dangel/cockpit/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/f-dangel/cockpit/releases/tag/1.0.0
