@@ -25,7 +25,7 @@ def _root_sum_of_squares(list):
     Returns:
         [float]: Root sum of squares
     """
-    return sum((el ** 2 for el in list)) ** (0.5)
+    return sum((el**2 for el in list)) ** (0.5)
 
 
 def abs_max(tensor):

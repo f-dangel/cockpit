@@ -70,7 +70,7 @@ class AutogradNormTest(NormTest):
         individual_gradients_flat = autograd_individual_gradients(
             losses, params, concat=True
         )
-        sum_of_squares = (individual_gradients_flat ** 2).sum()
+        sum_of_squares = (individual_gradients_flat**2).sum()
 
         grad_norm = torch.cat([p.grad.flatten() for p in params]).norm()
 
@@ -80,7 +80,7 @@ class AutogradNormTest(NormTest):
             (
                 1
                 / (batch_size * (batch_size - 1))
-                * (sum_of_squares / grad_norm ** 2 - batch_size)
+                * (sum_of_squares / grad_norm**2 - batch_size)
             )
             .sqrt()
             .item()

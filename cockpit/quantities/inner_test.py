@@ -92,7 +92,7 @@ class InnerTest(SingleStepQuantity):
         Returns:
             [type]: [description]
         """
-        return (var_projection / batch_size / grad_l2_squared ** 2).sqrt()
+        return (var_projection / batch_size / grad_l2_squared**2).sqrt()
 
     def _compute_projection_variance(self, batch_size, batch_dot, grad_l2_squared):
         """Compute sample variance of individual gradient projections onto the gradient.
@@ -112,5 +112,5 @@ class InnerTest(SingleStepQuantity):
         projections = batch_size * batch_dot.sum(1)
 
         return (1 / (batch_size - 1)) * (
-            (projections ** 2).sum() - batch_size * grad_l2_squared ** 2
+            (projections**2).sum() - batch_size * grad_l2_squared**2
         )

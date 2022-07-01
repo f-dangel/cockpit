@@ -74,7 +74,7 @@ class AutogradMeanGSNR(MeanGSNR):
         grad_squared = torch.cat([p.grad.flatten() for p in params]) ** 2
 
         N_axis = 0
-        second_moment_flat = (individual_gradients_flat ** 2).mean(N_axis)
+        second_moment_flat = (individual_gradients_flat**2).mean(N_axis)
 
         gsnr = grad_squared / (second_moment_flat - grad_squared + self._epsilon)
 

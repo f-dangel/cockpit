@@ -116,6 +116,6 @@ class OrthoTest(SingleStepQuantity):
         projections = batch_size * batch_dot.sum(1)
 
         return (1 / (batch_size - 1)) * (
-            batch_size ** 2 * batch_l2_squared.sum()
-            - (projections ** 2 / grad_l2_squared).sum()
+            batch_size**2 * batch_l2_squared.sum()
+            - (projections**2 / grad_l2_squared).sum()
         )

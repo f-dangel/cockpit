@@ -144,7 +144,7 @@ class HVPLinearOperator(BaseLinearOperator):
             return torch.allclose(old, new, rtol=rtol, atol=atol)
 
         def normalize(vecs):
-            norm = sum((v ** 2).sum() for v in vecs).sqrt()
+            norm = sum((v**2).sum() for v in vecs).sqrt()
             for v in vecs:
                 v /= norm
 

@@ -97,11 +97,8 @@ class EarlyStopping(SingleStepQuantity):
         grad_squared = self._fetch_grad(params, aggregate=True) ** 2
 
         # compensate BackPACK's 1/B scaling
-        sgs_compensated = (
-            B ** 2
-            * self._fetch_sum_grad_squared_via_batch_grad_transforms(
-                params, aggregate=True
-            )
+        sgs_compensated = B**2 * self._fetch_sum_grad_squared_via_batch_grad_transforms(
+            params, aggregate=True
         )
 
         diag_variance = (sgs_compensated - B * grad_squared) / (B - 1)

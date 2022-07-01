@@ -84,7 +84,7 @@ def alpha_gauge(self, fig, gridspec):
 
     # Plot unit parabola
     x = np.linspace(plot_args["xlim"][0], plot_args["xlim"][1], 100)
-    y = x ** 2
+    y = x**2
     ax.plot(x, y, linewidth=2, color=color_parabola)
 
     _beautify_plot(**plot_args, ax=ax)
