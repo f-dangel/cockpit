@@ -417,7 +417,7 @@ class Alpha(TwoStepQuantity):
 
         # compute the update step
         updates = self.load_from_cache(start_step, "update_start")
-        update_size = sum((upd ** 2).sum() for upd in updates.values()).sqrt().item()
+        update_size = sum((upd**2).sum() for upd in updates.values()).sqrt().item()
         self.save_to_cache(start_step, "update_size_start", update_size, block_fn)
 
         for step, p in [[start_step, "start"], [end_step, "end"]]:
@@ -451,7 +451,7 @@ class Alpha(TwoStepQuantity):
         search_dir = [
             end_params[key] - start_params[key] for key in start_params.keys()
         ]
-        update_size = sum((s ** 2).sum() for s in search_dir).sqrt().item()
+        update_size = sum((s**2).sum() for s in search_dir).sqrt().item()
 
         block_fn = self._make_block_fn(end_step, end_step)
         self.save_to_cache(start_step, "update_size_start", update_size, block_fn)
@@ -596,7 +596,7 @@ def _fit_quadratic(t, fs, dfs, fs_var, dfs_var):
     # i.e. for f(0) we see (0)**2 *w1 + (0)*w2 + w3
     # and for f'(t) we see 2*(t)*w1 + w2
 
-    Phi = np.array([[1, 0, 0], [1, t, t ** 2], [0, 1, 0], [0, 1, 2 * t]]).T
+    Phi = np.array([[1, 0, 0], [1, t, t**2], [0, 1, 0], [0, 1, 2 * t]]).T
 
     # small value to use if one of the variances or t is 0.
     eps = 1e-10
@@ -604,12 +604,12 @@ def _fit_quadratic(t, fs, dfs, fs_var, dfs_var):
         warnings.warn(
             "The variance of f is 0, using a small value instead.", stacklevel=2
         )
-        fs_var = list(map(lambda i: eps if i == 0 else i, fs_var))
+        fs_var = [eps if i == 0 else i for i in fs_var]
     if 0 in dfs_var:
         warnings.warn(
             "The variance of df is 0, using a small value instead.", stacklevel=2
         )
-        dfs_var = list(map(lambda i: eps if i == 0 else i, dfs_var))
+        dfs_var = [eps if i == 0 else i for i in dfs_var]
     if t == 0.0:
         warnings.warn(
             "The two observations were (almost) at the same point.", stacklevel=2

@@ -225,7 +225,7 @@ def autograd_diagonal_variance(losses, params, concat=False, unbiased=True):
     factor = batch_size / (batch_size - 1) if unbiased else 1
 
     diag_variance = [
-        factor * ((igrad ** 2).mean(batch_axis) - igrad.mean(batch_axis) ** 2)
+        factor * ((igrad**2).mean(batch_axis) - igrad.mean(batch_axis) ** 2)
         for igrad in individual_gradients
     ]
 

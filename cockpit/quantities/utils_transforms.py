@@ -16,7 +16,7 @@ def BatchGradTransformsHook_BatchL2Grad():
 def batch_l2_transform(batch_grad):
     """Transform individual gradients into individual ℓ₂ norms."""
     sum_axes = list(range(batch_grad.dim()))[1:]
-    return (batch_grad ** 2).sum(sum_axes)
+    return (batch_grad**2).sum(sum_axes)
 
 
 def BatchGradTransformsHook_BatchDotGrad():
@@ -47,7 +47,7 @@ def BatchGradTransformsHook_SumGradSquared():
 
 def sum_grad_squared_transform(batch_grad):
     """Transform individual gradients into second non-centered moment."""
-    return (batch_grad ** 2).sum(0)
+    return (batch_grad**2).sum(0)
 
 
 class BatchGradTransformsHook(ParameterExtensionHook):

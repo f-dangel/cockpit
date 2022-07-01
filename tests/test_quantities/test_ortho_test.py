@@ -71,7 +71,7 @@ class AutogradOrthoTest(OrthoTest):
             losses, params, concat=True
         )
         D_axis = 1
-        individual_l2_norms_squared = (individual_gradients_flat ** 2).sum(D_axis)
+        individual_l2_norms_squared = (individual_gradients_flat**2).sum(D_axis)
 
         grad = torch.cat([p.grad.flatten() for p in params])
         grad_norm = grad.norm()
@@ -85,8 +85,8 @@ class AutogradOrthoTest(OrthoTest):
                 1
                 / (batch_size * (batch_size - 1))
                 * (
-                    individual_l2_norms_squared / grad_norm ** 2
-                    - (projections ** 2) / grad_norm ** 4
+                    individual_l2_norms_squared / grad_norm**2
+                    - (projections**2) / grad_norm**4
                 ).sum()
             )
             .sqrt()

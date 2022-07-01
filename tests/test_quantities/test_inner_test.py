@@ -82,7 +82,7 @@ class AutogradInnerTest(InnerTest):
             (
                 1
                 / (batch_size * (batch_size - 1))
-                * ((projections ** 2).sum(N_axis) / grad_norm ** 4 - batch_size)
+                * ((projections**2).sum(N_axis) / grad_norm**4 - batch_size)
             )
             .sqrt()
             .item()

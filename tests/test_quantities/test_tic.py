@@ -83,7 +83,7 @@ class AutogradTICDiag(TICDiag):
             raise NotImplementedError("Only Hessian diagonal is implemented")
 
         N_axis = 0
-        second_moment_flat = (individual_gradients_flat ** 2).mean(N_axis)
+        second_moment_flat = (individual_gradients_flat**2).mean(N_axis)
 
         return (second_moment_flat / (diag_curvature_flat + self._epsilon)).sum().item()
 
@@ -142,7 +142,7 @@ class AutogradTICTrace(TICTrace):
             raise NotImplementedError("Only Hessian trace is implemented")
 
         N_axis = 0
-        mean_squared_l2_norm = (individual_gradients_flat ** 2).mean(N_axis).sum()
+        mean_squared_l2_norm = (individual_gradients_flat**2).mean(N_axis).sum()
 
         return (mean_squared_l2_norm / (curvature_trace + self._epsilon)).item()
 

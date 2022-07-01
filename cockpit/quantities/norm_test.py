@@ -107,5 +107,5 @@ class NormTest(SingleStepQuantity):
             torch.Tensor: The sample variance ℓ₁ norm.
         """
         return (1 / (batch_size - 1)) * (
-            batch_size ** 2 * batch_l2_squared.sum() - batch_size * grad_l2_squared
+            batch_size**2 * batch_l2_squared.sum() - batch_size * grad_l2_squared
         )
