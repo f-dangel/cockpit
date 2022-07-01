@@ -604,12 +604,12 @@ def _fit_quadratic(t, fs, dfs, fs_var, dfs_var):
         warnings.warn(
             "The variance of f is 0, using a small value instead.", stacklevel=2
         )
-        fs_var = list(map(lambda i: eps if i == 0 else i, fs_var))
+        fs_var = [eps if i == 0 else i for i in fs_var]
     if 0 in dfs_var:
         warnings.warn(
             "The variance of df is 0, using a small value instead.", stacklevel=2
         )
-        dfs_var = list(map(lambda i: eps if i == 0 else i, dfs_var))
+        dfs_var = [eps if i == 0 else i for i in dfs_var]
     if t == 0.0:
         warnings.warn(
             "The two observations were (almost) at the same point.", stacklevel=2
