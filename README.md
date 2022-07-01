@@ -71,19 +71,29 @@ Distributed under the MIT License. See [`LICENSE`](LICENSE.txt) for more informa
 <!-- Citation -->
 ## Citation
 
-If you use **Cockpit**, please consider citing:
+We are interested in successful user stories with **Cockpit** (shoot us an email!).
+
+Please consider citing:
 
 > [Frank Schneider, Felix Dangel, Philipp Hennig<br/>
 > **Cockpit: A Practical Debugging Tool for Training Deep Neural Networks**<br/>
 > *arXiv 2102.06604*](http://arxiv.org/abs/2102.06604)
 
 ```bibtex
-@misc{schneider2021cockpit,
-   title={{Cockpit: A Practical Debugging Tool for Training Deep Neural Networks}},
-   author={Frank Schneider and Felix Dangel and Philipp Hennig},
-   year={2021},
-   eprint={2102.06604},
-   archivePrefix={arXiv},
-   primaryClass={cs.LG}
+
+@inproceedings{schneider2021cockpit,
+  author =       {Schneider, Frank and Dangel, Felix and Hennig, Philipp},
+  booktitle =    {Advances in Neural Information Processing Systems},
+  editor =       {M. Ranzato and A. Beygelzimer and Y. Dauphin and P.S. Liang
+                  and J. Wortman Vaughan},
+  pages =        {20825--20837},
+  publisher =    {Curran Associates, Inc.},
+  title =        {Cockpit: A Practical Debugging Tool for the Training of Deep
+                  Neural Networks},
+  url =
+  {https://proceedings.neurips.cc/paper/2021/file/ae3539867aaeec609a4260c6feb725f4-Paper.pdf},
+  volume =       34,
+  year =         2021
 }
+
 ```
